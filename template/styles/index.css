@@ -11,6 +11,7 @@ body {
     color: #f7f7f7;
     display: flex;
     gap: 5px;
+    padding-top: 8px;
 }
 
 span {
@@ -25,4 +26,95 @@ body .left-nav {
     height: 100%;
     display: flex;
     flex-direction: column;
+    border: 1px solid #d4171b;
+}
+
+body .main {
+    background: #0a0a08;
+    color: #f7f7f7;
+    display: flex;
+    flex-direction: column;
+    width: 69%;
+    border: 1px solid #d4171b;
+    height: 100%;
+    border-radius: 8px;
+}
+
+body .right-nav {
+    background: #080808;
+    color: #f7f7f7;
+    width: 22%;
+    height: 100%;
+    display: flex;
+    border: 1px solid #d4171b;
+    flex-direction: column;
+    align-items: center;
+
+    .actual-play {
+        width: 97%;
+        height: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-radius: 10px;
+
+        .song {
+            width: 95%;
+            height: 80%;
+            border-radius: 10px;
+            align-items: center;
+            padding-top: 10px;
+
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 10px;
+            }
+        }
+    }
+}
+
+body .bottom-nav {
+    position: fixed;
+    width: 100%;
+    height: 90px;
+    background: #0a0a08;
+    border-top: 5px solid #d4171b;
+    display: flex;
+    justify-content: space-between;
+    bottom: 0;
+}
+
+body .bottom-nav .holder {
+    width: 30%;
+    height: 98%;
+    display: flex;
+    align-items: center;
+    padding-left: 50px;
+    gap: 10px;
+}
+
+body .bottom-nav .holder img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+}
+
+body .bottom-nav .holder .dtls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    strong {
+        font-size: 20px;
+        font-weight: 100;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    }
+
+    span {
+        font-size: 13px;
+        background: transparent;
+        font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        color: #e0e0e0;
+    }
 }
