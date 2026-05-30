@@ -322,7 +322,7 @@ body .right-nav {
 body .bottom-nav {
     position: fixed;
     width: 100%;
-    height: 90px;
+    height: 65px;
     background: #0a0a08;
     border-top: 5px solid #722128;
     display: flex;
