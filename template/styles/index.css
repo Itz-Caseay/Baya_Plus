@@ -112,7 +112,7 @@ body .main {
     height: 100%;
     border-radius: 8px;
     overflow-y: scroll;
-    scrollbar-width: none;
+    /* scrollbar-width: none; */
     scroll-behavior: smooth;
 
     .top-nav {
@@ -258,9 +258,70 @@ body .main {
             scrollbar-width: none;
 
             .song-card {
-                width: 225px;
+                width: 220px;
                 height: 250px;
-                border: 1px solid red;
+                /* border: 1px solid red; */
+                border-radius: 10px;
+                cursor: pointer;
+
+                .img {
+                    width: 100%;
+                    height: 70%;
+                    /* border: 1px solid red; */
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        border-top-left-radius: 10px;
+                        border-top-right-radius: 10px;
+                    }
+                }
+
+                .credits {
+                    width: 100%;
+                    height: 30%;
+                    /* border: 1px solid blue; */
+                    border-bottom-left-radius: 10px;
+                    border-bottom-right-radius: 10px;
+                    padding: 5px;
+                    gap: 10px;
+
+                    p {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        font-weight: 600;
+                        gap: 5px;
+                        /* padding: 5px; */
+                    }
+
+                    h5 {
+                        /* padding: 5px; */
+                        color: #7a7a7a;
+                    }
+
+                    a {
+                        width: 50px;
+                        height: 50px;
+                        background: #f7bb0d;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        justify-self: last baseline;
+                        /* padding-bottom: 20px; */
+                        top: 585px;
+                        border-radius: 50%;
+                        position: absolute;
+
+                        img {
+                            width: 50%;
+                            height: 50%;
+                        }
+                    }
+                }
+            }
+
+            .song-card:hover {
+                box-shadow: 0px 0px 10px 0px #f7bb0d;
+                transition: 0.9s ease-in-out;
                 border-radius: 10px;
             }
         }
@@ -364,7 +425,7 @@ body .bottom-nav {
     height: 65px;
     background: #0a0a08;
     border-top: 5px solid #722128;
-    display: flex;
+    display: none;
     justify-content: space-between;
     bottom: 0;
 
