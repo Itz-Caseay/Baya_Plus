@@ -112,7 +112,7 @@ body .main {
     height: 100%;
     border-radius: 8px;
     overflow-y: scroll;
-    /* scrollbar-width: none; */
+    scrollbar-width: none;
     scroll-behavior: smooth;
 
     .top-nav {
@@ -306,11 +306,14 @@ body .main {
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                        justify-self: last baseline;
+                        justify-self: right;
                         /* padding-bottom: 20px; */
-                        top: 585px;
+                        top: 0;
                         border-radius: 50%;
-                        position: absolute;
+                        padding-bottom: 40px;
+                        position: relative;
+                        /* left: 0; */
+                        /* z-index: 10; */
 
                         img {
                             width: 50%;
@@ -342,7 +345,8 @@ body .main {
         .artist-card {
             width: 250px;
             height: 80px;
-            border: 1px solid red;
+            /* border: 1px solid red; */
+            border-radius: 10px;
             padding: 10px;
             display: flex;
 
@@ -364,6 +368,10 @@ body .main {
                 flex-direction: column;
                 align-items: baseline;
                 justify-content: center;
+
+                h5 {
+                    color: #7a7a7a;
+                }
             }
         }
     }
@@ -466,7 +474,7 @@ body .bottom-nav {
     height: 65px;
     background: #0a0a08;
     border-top: 5px solid #722128;
-    display: none;
+    display: flex;
     justify-content: space-between;
     bottom: 0;
 
