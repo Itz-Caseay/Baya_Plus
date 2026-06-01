@@ -146,12 +146,43 @@
         height: 70px;
         position: fixed;
         bottom: 0;
-        padding: 2px;
+        padding: 0;
+        gap: 8px;
         display: flex;
         /* justify-content: space-between; */
 
+        .action {
+            display: flex;
+            /* align-self: flex-end; */
+            /* padding-left: 120px; */
+            right: 0;
+        }
+
         .holder {
             display: flex;
+            padding: 0;
+            width: 100px;
+            /* border: 1px solid red; */
+            /* padding-right: 15px; */
+
+            img {
+                padding-left: 8px;
+                /* border: 1px solid red; */
+            }
+
+            .dtls {
+                display: flex;
+                flex-direction: column;
+                padding-right: 10px;
+
+                strong {
+                    font-size: 15px;
+                }
+
+                span {
+                    font-size: 12px;
+                }
+            }
         }
 
 
