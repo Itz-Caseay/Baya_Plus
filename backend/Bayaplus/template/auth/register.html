@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BayaPlus - Authentication</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex overflow-x-hidden select-none">
+
+    <!-- 1. LEFT SIDE BRANDING BANNER (Visible on lg viewports and up) -->
+    <div class="hidden lg:flex w-[38%] relative bg-[#050505] flex-col justify-between p-12 overflow-hidden border-r border-[#1a1a1a] shrink-0">
+        <div class="absolute inset-0 bg-cover bg-center mix-blend-screen opacity-40 grayscale contrast-125" style="background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-red-950/40 to-black/80 z-0"></div>
+        
+        <div class="absolute right-0 top-1/4 bottom-0 w-80 bg-cover bg-top mix-blend-color-dodge opacity-30 pointer-events-none" style="background-image: url('https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=600&q=80');"></div>
+
+        <div class="z-10 space-y-12">
+            <!-- App Logo -->
+            <div class="flex items-center gap-1">
+                <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-3xl font-light italic">plus</span>
+            </div>
+
+            <!-- Value Proposition Pitch -->
+            <div class="space-y-4 max-w-sm">
+                <h1 class="text-4xl font-extrabold tracking-tight leading-tight">
+                    Music that <br><span class="text-yellow-400">moves you.</span>
+                </h1>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    Stream millions of songs, create playlists and enjoy unlimited music anytime, anywhere.
+                </p>
+            </div>
+
+            <!-- Perks Checklist Features -->
+            <div class="space-y-6 max-w-xs">
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-full bg-red-950/40 border border-red-900/30 flex items-center justify-center text-red-500 shrink-0 text-sm">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-200">Millions of songs</h4>
+                        <p class="text-[11px] text-gray-500 mt-0.5">All your favorites in one place.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-full bg-red-950/40 border border-red-900/30 flex items-center justify-center text-red-500 shrink-0 text-sm">
+                        <i class="fa-solid fa-headphones"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-200">Ad-free listening</h4>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Pure music. No interruptions.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-full bg-red-950/40 border border-red-900/30 flex items-center justify-center text-red-500 shrink-0 text-sm">
+                        <i class="fa-regular fa-heart"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-200">Playlists for every mood</h4>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Curated by you, for you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Slide Indicators decoration -->
+        <div class="z-10 flex gap-1.5 pt-6">
+            <span class="w-5 h-1 bg-yellow-400 rounded-full"></span>
+            <span class="w-2 h-1 bg-gray-700 rounded-full"></span>
+            <span class="w-2 h-1 bg-gray-700 rounded-full"></span>
+            <span class="w-2 h-1 bg-gray-700 rounded-full"></span>
+        </div>
+    </div>
+
+    <!-- 2. MAIN CORE INTERACTIVE CONTAINER PANEL -->
+    <div class="flex-1 bg-[#0b0b0b] flex flex-col min-h-screen p-6 sm:p-8 lg:p-12">
+        
+        <!-- Header Context Switcher Bar -->
+        <div class="flex items-center justify-between lg:justify-end shrink-0">
+            <!-- Mobile App Brand Visibility Guard (Shows up on mobile/tablet screens only) -->
+            <div class="flex items-center gap-0.5 lg:hidden">
+                <span class="text-red-600 text-xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-xl font-light italic">plus</span>
+            </div>
+            <div class="text-[11px] text-gray-400 font-medium">
+                Already have an account? <a href="login.html" class="text-yellow-400 hover:underline ml-1">Log in</a>
+            </div>
+        </div>
+
+        <!-- Centered Unified Registration Form Wrapper Architecture -->
+        <div class="flex-1 flex items-center justify-center py-8">
+            <section class="w-full max-w-md space-y-6">
+                <!-- Heading Block Header -->
+                <div class="text-center md:text-left space-y-1.5">
+                    <div class="hidden md:flex text-red-500 text-2xl mb-1"><i class="fa-solid fa-user-plus"></i></div>
+                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Create your account</h2>
+                    <p class="text-xs text-gray-500">Join millions of music lovers.</p>
+                </div>
+
+                <!-- Registration Action Submission Form -->
+                <form class="space-y-3.5" onsubmit="event.preventDefault();">
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="text" autocomplete="name" placeholder="Full name" class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="email" autocomplete="email" placeholder="Email address" class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="password" autocomplete="new-password" placeholder="Password" class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-10 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 transition">
+                        <i class="fa-regular fa-eye absolute right-4 top-3.5 text-gray-500 text-xs cursor-pointer hover:text-white transition"></i>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="password" autocomplete="new-password" placeholder="Confirm password" class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-10 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 transition">
+                        <i class="fa-regular fa-eye absolute right-4 top-3.5 text-gray-500 text-xs cursor-pointer hover:text-white transition"></i>
+                    </div>
+
+                    <!-- Terms & Conditions Agreement Checkbox -->
+                    <div class="flex items-start gap-2.5 pt-1">
+                        <input type="checkbox" id="terms" class="mt-0.5 rounded border-gray-800 bg-[#121212] text-yellow-400 focus:ring-0 cursor-pointer">
+                        <label for="terms" class="text-[11px] text-gray-500 leading-normal cursor-pointer select-none">
+                            I agree to the <a href="#" class="text-yellow-500 hover:underline">Terms of Service</a> and <a href="#" class="text-yellow-500 hover:underline">Privacy Policy</a>.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-3.5 rounded-full transition tracking-wide mt-2 shadow-lg shadow-yellow-400/5">
+                        Sign Up
+                    </button>
+                </form>
+
+                <!-- Divider Component layout separator -->
+                <div class="relative flex items-center justify-center py-2">
+                    <div class="border-t border-[#1e1e1e] w-full"></div>
+                    <span class="absolute bg-[#0b0b0b] px-3 text-[9px] uppercase font-bold tracking-widest text-gray-600">or continue with</span>
+                </div>
+
+                <!-- Third-Party Federated SSO Buttons Grid Menu -->
+                <div class="space-y-2.5">
+                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
+                        <i class="fa-brands fa-google text-red-500 text-sm"></i> Continue with Google
+                    </button>
+                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
+                        <i class="fa-brands fa-apple text-white text-sm"></i> Continue with Apple
+                    </button>
+                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
+                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> Continue with Facebook
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Global Layout Footer Meta Context Link Bar -->
+        <footer class="text-center text-[10px] text-gray-600 shrink-0 pt-4">
+            By continuing, you agree to our <a href="#" class="hover:underline text-gray-500">Terms of Service</a> and <a href="#" class="hover:underline text-gray-500">Privacy Policy</a>.
+        </footer>
+    </div>
+
+</body>
+</html>
