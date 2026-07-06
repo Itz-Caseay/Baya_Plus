@@ -2,5 +2,5 @@
 A streaming platform designed in Cameroon
 
 # Contributors
-### CA_Studio
 ### BTS Studio
+### CA_Studio
