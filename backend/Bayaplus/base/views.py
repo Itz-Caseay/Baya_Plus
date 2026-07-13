@@ -42,19 +42,31 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            login(request, user)
 
-            # Check if the user has created a profile
-            if not UserProfile.objects.filter(user=user).exists():
-                login(request, user)
+            # Check whether the user has created a profile
+            try:
+                profile = UserProfile.objects.get(user=user)
+
+                messages.success(request, "Successfully logged in.")
+
+                # Redirect according to profile role
+                if profile.role == "Artist":
+                    return redirect("artistboard")
+
+                elif profile.role == "Fan":
+                    return redirect("fanboard")
+
+                # Fallback
+                return redirect("index")
+
+            except UserProfile.DoesNotExist:
                 messages.info(request, "Please create your profile before continuing.")
                 return redirect("choose-profile")
 
-            login(request, user)
-            messages.success(request, "Successfully logged in.")
-            return redirect("index")
-
-        messages.error(request, "Invalid username or password.")
-        return redirect("login")
+        else:
+            messages.error(request, "Invalid username or password.")
+            return redirect("login")
 
     return render(request, "auth/login.html")
 
