@@ -8,4 +8,5 @@ urlpatterns = [
     path('choose-profile/', choose_profile, name="choose-profile"),
     path('fanboard/', fanboard, name="fanboard"),
     path('artistboard/', artistboard, name="artistboard"),
+    path('activate/<uidb64>/<token>/', activate, name='activate'),
 ]
