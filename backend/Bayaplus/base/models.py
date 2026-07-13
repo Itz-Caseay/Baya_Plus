@@ -18,7 +18,7 @@ class UserProfile(models.Model):
         ('Artist', 'Artist'),
         ('Fan', 'Fan'),
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=10, choices=ROLES, blank=False)
     artist_name = models.CharField(max_length=50, unique=True, blank=True, null=True)
     

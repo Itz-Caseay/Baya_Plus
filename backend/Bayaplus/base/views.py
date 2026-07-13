@@ -35,26 +35,28 @@ def signup(request):
 
 # signin views function
 def login_user(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        
-        try:
-            user = authenticate(request, email=email, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, "Successfully logged In")
-                return redirect('index')
-            
-            else:
-                messages.error(request, "Invalid Credentials")
-                return redirect('login')
-        
-        except Exception as e:
-            
-            messages.error(request, {'error':e})
-    return render(request, "auth/login.html")
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
 
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+
+            # Check if the user has created a profile
+            if not UserProfile.objects.filter(user=user).exists():
+                login(request, user)
+                messages.info(request, "Please create your profile before continuing.")
+                return redirect("choose-profile")
+
+            login(request, user)
+            messages.success(request, "Successfully logged in.")
+            return redirect("index")
+
+        messages.error(request, "Invalid username or password.")
+        return redirect("login")
+
+    return render(request, "auth/login.html")
 
 @login_required(login_url='login')
 def logout_user(request):
@@ -63,13 +65,32 @@ def logout_user(request):
     return redirect('login')
 
 def choose_profile(request):
-    if request.method == 'POST':
-        role = request.POST['role']
-        if role == "artist":
-            artist_name = request.POST['artist_name']
-            
-            
-        elif role == "fan":
+    if request.method == "POST":
+        role = request.POST.get("role")
+
+        if role == "Artist":
+            artist_name = request.POST.get("artist_name")
+
+            if UserProfile.objects.filter(artist_name=artist_name).exists():
+                messages.error(request, "Artist name denied. Already used by another artist")
+                return redirect("choose-profile")
+
+            UserProfile.objects.create(
+                user = request.user,
+                role=role,
+                artist_name=artist_name
+            )
+
+            messages.success(request, "Artist account created successfully")
+            return redirect("artistboard")
+
+        elif role == "Fan":
+            UserProfile.objects.create(
+                role=role,
+                user = request.user,
+            )
+
             messages.success(request, "Fan account created successfully")
-            return redirect('fanboard')
-    return HttpResponse("Artist or Fan?")
+            return redirect("fanboard")
+
+    return render(request, "auth/choose-profile.html")
