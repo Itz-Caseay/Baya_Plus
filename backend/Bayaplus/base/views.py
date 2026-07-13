@@ -106,3 +106,15 @@ def choose_profile(request):
             return redirect("fanboard")
 
     return render(request, "auth/choose-profile.html")
+
+def fanboard(request):
+    profile = UserProfile.objects.get(user=request.user)
+    return HttpResponse(f"""
+                        <h3>{request.user.username} Welcom to your Artist page</h3> <h3>Role: {profile.role}</h3>"""
+                        )
+
+def artistboard(request):
+    profile = UserProfile.objects.get(user=request.user)
+    return HttpResponse(f"""
+                        <h3>{request.user.username} Welcom to your Fan page</h3> <h3>Role: {profile.role}</h3>"""
+                        )
