@@ -4,21 +4,23 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class User(AbstractUser):
-    username = models.CharField(max_length=50, unique=True, blank=False)
+    fullname = models.CharField(max_length=50, blank=False, null=False)
     email = models.EmailField(max_length=254, unique=True, blank=False)
-    full_name = models.CharField(max_length=50)
+    username = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"User {self.usernaame}"
+        return f"{self.username} registered on {self.date_joined}"
     
-class Profile(models.Model):
-    GENDER = (
-        ('Male', 'Male'),
-        ('Female', 'Female'),
+    
+class UserProfile(models.Model):
+    ROLES = (
+        ('Artist', 'Artist'),
+        ('Fan', 'Fan'),
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    gender = models.CharField(max_length=50, null=False, null=False, choices=GENDER, default="Male")
-    is_artist = models.BooleanField(default=False)
+    role = models.CharField(max_length=10, choices=ROLES, blank=False)
+    artist_name = models.CharField(max_length=50, unique=True, blank=True, null=True)
     
     def __str__(self):
-        return f"User {self.user.username}'s Profile"
+        return f"{self.user.username} role: {self.role}"

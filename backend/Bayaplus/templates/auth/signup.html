@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup | BayaPlus</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Enter Usernamw"><br><br>
+        <input type="text" name="fullname" placeholder="Enter Fullname"><br><br>
+        <input type="email" name="email" placeholder="Enter Email Address"><br><br>
+        
+        <input type="password" name="password2" placeholder="XXXX"><br><br>
+        <input type="password" name="password" placeholder="XXXX"><br><br>
+        <button type="submit">Signup</button>
+    </form>
+</body>
+</html>
