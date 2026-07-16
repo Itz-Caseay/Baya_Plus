@@ -12,6 +12,8 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.auth.tokens import default_token_generator
 from .utils import *
 from django.conf import settings
+from datetime import timedelta
+import re
 from .models import *
 import logging
 
@@ -318,15 +320,20 @@ def fanboard(request):
                         <p><a href="/bayaplus/logout/">Logout</a></p>"""
                         )
 
+@login_required(login_url="login")
 def artistboard(request):
     profile = UserProfile.objects.get(user=request.user)
-    return HttpResponse(f"""
-                       <h2>Welcome, { request.user.username }</h2> 
-                       <h3>Role: {profile.role}</h3> 
-                       <h3>Email Verified: {profile.email_verified}</h3>
-                       <h3>Payment Verified: {profile.payment_verified}</h3>
-                       <p><a href="/bayaplus/logout/">Logout</a></p>"""
-                        )
+    releases = Release.objects.filter(artist=request.user).order_by('-created_at')
+    
+    return render(request, "auth/artistboard.html", {
+        'profile': profile,
+        'releases': releases,
+        'total_releases': releases.count(),
+        'published': releases.filter(status='published').count(),
+        'pending': releases.filter(status='pending').count(),
+        'drafts': releases.filter(status='draft').count(),
+        'rejected': releases.filter(status='rejected').count(),
+    })
 
 #Artists create releases
 @login_required(login_url='login')
@@ -378,11 +385,13 @@ def create_release(request):
                 tags=tags,
                 language=language,
                 is_public=is_public,
-                status='pending',  # Changed from 'draft' to 'pending' for admin review
+                status='draft',
                 track_count=0,
             )
             
             messages.success(request, f"Release '{title}' created successfully! Now add tracks.")
+            
+            # Redirect to add tracks page
             return redirect('add_tracks', release_id=release.id)
             
         except Exception as e:
@@ -394,7 +403,7 @@ def create_release(request):
         'release_types': Release.RELEASE_TYPES,
         'artist_profile': profile,
     })
-    
+   
 @login_required(login_url='login')
 def publish_release(request, release_id):
     release = get_object_or_404(Release, id=release_id, artist=request.user)
@@ -632,3 +641,242 @@ def send_artist_revision_request(request, release, admin_notes):
         )
     except Exception as e:
         print(f"Error sending revision request: {str(e)}")
+        
+@login_required(login_url='login')
+def add_tracks(request, release_id):
+    # Get the release
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    # Check if user owns this release
+    if release.artist != request.user:
+        messages.error(request, "You don't have permission to edit this release.")
+        return redirect('artistboard')
+    
+    if request.method == "POST":
+        track_title = request.POST.get('track_title')
+        track_number = request.POST.get('track_number')
+        duration_str = request.POST.get('duration')
+        is_explicit = request.POST.get('is_explicit') == 'on'
+        
+        if not track_title:
+            messages.error(request, "Track title is required.")
+            return redirect('add_tracks', release_id=release_id)
+        
+        try:
+            # Convert duration string to timedelta
+            duration = None
+            if duration_str:
+                duration = parse_duration(duration_str)
+            
+            # Create the track
+            track = Track.objects.create(
+                release=release,
+                title=track_title,
+                track_number=track_number or release.tracks.count() + 1,
+                duration=duration,
+                is_explicit=is_explicit,
+            )
+            
+            # Update track count on release
+            release.track_count = release.tracks.count()
+            release.save()
+            
+            messages.success(request, f"Track '{track_title}' added successfully!")
+            
+            # Check if user wants to add another track
+            if request.POST.get('add_another') == 'on':
+                return redirect('add_tracks', release_id=release_id)
+            else:
+                return redirect('publish_release', release_id=release_id)
+                
+        except Exception as e:
+            messages.error(request, f"Error adding track: {str(e)}")
+            return redirect('add_tracks', release_id=release_id)
+    
+    # GET request - show the form
+    tracks = release.tracks.all().order_by('track_number')
+    return render(request, "releases/add_tracks.html", {
+        'release': release,
+        'tracks': tracks,
+        'track_count': tracks.count(),
+    })
+
+
+def parse_duration(duration_str):
+    """
+    Parse duration string to timedelta object.
+    Supports formats:
+    - "3:45" (minutes:seconds)
+    - "1:30:45" (hours:minutes:seconds)
+    - "120" (seconds)
+    - "2m 30s" (minutes and seconds)
+    """
+    if not duration_str:
+        return None
+    
+    duration_str = duration_str.strip()
+    
+    # Try to parse HH:MM:SS or MM:SS
+    if ':' in duration_str:
+        parts = duration_str.split(':')
+        if len(parts) == 2:
+            # MM:SS
+            minutes = int(parts[0])
+            seconds = int(parts[1])
+            return timedelta(minutes=minutes, seconds=seconds)
+        elif len(parts) == 3:
+            # HH:MM:SS
+            hours = int(parts[0])
+            minutes = int(parts[1])
+            seconds = int(parts[2])
+            return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    
+    # Try to parse "2m 30s" format
+    import re
+    minutes = 0
+    seconds = 0
+    
+    minute_match = re.search(r'(\d+)\s*m', duration_str)
+    if minute_match:
+        minutes = int(minute_match.group(1))
+    
+    second_match = re.search(r'(\d+)\s*s', duration_str)
+    if second_match:
+        seconds = int(second_match.group(1))
+    
+    if minutes > 0 or seconds > 0:
+        return timedelta(minutes=minutes, seconds=seconds)
+    
+    # Try to parse as plain seconds
+    try:
+        total_seconds = int(duration_str)
+        return timedelta(seconds=total_seconds)
+    except ValueError:
+        pass
+    
+    # If all else fails, return None
+    return None
+    # Get the release
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    # Check if user owns this release
+    if release.artist != request.user:
+        messages.error(request, "You don't have permission to edit this release.")
+        return redirect('artistboard')
+    
+    if request.method == "POST":
+        track_title = request.POST.get('track_title')
+        track_number = request.POST.get('track_number')
+        duration = request.POST.get('duration')
+        is_explicit = request.POST.get('is_explicit') == 'on'
+        
+        if not track_title:
+            messages.error(request, "Track title is required.")
+            return redirect('add_tracks', release_id=release_id)
+        
+        try:
+            # Create the track
+            track = Track.objects.create(
+                release=release,
+                title=track_title,
+                track_number=track_number or release.tracks.count() + 1,
+                duration=duration,
+                is_explicit=is_explicit,
+            )
+            
+            # Update track count on release
+            release.track_count = release.tracks.count()
+            release.save()
+            
+            messages.success(request, f"Track '{track_title}' added successfully!")
+            
+            # Check if user wants to add another track
+            if request.POST.get('add_another') == 'on':
+                return redirect('add_tracks', release_id=release_id)
+            else:
+                return redirect('publish_release', release_id=release_id)
+                
+        except Exception as e:
+            messages.error(request, f"Error adding track: {str(e)}")
+            return redirect('add_tracks', release_id=release_id)
+    
+    # GET request - show the form
+    tracks = release.tracks.all().order_by('track_number')
+    return render(request, "releases/add_tracks.html", {
+        'release': release,
+        'tracks': tracks,
+        'track_count': tracks.count(),
+    })
+    
+    
+@login_required(login_url='login')
+def delete_track(request, release_id, track_id):
+    """Delete a track from a release"""
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    track = get_object_or_404(Track, id=track_id, release=release)
+    
+    if request.method == "POST":
+        track_title = track.title
+        track.delete()
+        
+        # Update track count
+        release.track_count = release.tracks.count()
+        release.save()
+        
+        messages.success(request, f"Track '{track_title}' deleted successfully.")
+        return redirect('add_tracks', release_id=release_id)
+    
+    # If GET request, redirect back
+    return redirect('add_tracks', release_id=release_id)
+
+@login_required(login_url='login')
+def delete_release(request, release_id):
+    """Delete a release"""
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    if request.method == "POST":
+        release_title = release.title
+        release.delete()
+        messages.success(request, f"Release '{release_title}' deleted successfully.")
+        return redirect('artistboard')
+    
+    return redirect('artistboard')
+
+@login_required(login_url='login')
+def edit_release(request, release_id):
+    """Edit an existing release"""
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    if release.artist != request.user:
+        messages.error(request, "You don't have permission to edit this release.")
+        return redirect('artistboard')
+    
+    if release.status == 'published':
+        messages.warning(request, "This release is published. Editing will save it as a draft.")
+    
+    if request.method == "POST":
+        # Update release information
+        release.title = request.POST.get('title', release.title)
+        release.release_type = request.POST.get('release_type', release.release_type)
+        release.genre = request.POST.get('genre', release.genre)
+        release.description = request.POST.get('description', release.description)
+        release.release_date = request.POST.get('release_date', release.release_date)
+        release.is_free = request.POST.get('is_free') == 'on'
+        release.price = request.POST.get('price', 0.00) if not release.is_free else 0.00
+        release.tags = request.POST.get('tags', release.tags)
+        release.language = request.POST.get('language', release.language)
+        release.is_public = request.POST.get('is_public') == 'on'
+        
+        # If published, change to draft
+        if release.status == 'published':
+            release.status = 'draft'
+        
+        release.save()
+        
+        messages.success(request, f"Release '{release.title}' updated successfully!")
+        return redirect('publish_release', release_id=release.id)
+    
+    return render(request, "releases/edit_release.html", {
+        'release': release,
+        'release_types': Release.RELEASE_TYPES,
+    })

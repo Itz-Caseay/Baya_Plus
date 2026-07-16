@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Tracks - BayaPlus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .release-info {
+            background: #f9f9f9;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .release-info h3 {
+            color: #333;
+        }
+        
+        .release-info p {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        label .required {
+            color: red;
+        }
+        
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn-secondary {
+            background: #2196F3;
+        }
+        
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .btn-small {
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+        
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        .messages li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .messages .error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+        
+        .messages .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .tracks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .tracks-table th {
+            background: #f0f0f0;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tracks-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tracks-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .track-number {
+            color: #888;
+            font-weight: bold;
+            width: 50px;
+        }
+        
+        .no-tracks {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+        
+        .cancel-link {
+            color: #666;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 14px;
+        }
+        
+        .cancel-link:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎵 Add Tracks</h2>
+        <p class="subtitle">Add tracks to your release</p>
+        
+        <div class="release-info">
+            <h3>{{ release.title }}</h3>
+            <p>Type: {{ release.get_release_type_display }} | Tracks: {{ track_count }}</p>
+        </div>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="track_title">Track Title <span class="required">*</span></label>
+                    <input type="text" name="track_title" id="track_title" placeholder="Enter track title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="track_number">Track Number</label>
+                    <input type="number" name="track_number" id="track_number" placeholder="Track #" min="1">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration">Duration (Optional)</label>
+                <input type="text" name="duration" id="duration" placeholder="e.g., 3:45">
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" name="is_explicit" id="is_explicit">
+                <label for="is_explicit">Explicit Content</label>
+            </div>
+            
+            <div class="checkbox-group" style="margin-top: 10px;">
+                <input type="checkbox" name="add_another" id="add_another" checked>
+                <label for="add_another">Add another track after this</label>
+            </div>
+            
+            <div class="btn-group">
+                <button type="submit" class="btn">Add Track</button>
+                <button type="submit" class="btn btn-secondary" name="finish" value="finish">Add & Continue</button>
+                <a href="{% url 'publish_release' release_id=release.id %}" class="cancel-link">Skip to Publish</a>
+            </div>
+        </form>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #f0f0f0;">
+        
+        <h3 style="margin-bottom: 15px;">Added Tracks ({{ track_count }})</h3>
+        
+        {% if tracks %}
+            <table class="tracks-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Explicit</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in tracks %}
+                        <tr>
+                            <td class="track-number">{{ track.track_number }}</td>
+                            <td>{{ track.title }}</td>
+                            <td>{{ track.duration|default:"--" }}</td>
+                            <td>{% if track.is_explicit %}🔞{% else %}✅{% endif %}</td>
+                            <td>
+                                <!-- In add_tracks.html, update the delete form -->
+                                <form method="POST" action="{% url 'delete_track' release_id=release.id track_id=track.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Delete this track?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-tracks">
+                <p>No tracks added yet. Add your first track above!</p>
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 20px;">
+            <a href="{% url 'publish_release' release_id=release.id %}" class="btn btn-secondary">
+                {% if tracks %}Continue to Publish{% else %}Skip to Publish{% endif %}
+            </a>
+            <a href="{% url 'artistboard' %}" class="cancel-link">Cancel</a>
+        </div>
+    </div>
+</body>
+</html>

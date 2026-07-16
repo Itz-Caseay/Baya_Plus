@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Publish Release - BayaPlus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .release-preview {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .release-preview h3 {
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .release-preview .meta {
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .release-preview .meta span {
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        
+        .tracks-list {
+            margin: 15px 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .tracks-list li {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .tracks-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .track-number {
+            color: #888;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #f57c00;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #555;
+        }
+        
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        .messages li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .messages .error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+        
+        .messages .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        
+        .messages .warning {
+            background: #fff3e0;
+            color: #e65100;
+            border-color: #e65100;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-draft {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .status-published {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .cancel-link {
+            color: #666;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 14px;
+        }
+        
+        .cancel-link:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📋 Preview & Publish</h2>
+        <p class="subtitle">Review your release before publishing</p>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="release-preview">
+            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap;">
+                <div>
+                    <h3>{{ release.title }}</h3>
+                    <div class="meta">
+                        <span>{{ release.get_release_type_display }}</span>
+                        {% if release.genre %}
+                            <span>{{ release.genre }}</span>
+                        {% endif %}
+                        <span>Status: <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span></span>
+                    </div>
+                    <p style="color: #666; margin-top: 10px;">
+                        {% if release.description %}
+                            {{ release.description }}
+                        {% else %}
+                            <em>No description provided</em>
+                        {% endif %}
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="color: #666; font-size: 14px;">
+                        {% if release.is_free %}
+                            <strong style="color: #4CAF50;">FREE</strong>
+                        {% else %}
+                            <strong>${{ release.price }}</strong>
+                        {% endif %}
+                    </p>
+                    <p style="color: #888; font-size: 12px;">
+                        Release Date: {{ release.release_date }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <h3 style="margin: 20px 0 10px;">Tracks ({{ track_count }})</h3>
+        
+        {% if tracks %}
+            <ul class="tracks-list">
+                {% for track in tracks %}
+                    <li>
+                        <span>
+                            <span class="track-number">{{ track.track_number }}</span>
+                            {{ track.title }}
+                        </span>
+                        <span>
+                            {% if track.is_explicit %}🔞{% endif %}
+                            {{ track.duration|default:"--" }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="color: #999; padding: 20px; text-align: center; background: #f9f9f9; border-radius: 5px;">
+                No tracks added yet. <a href="{% url 'add_tracks' release_id=release.id %}">Add tracks</a>
+            </p>
+        {% endif %}
+        
+        <div class="btn-group">
+            {% if track_count > 0 %}
+                <form method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="publish" class="btn btn-success">
+                        🚀 Submit for Review
+                    </button>
+                </form>
+            {% else %}
+                <button class="btn btn-secondary" disabled style="cursor: not-allowed;">
+                    🚀 Need at least 1 track to publish
+                </button>
+                <a href="{% url 'add_tracks' release_id=release.id %}" class="btn btn-warning">➕ Add Tracks</a>
+            {% endif %}
+            
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" name="action" value="save_draft" class="btn btn-warning">
+                    💾 Save as Draft
+                </button>
+            </form>
+            
+            <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this release? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" name="action" value="delete" class="btn btn-danger">
+                    🗑️ Delete
+                </button>
+            </form>
+            
+            <a href="{% url 'artistboard' %}" class="cancel-link">Back to Dashboard</a>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
+            <p style="color: #e65100; font-size: 14px;">
+                <strong>ℹ️ Note:</strong> Submitting for review will send your release to the admin team. 
+                You'll receive a notification once it's approved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

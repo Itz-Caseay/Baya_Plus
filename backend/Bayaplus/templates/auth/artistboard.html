@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Artist Dashboard - BayaPlus</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat-card h3 { font-size: 28px; color: #4CAF50; }
+        .stat-card p { color: #666; margin-top: 5px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        .btn:hover { background: #45a049; }
+        .btn-warning { background: #ff9800; }
+        .btn-warning:hover { background: #f57c00; }
+        .release-list { background: white; padding: 20px; border-radius: 8px; }
+        .release-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .release-item:last-child { border-bottom: none; }
+        .status-badge { padding: 3px 12px; border-radius: 12px; font-size: 12px; }
+        .status-published { background: #4CAF50; color: white; }
+        .status-pending { background: #ff9800; color: white; }
+        .status-draft { background: #666; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h2>🎵 Welcome, {{ profile.artist_name|default:request.user.username }}!</h2>
+                <p style="opacity: 0.9;">Role: Artist | Email: {% if profile.email_verified %}✅ Verified{% else %}⚠️ Not Verified{% endif %}</p>
+            </div>
+            <div>
+                <a href="{% url 'create_release' %}" class="btn">+ New Release</a>
+                <a href="{% url 'logout' %}" style="color: white; margin-left: 15px;">Logout</a>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>{{ total_releases }}</h3>
+                <p>Total Releases</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #4CAF50;">{{ published }}</h3>
+                <p>Published</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #ff9800;">{{ pending }}</h3>
+                <p>Pending Review</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #666;">{{ drafts }}</h3>
+                <p>Drafts</p>
+            </div>
+        </div>
+
+        <!-- In artistboard.html, update the release item links -->
+        <div class="release-item">
+            <div>
+                <strong>{{ release.title }}</strong>
+                <span style="color: #888; margin-left: 10px;">{{ release.get_release_type_display }}</span>
+                <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+            </div>
+            <div>
+                {% comment %} <a href="{% url 'edit_release' release.id %}" style="color: #4CAF50; margin-right: 10px;">Edit</a> {% endcomment %}
+                {% comment %} <a href="{% url 'add_tracks' release.id %}" style="color: #2196F3; margin-right: 10px;">Tracks</a>
+                <a href="{% url 'publish_release' release.id %}" style="color: #ff9800; margin-right: 10px;">Publish</a>
+                <a href="{% url 'release_detail' release.id %}" style="color: #666;">View</a> {% endcomment %}
+            </div>
+        </div>
+        
+        <div class="release-list">
+            <h3 style="margin-bottom: 15px;">Your Releases</h3>
+            {% if releases %}
+                {% for release in releases %}
+                    <div class="release-item">
+                        <div>
+                            <strong>{{ release.title }}</strong>
+                            <span style="color: #888; margin-left: 10px;">{{ release.get_release_type_display }}</span>
+                            <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+                        </div>
+                        <div>
+                            <a href="{% url 'edit_release' release.id %}" style="color: #4CAF50; margin-right: 10px;">Edit</a>
+                            <a href="{% url 'add_tracks' release.id %}" style="color: #2196F3; margin-right: 10px;">Tracks</a>
+                            {% comment %} <a href="{% url 'release_detail' release.id %}" style="color: #666;">View</a> {% endcomment %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; padding: 40px; color: #999;">
+                    No releases yet. <a href="{% url 'create_release' %}">Create your first release</a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -12,19 +12,19 @@ urlpatterns = [
    path('create-release/', create_release, name='create_release'),
     
     # Add tracks to release
-    # path('add-tracks/<int:release_id>/', add_tracks, name='add_tracks'),
+    path('add-tracks/<int:release_id>/', add_tracks, name='add_tracks'),
     
     # Publish/Submit release for review
     path('publish-release/<int:release_id>/', publish_release, name='publish_release'),
     
     # Edit release
-    # path('edit-release/<int:release_id>/', edit_release, name='edit_release'),
+    path('edit-release/<int:release_id>/', edit_release, name='edit_release'),
     
     # Delete release
-    # path('delete-release/<int:release_id>/', delete_release, name='delete_release'),
+    path('delete-release/<int:release_id>/', delete_release, name='delete_release'),
     
     # Delete track from release
-    # path('delete-track/<int:release_id>/<int:track_id>/', delete_track, name='delete_track'),
+    path('delete-track/<int:release_id>/<int:track_id>/', delete_track, name='delete_track'),
     
     # ==================== RELEASE VIEWING URLs ====================
     # View release detail (public)
