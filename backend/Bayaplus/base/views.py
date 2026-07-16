@@ -421,15 +421,16 @@ def publish_release(request, release_id):
                 messages.error(request, "Cannot publish a release without tracks. Please add at least one track.")
                 return redirect('add_tracks', release_id=release_id)
             
-            # Check if tracks have audio files
+            # Check if cover art is uploaded
+            if not release.cover_art:
+                messages.error(request, "Please upload cover art before publishing.")
+                return redirect('add_tracks', release_id=release_id)
+            
+            # Check if all tracks have audio files
             tracks_without_audio = release.tracks.filter(audio_file__isnull=True)
             if tracks_without_audio.exists():
                 messages.error(request, f"Please upload audio files for the following tracks: {', '.join([t.title for t in tracks_without_audio])}")
                 return redirect('add_tracks', release_id=release_id)
-            
-            # Check if cover art is uploaded
-            if not release.cover_art:
-                messages.warning(request, "You haven't uploaded cover art. It's recommended for better visibility.")
             
             # Submit for review
             release.status = 'pending'
@@ -455,8 +456,8 @@ def publish_release(request, release_id):
                 Artist: {release.artist_profile.artist_name or release.artist.username}
                 Type: {release.get_release_type_display()}
                 Tracks: {release.tracks.count()}
-                Audio Files: {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}
-                Cover Art: {'✅ Yes' if release.cover_art else '❌ No'}
+                Audio Files: ✅ Yes ({release.tracks.filter(audio_file__isnull=False).count()} tracks)
+                Cover Art: ✅ Yes
                 
                 Review Link: {admin_approval_link}
                 """
@@ -466,8 +467,8 @@ def publish_release(request, release_id):
                 <p><strong>Artist:</strong> {release.artist_profile.artist_name or release.artist.username}</p>
                 <p><strong>Type:</strong> {release.get_release_type_display()}</p>
                 <p><strong>Tracks:</strong> {release.tracks.count()}</p>
-                <p><strong>Audio Files:</strong> {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</p>
-                <p><strong>Cover Art:</strong> {'✅ Yes' if release.cover_art else '❌ No'}</p>
+                <p><strong>Audio Files:</strong> ✅ Yes ({release.tracks.filter(audio_file__isnull=False).count()} tracks)</p>
+                <p><strong>Cover Art:</strong> ✅ Yes</p>
                 <p><a href="{admin_approval_link}">Click here to review</a></p>
                 """
                 
@@ -482,7 +483,7 @@ def publish_release(request, release_id):
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
                 
-                messages.success(request, f"Release '{release.title}' submitted for admin review!")
+                messages.success(request, f"✅ Release '{release.title}' submitted for admin review!")
                 
             except Exception as e:
                 print(f"Error sending admin notification: {str(e)}")

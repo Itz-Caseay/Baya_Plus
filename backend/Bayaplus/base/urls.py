@@ -9,8 +9,8 @@ urlpatterns = [
     path('fanboard/', fanboard, name="fanboard"),
     path('artistboard/', artistboard, name="artistboard"),
     path('activate/<uidb64>/<token>/', activate, name='activate'),
-   path('create-release/', create_release, name='create_release'),
-   # In urls.py
+    path('create-release/', create_release, name='create_release'),
+  
     path('upload-cover-art/<int:release_id>/', upload_cover_art, name='upload_cover_art'),
     
     # Add tracks to release
