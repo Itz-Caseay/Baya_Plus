@@ -325,3 +325,6 @@ def artistboard(request):
                        <h3>Payment Verified: {profile.payment_verified}</h3>
                        <p><a href="/bayaplus/logout/">Logout</a></p>"""
                         )
+    
+def create_release(request):
+    pass
