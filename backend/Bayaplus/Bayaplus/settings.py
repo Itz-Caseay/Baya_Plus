@@ -132,3 +132,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'edutrackplus12@gmail.com'  # Your Gmail address
 EMAIL_HOST_PASSWORD = 'ptorzzolqblljsfg'  # App password
 DEFAULT_FROM_EMAIL = 'BayaPlus <edutrackplus12@gmail.com>'
+
+# Admin notification settings
+ADMIN_EMAILS = ['edutrackplus12@gmail.com']  # List of admin emails
+ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <edutrackplus12@gmail.com'

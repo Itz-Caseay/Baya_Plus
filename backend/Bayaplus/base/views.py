@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -9,6 +10,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.auth.tokens import default_token_generator
+from .utils import *
 from django.conf import settings
 from .models import *
 import logging
@@ -325,6 +327,308 @@ def artistboard(request):
                        <h3>Payment Verified: {profile.payment_verified}</h3>
                        <p><a href="/bayaplus/logout/">Logout</a></p>"""
                         )
-    
+
+#Artists create releases
+@login_required(login_url='login')
 def create_release(request):
-    pass
+    # Check if user has an artist profile
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can create releases.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    if request.method == "POST":
+        # Get basic release information
+        title = request.POST.get('title')
+        release_type = request.POST.get('release_type')
+        genre = request.POST.get('genre')
+        description = request.POST.get('description')
+        release_date = request.POST.get('release_date')
+        is_free = request.POST.get('is_free') == 'on'
+        price = request.POST.get('price', 0.00)
+        tags = request.POST.get('tags')
+        language = request.POST.get('language')
+        is_public = request.POST.get('is_public') == 'on'
+        
+        # Validation
+        if not title:
+            messages.error(request, "Title is required.")
+            return redirect('create_release')
+        
+        if not release_type:
+            messages.error(request, "Release type is required.")
+            return redirect('create_release')
+        
+        # Create the release
+        try:
+            release = Release.objects.create(
+                title=title,
+                artist=request.user,
+                artist_profile=profile,
+                release_type=release_type,
+                genre=genre,
+                description=description,
+                release_date=release_date or timezone.now().date(),
+                is_free=is_free,
+                price=price if not is_free else 0.00,
+                tags=tags,
+                language=language,
+                is_public=is_public,
+                status='pending',  # Changed from 'draft' to 'pending' for admin review
+                track_count=0,
+            )
+            
+            messages.success(request, f"Release '{title}' created successfully! Now add tracks.")
+            return redirect('add_tracks', release_id=release.id)
+            
+        except Exception as e:
+            messages.error(request, f"Error creating release: {str(e)}")
+            return redirect('create_release')
+    
+    # GET request - show the form
+    return render(request, "releases/create_release.html", {
+        'release_types': Release.RELEASE_TYPES,
+        'artist_profile': profile,
+    })
+    
+@login_required(login_url='login')
+def publish_release(request, release_id):
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    if release.artist != request.user:
+        messages.error(request, "You don't have permission to publish this release.")
+        return redirect('artistboard')
+    
+    if request.method == "POST":
+        action = request.POST.get('action')
+        
+        if action == 'publish':
+            # Check if release has tracks
+            if release.tracks.count() == 0:
+                messages.error(request, "Cannot publish a release without tracks. Please add at least one track.")
+                return redirect('add_tracks', release_id=release_id)
+            
+            # Submit for review - change to pending
+            release.status = 'pending'
+            release.is_public = False  # Not public until approved
+            release.save()
+            
+            # Send notification to admins
+            email_sent = send_admin_release_notification(request, release)
+            
+            if email_sent:
+                messages.success(request, f"Release '{release.title}' submitted for admin review! You'll be notified once approved.")
+            else:
+                messages.warning(request, f"Release '{release.title}' submitted but admin notification failed. Please contact support.")
+            
+            return redirect('artistboard')
+            
+        elif action == 'save_draft':
+            # Save as draft
+            release.status = 'draft'
+            release.save()
+            messages.success(request, f"Release '{release.title}' saved as draft.")
+            return redirect('artistboard')
+            
+        elif action == 'delete':
+            # Delete the release
+            release.delete()
+            messages.success(request, f"Release '{release.title}' has been deleted.")
+            return redirect('artistboard')
+    
+    # GET request - show preview
+    tracks = release.tracks.all().order_by('track_number')
+    return render(request, "releases/publish_release.html", {
+        'release': release,
+        'tracks': tracks,
+        'track_count': tracks.count(),
+    })
+    
+@staff_member_required(login_url='login')
+def admin_review_release(request, release_id):
+    """Admin view to review and approve/reject releases"""
+    release = get_object_or_404(Release, id=release_id)
+    
+    if request.method == "POST":
+        action = request.POST.get('action')
+        admin_notes = request.POST.get('admin_notes', '')
+        
+        if action == 'approve':
+            release.status = 'published'
+            release.is_public = True
+            release.save()
+            
+            # Send approval notification to artist
+            send_artist_approval_notification(request, release)
+            
+            messages.success(request, f"Release '{release.title}' has been approved and published!")
+            
+        elif action == 'reject':
+            release.status = 'rejected'
+            release.save()
+            
+            # Send rejection notification to artist
+            send_artist_rejection_notification(request, release, admin_notes)
+            
+            messages.success(request, f"Release '{release.title}' has been rejected.")
+            
+        elif action == 'request_changes':
+            release.status = 'draft'
+            release.save()
+            
+            # Send revision request to artist
+            send_artist_revision_request(request, release, admin_notes)
+            
+            messages.info(request, f"Revision request sent to artist for '{release.title}'.")
+        
+        return redirect('admin_pending_releases')
+    
+    tracks = release.tracks.all().order_by('track_number')
+    return render(request, "admin/review_release.html", {
+        'release': release,
+        'tracks': tracks,
+    })
+
+@staff_member_required(login_url='login')
+def admin_pending_releases(request):
+    """Admin view to see all pending releases"""
+    pending_releases = Release.objects.filter(status='pending').order_by('-created_at')
+    all_releases = Release.objects.all().order_by('-created_at')
+    
+    return render(request, "admin/pending_releases.html", {
+        'pending_releases': pending_releases,
+        'all_releases': all_releases,
+        'pending_count': pending_releases.count(),
+    })
+
+def send_artist_approval_notification(request, release):
+    """Send approval notification to the artist"""
+    subject = f"Release Approved: {release.title}"
+    
+    # Plain text
+    text_content = f"""
+    Congratulations {release.artist_profile.artist_name or release.artist.username}!
+    
+    Your release "{release.title}" has been approved and is now live on BayaPlus!
+    
+    View your release: http://{get_current_site(request).domain}/bayaplus/release/{release.id}/
+    
+    Keep creating amazing music!
+    
+    - BayaPlus Team
+    """
+    
+    # HTML
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px; }}
+            .btn {{ display: inline-block; padding: 12px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🎵 Release Approved!</h1>
+        </div>
+        <div class="content">
+            <h2>Congratulations {release.artist_profile.artist_name or release.artist.username}!</h2>
+            <p>Your release <strong>"{release.title}"</strong> has been approved and is now live on BayaPlus!</p>
+            <p style="text-align: center;">
+                <a href="http://{get_current_site(request).domain}/bayaplus/release/{release.id}/" class="btn">View Your Release</a>
+            </p>
+            <p>Keep creating amazing music!</p>
+            <p>- BayaPlus Team</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        msg = EmailMultiAlternatives(subject, text_content, settings.ADMIN_NOTIFICATION_EMAIL, [release.artist.email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+    except Exception as e:
+        print(f"Error sending approval notification: {str(e)}")
+
+def send_artist_rejection_notification(request, release, admin_notes):
+    """Send rejection notification to the artist"""
+    subject = f"Release Update: {release.title}"
+    
+    text_content = f"""
+    Hi {release.artist_profile.artist_name or release.artist.username},
+    
+    Your release "{release.title}" was not approved for publication.
+    
+    Reason: {admin_notes or 'No specific reason provided'}
+    
+    Please make the necessary changes and resubmit.
+    
+    - BayaPlus Team
+    """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #f44336; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Release Update</h1>
+        </div>
+        <div class="content">
+            <h2>Hi {release.artist_profile.artist_name or release.artist.username},</h2>
+            <p>Your release <strong>"{release.title}"</strong> was not approved for publication.</p>
+            <p><strong>Reason:</strong> {admin_notes or 'No specific reason provided'}</p>
+            <p>Please make the necessary changes and resubmit.</p>
+            <p>- BayaPlus Team</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        msg = EmailMultiAlternatives(subject, text_content, settings.ADMIN_NOTIFICATION_EMAIL, [release.artist.email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+    except Exception as e:
+        print(f"Error sending rejection notification: {str(e)}")
+
+def send_artist_revision_request(request, release, admin_notes):
+    """Send revision request to the artist"""
+    subject = f"Revision Requested: {release.title}"
+    
+    text_content = f"""
+    Hi {release.artist_profile.artist_name or release.artist.username},
+    
+    Your release "{release.title}" needs some revisions before it can be approved.
+    
+    Feedback: {admin_notes or 'Please review and make the necessary changes.'}
+    
+    You can edit your release here: http://{get_current_site(request).domain}/bayaplus/edit-release/{release.id}/
+    
+    - BayaPlus Team
+    """
+    
+    try:
+        send_mail(
+            subject,
+            text_content,
+            settings.ADMIN_NOTIFICATION_EMAIL,
+            [release.artist.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(f"Error sending revision request: {str(e)}")
