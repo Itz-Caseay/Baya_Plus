@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pending Releases - BayaPlus Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        .admin-badge {
+            background: #2196F3;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 28px;
+            color: #4CAF50;
+        }
+        
+        .stat-card p {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .release-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .release-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .release-item:last-child {
+            border-bottom: none;
+        }
+        
+        .release-info h4 {
+            color: #333;
+        }
+        
+        .release-info p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 3px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .status-published {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-rejected {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status-draft {
+            background: #666;
+            color: white;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #555;
+        }
+        
+        .no-releases {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        .messages li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .messages .error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+        
+        .messages .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        
+        .back-link {
+            color: #666;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        
+        .back-link:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .release-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📋 Pending Releases</h1>
+                <span class="admin-badge">Admin Panel</span>
+            </div>
+            <div>
+                {% comment %} <a href="{% url 'admin_all_releases' %}" class="btn btn-secondary">View All Releases</a> {% endcomment %}
+            </div>
+        </div>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>{{ pending_count }}</h3>
+                <p>Pending Review</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #4CAF50;">{{ published_count|default:0 }}</h3>
+                <p>Published</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #f44336;">{{ rejected_count|default:0 }}</h3>
+                <p>Rejected</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #666;">{{ draft_count|default:0 }}</h3>
+                <p>Drafts</p>
+            </div>
+        </div>
+        
+        <h3 style="margin-bottom: 15px;">Releases Awaiting Review</h3>
+        
+        {% if pending_releases %}
+            {% for release in pending_releases %}
+                <div class="release-item">
+                    <div class="release-info">
+                        <h4>{{ release.title }}</h4>
+                        <p>
+                            Artist: {{ release.artist_profile.artist_name|default:release.artist.username }} |
+                            Type: {{ release.get_release_type_display }} |
+                            Tracks: {{ release.tracks.count }} |
+                            Submitted: {{ release.created_at|timesince }} ago
+                        </p>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+                        <a href="{% url 'admin_review_release' release.id %}" class="btn btn-primary">Review</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-releases">
+                <p>🎉 No pending releases to review!</p>
+                <p style="color: #ccc; font-size: 14px;">All releases have been reviewed.</p>
+            </div>
+        {% endif %}
+        
+        <a href="{% url 'artistboard' %}" class="back-link">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

@@ -415,48 +415,125 @@ def publish_release(request, release_id):
     if request.method == "POST":
         action = request.POST.get('action')
         
+        # Handle audio upload for rejected releases
+        if action == 'upload_audio':
+            # Process audio file uploads
+            for track in release.tracks.all():
+                audio_file = request.FILES.get(f'audio_{track.id}')
+                if audio_file:
+                    track.audio_file = audio_file
+                    track.save()
+                    messages.success(request, f"Audio uploaded for '{track.title}'")
+            
+            messages.success(request, "Audio files uploaded successfully!")
+            return redirect('publish_release', release_id=release_id)
+        
         if action == 'publish':
             # Check if release has tracks
             if release.tracks.count() == 0:
                 messages.error(request, "Cannot publish a release without tracks. Please add at least one track.")
                 return redirect('add_tracks', release_id=release_id)
             
-            # Submit for review - change to pending
+            # Check if audio files are uploaded (for rejected releases)
+            if release.status == 'rejected':
+                has_audio = False
+                for track in release.tracks.all():
+                    if track.audio_file:
+                        has_audio = True
+                        break
+                if not has_audio:
+                    messages.error(request, "Please upload audio files for at least one track before resubmitting.")
+                    return redirect('publish_release', release_id=release_id)
+            
+            # Submit for review
             release.status = 'pending'
-            release.is_public = False  # Not public until approved
+            release.is_public = False
             release.save()
             
             # Send notification to admins
-            email_sent = send_admin_release_notification(request, release)
-            
-            if email_sent:
-                messages.success(request, f"Release '{release.title}' submitted for admin review! You'll be notified once approved.")
-            else:
-                messages.warning(request, f"Release '{release.title}' submitted but admin notification failed. Please contact support.")
+            try:
+                from django.core.mail import EmailMultiAlternatives
+                from django.contrib.sites.shortcuts import get_current_site
+                
+                current_site = get_current_site(request)
+                admin_approval_link = f"http://{current_site.domain}/bayaplus/admin/review-release/{release.id}/"
+                
+                subject = f"New Release Pending Approval: {release.title}"
+                
+                text_content = f"""
+                New Release Notification - BayaPlus Admin
+                
+                A new release has been submitted for review.
+                
+                Title: {release.title}
+                Artist: {release.artist_profile.artist_name or release.artist.username}
+                Type: {release.get_release_type_display()}
+                Tracks: {release.tracks.count()}
+                Audio Files: {'Yes' if release.tracks.filter(audio_file__isnull=False).exists() else 'No'}
+                
+                Review Link: {admin_approval_link}
+                """
+                
+                html_content = f"""
+                <h2>New Release: {release.title}</h2>
+                <p><strong>Artist:</strong> {release.artist_profile.artist_name or release.artist.username}</p>
+                <p><strong>Type:</strong> {release.get_release_type_display()}</p>
+                <p><strong>Tracks:</strong> {release.tracks.count()}</p>
+                <p><strong>Audio Files:</strong> {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</p>
+                <p><a href="{admin_approval_link}">Click here to review</a></p>
+                """
+                
+                from_email = 'BayaPlus Admin <edutrackplus12@gmail.com>'
+                
+                msg = EmailMultiAlternatives(
+                    subject,
+                    text_content,
+                    from_email,
+                    ['edutrackplus12@gmail.com']
+                )
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
+                
+                messages.success(request, f"Release '{release.title}' submitted for admin review!")
+                
+            except Exception as e:
+                print(f"Error sending admin notification: {str(e)}")
+                messages.warning(request, f"Release submitted but admin notification failed.")
             
             return redirect('artistboard')
             
         elif action == 'save_draft':
-            # Save as draft
             release.status = 'draft'
             release.save()
             messages.success(request, f"Release '{release.title}' saved as draft.")
             return redirect('artistboard')
             
         elif action == 'delete':
-            # Delete the release
             release.delete()
             messages.success(request, f"Release '{release.title}' has been deleted.")
             return redirect('artistboard')
     
-    # GET request - show preview
     tracks = release.tracks.all().order_by('track_number')
     return render(request, "releases/publish_release.html", {
         'release': release,
         'tracks': tracks,
         'track_count': tracks.count(),
-    })
+    })   
     
+@staff_member_required(login_url='login')
+def admin_pending_releases(request):
+    """Admin view to see all pending releases"""
+    pending_releases = Release.objects.filter(status='pending').order_by('-created_at')
+    all_releases = Release.objects.all()
+    
+    return render(request, "admin/pending_releases.html", {
+        'pending_releases': pending_releases,
+        'pending_count': pending_releases.count(),
+        'published_count': all_releases.filter(status='published').count(),
+        'rejected_count': all_releases.filter(status='rejected').count(),
+        'draft_count': all_releases.filter(status='draft').count(),
+    })
+
 @staff_member_required(login_url='login')
 def admin_review_release(request, release_id):
     """Admin view to review and approve/reject releases"""
@@ -500,18 +577,6 @@ def admin_review_release(request, release_id):
     return render(request, "admin/review_release.html", {
         'release': release,
         'tracks': tracks,
-    })
-
-@staff_member_required(login_url='login')
-def admin_pending_releases(request):
-    """Admin view to see all pending releases"""
-    pending_releases = Release.objects.filter(status='pending').order_by('-created_at')
-    all_releases = Release.objects.all().order_by('-created_at')
-    
-    return render(request, "admin/pending_releases.html", {
-        'pending_releases': pending_releases,
-        'all_releases': all_releases,
-        'pending_count': pending_releases.count(),
     })
 
 def send_artist_approval_notification(request, release):

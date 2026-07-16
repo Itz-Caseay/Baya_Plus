@@ -144,8 +144,8 @@ class Track(models.Model):
     release = models.ForeignKey(Release, on_delete=models.CASCADE, related_name='tracks')
     title = models.CharField(max_length=200)
     track_number = models.PositiveIntegerField()
-    duration = models.DurationField(blank=True, null=True)
-    audio_file = models.FileField(upload_to='tracks/audio/', blank=True, null=True)
+    duration = models.CharField(max_length=20, blank=True, null=True)  # Store as "3:45"
+    audio_file = models.FileField(upload_to='tracks/audio/', blank=True, null=True)  # ← Add this
     lyrics = models.TextField(blank=True, null=True)
     is_explicit = models.BooleanField(default=False)
     
@@ -158,16 +158,6 @@ class Track(models.Model):
     
     def __str__(self):
         return f"{self.track_number}. {self.title} - {self.release.title}"
-    
-    @property
-    def formatted_duration(self):
-        if self.duration:
-            total_seconds = int(self.duration.total_seconds())
-            minutes = total_seconds // 60
-            seconds = total_seconds % 60
-            return f"{minutes:02d}:{seconds:02d}"
-        return "00:00"
-
 
 class Like(models.Model):
     """Track or Release likes"""

@@ -135,4 +135,4 @@ DEFAULT_FROM_EMAIL = 'BayaPlus <edutrackplus12@gmail.com>'
 
 # Admin notification settings
 ADMIN_EMAILS = ['edutrackplus12@gmail.com']  # List of admin emails
-ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <edutrackplus12@gmail.com'
+ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <edutrackplus12@gmail.com>'
