@@ -10,6 +10,8 @@ urlpatterns = [
     path('artistboard/', artistboard, name="artistboard"),
     path('activate/<uidb64>/<token>/', activate, name='activate'),
    path('create-release/', create_release, name='create_release'),
+   # In urls.py
+    path('upload-cover-art/<int:release_id>/', upload_cover_art, name='upload_cover_art'),
     
     # Add tracks to release
     path('add-tracks/<int:release_id>/', add_tracks, name='add_tracks'),

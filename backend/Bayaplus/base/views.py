@@ -415,35 +415,21 @@ def publish_release(request, release_id):
     if request.method == "POST":
         action = request.POST.get('action')
         
-        # Handle audio upload for rejected releases
-        if action == 'upload_audio':
-            # Process audio file uploads
-            for track in release.tracks.all():
-                audio_file = request.FILES.get(f'audio_{track.id}')
-                if audio_file:
-                    track.audio_file = audio_file
-                    track.save()
-                    messages.success(request, f"Audio uploaded for '{track.title}'")
-            
-            messages.success(request, "Audio files uploaded successfully!")
-            return redirect('publish_release', release_id=release_id)
-        
         if action == 'publish':
             # Check if release has tracks
             if release.tracks.count() == 0:
                 messages.error(request, "Cannot publish a release without tracks. Please add at least one track.")
                 return redirect('add_tracks', release_id=release_id)
             
-            # Check if audio files are uploaded (for rejected releases)
-            if release.status == 'rejected':
-                has_audio = False
-                for track in release.tracks.all():
-                    if track.audio_file:
-                        has_audio = True
-                        break
-                if not has_audio:
-                    messages.error(request, "Please upload audio files for at least one track before resubmitting.")
-                    return redirect('publish_release', release_id=release_id)
+            # Check if tracks have audio files
+            tracks_without_audio = release.tracks.filter(audio_file__isnull=True)
+            if tracks_without_audio.exists():
+                messages.error(request, f"Please upload audio files for the following tracks: {', '.join([t.title for t in tracks_without_audio])}")
+                return redirect('add_tracks', release_id=release_id)
+            
+            # Check if cover art is uploaded
+            if not release.cover_art:
+                messages.warning(request, "You haven't uploaded cover art. It's recommended for better visibility.")
             
             # Submit for review
             release.status = 'pending'
@@ -469,7 +455,8 @@ def publish_release(request, release_id):
                 Artist: {release.artist_profile.artist_name or release.artist.username}
                 Type: {release.get_release_type_display()}
                 Tracks: {release.tracks.count()}
-                Audio Files: {'Yes' if release.tracks.filter(audio_file__isnull=False).exists() else 'No'}
+                Audio Files: {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}
+                Cover Art: {'✅ Yes' if release.cover_art else '❌ No'}
                 
                 Review Link: {admin_approval_link}
                 """
@@ -480,6 +467,7 @@ def publish_release(request, release_id):
                 <p><strong>Type:</strong> {release.get_release_type_display()}</p>
                 <p><strong>Tracks:</strong> {release.tracks.count()}</p>
                 <p><strong>Audio Files:</strong> {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</p>
+                <p><strong>Cover Art:</strong> {'✅ Yes' if release.cover_art else '❌ No'}</p>
                 <p><a href="{admin_approval_link}">Click here to review</a></p>
                 """
                 
@@ -518,7 +506,7 @@ def publish_release(request, release_id):
         'release': release,
         'tracks': tracks,
         'track_count': tracks.count(),
-    })   
+    }) 
     
 @staff_member_required(login_url='login')
 def admin_pending_releases(request):
@@ -722,34 +710,34 @@ def add_tracks(request, release_id):
         track_number = request.POST.get('track_number')
         duration_str = request.POST.get('duration')
         is_explicit = request.POST.get('is_explicit') == 'on'
+        audio_file = request.FILES.get('audio_file')  # Get the uploaded audio file
         
         if not track_title:
             messages.error(request, "Track title is required.")
             return redirect('add_tracks', release_id=release_id)
         
         try:
-            # Convert duration string to timedelta
-            duration = None
-            if duration_str:
-                duration = parse_duration(duration_str)
-            
-            # Create the track
+            # Create the track with audio file
             track = Track.objects.create(
                 release=release,
                 title=track_title,
                 track_number=track_number or release.tracks.count() + 1,
-                duration=duration,
+                duration=duration_str,
                 is_explicit=is_explicit,
+                audio_file=audio_file,  # Save the audio file
             )
             
             # Update track count on release
             release.track_count = release.tracks.count()
             release.save()
             
-            messages.success(request, f"Track '{track_title}' added successfully!")
+            if audio_file:
+                messages.success(request, f"Track '{track_title}' added with audio file '{audio_file.name}'!")
+            else:
+                messages.warning(request, f"Track '{track_title}' added but no audio file uploaded.")
             
             # Check if user wants to add another track
-            if request.POST.get('add_another') == 'on':
+            if request.POST.get('add_another') == 'on' or not request.POST.get('finish'):
                 return redirect('add_tracks', release_id=release_id)
             else:
                 return redirect('publish_release', release_id=release_id)
@@ -766,6 +754,34 @@ def add_tracks(request, release_id):
         'track_count': tracks.count(),
     })
 
+@login_required(login_url='login')
+def upload_cover_art(request, release_id):
+    """Upload cover art for a release"""
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    if release.artist != request.user:
+        messages.error(request, "You don't have permission to edit this release.")
+        return redirect('artistboard')
+    
+    if request.method == "POST" and request.FILES.get('cover_art'):
+        cover_art = request.FILES['cover_art']
+        
+        # Validate file size (max 5MB)
+        if cover_art.size > 5 * 1024 * 1024:
+            messages.error(request, "Cover art file is too large. Maximum size is 5MB.")
+            return redirect('add_tracks', release_id=release_id)
+        
+        # Validate file type
+        if not cover_art.content_type.startswith('image/'):
+            messages.error(request, "Please upload a valid image file (JPG, PNG, or GIF).")
+            return redirect('add_tracks', release_id=release_id)
+        
+        release.cover_art = cover_art
+        release.save()
+        
+        messages.success(request, f"Cover art uploaded successfully!")
+    
+    return redirect('add_tracks', release_id=release_id)
 
 def parse_duration(duration_str):
     """

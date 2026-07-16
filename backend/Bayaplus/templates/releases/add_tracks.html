@@ -16,7 +16,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 40px auto;
             background: white;
             padding: 30px;
@@ -40,6 +40,10 @@
             border-radius: 5px;
             margin-bottom: 25px;
             border-left: 4px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
         .release-info h3 {
@@ -67,14 +71,31 @@
             color: red;
         }
         
+        label .help-text {
+            font-weight: normal;
+            color: #888;
+            font-size: 12px;
+        }
+        
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        input[type="file"] {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
             transition: border-color 0.3s;
+        }
+        
+        input[type="file"] {
+            padding: 10px;
+            background: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            background: #f0f0f0;
         }
         
         input:focus {
@@ -189,6 +210,7 @@
         .tracks-table td {
             padding: 12px;
             border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
         
         .tracks-table tr:hover {
@@ -199,6 +221,18 @@
             color: #888;
             font-weight: bold;
             width: 50px;
+        }
+        
+        .audio-status {
+            font-size: 12px;
+        }
+        
+        .audio-uploaded {
+            color: #4CAF50;
+        }
+        
+        .audio-missing {
+            color: #f44336;
         }
         
         .no-tracks {
@@ -228,6 +262,43 @@
             border-top: 2px solid #f0f0f0;
         }
         
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .file-preview .file-name {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .file-preview .file-size {
+            color: #999;
+            font-size: 11px;
+        }
+        
+        .cover-art-upload {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #4CAF50;
+            margin: 20px 0;
+        }
+        
+        .cover-art-upload h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        
+        .cover-preview {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -244,17 +315,27 @@
             .btn-group .btn {
                 width: 100%;
             }
+            
+            .release-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🎵 Add Tracks</h2>
-        <p class="subtitle">Add tracks to your release</p>
+        <p class="subtitle">Add tracks and upload audio files to your release</p>
         
         <div class="release-info">
-            <h3>{{ release.title }}</h3>
-            <p>Type: {{ release.get_release_type_display }} | Tracks: {{ track_count }}</p>
+            <div>
+                <h3>{{ release.title }}</h3>
+                <p>Type: {{ release.get_release_type_display }} | Tracks: {{ track_count }}</p>
+            </div>
+            <div>
+                <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+            </div>
         </div>
         
         {% if messages %}
@@ -265,7 +346,30 @@
             </ul>
         {% endif %}
         
-        <form method="POST">
+        <!-- Cover Art Upload Section -->
+        <div class="cover-art-upload">
+            <h4>🎨 Album Cover Art (3000 x 3000 pixels)</h4>
+            <p style="color: #666; margin-bottom: 10px;">
+                Upload a square image for your release cover art. Recommended: 3000x3000 pixels, JPG or PNG format.
+            </p>
+            <form method="POST" enctype="multipart/form-data" action="{% url 'upload_cover_art' release.id %}">
+                {% csrf_token %}
+                <input type="file" name="cover_art" accept="image/*" required>
+                {% if release.cover_art %}
+                    <div class="file-preview">
+                        <span class="file-name">✅ Current: {{ release.cover_art.name }}</span>
+                        <img src="{{ release.cover_art.url }}" alt="Cover Art" class="cover-preview">
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn" style="margin-top: 10px; padding: 8px 20px; font-size: 14px;">
+                    Upload Cover Art
+                </button>
+            </form>
+        </div>
+        
+        <!-- Add Track Form -->
+        <h3 style="margin: 25px 0 15px;">Add New Track</h3>
+        <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="form-row">
@@ -276,18 +380,25 @@
                 
                 <div class="form-group">
                     <label for="track_number">Track Number</label>
-                    <input type="number" name="track_number" id="track_number" placeholder="Track #" min="1">
+                    <input type="number" name="track_number" id="track_number" placeholder="Auto" min="1">
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="duration">Duration (Optional)</label>
-                <input type="text" name="duration" id="duration" placeholder="e.g., 3:45">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="duration">Duration <span class="help-text">(e.g., 3:45)</span></label>
+                    <input type="text" name="duration" id="duration" placeholder="MM:SS">
+                </div>
+                
+                <div class="form-group">
+                    <label for="audio_file">Audio File <span class="help-text">(MP3, WAV, FLAC)</span></label>
+                    <input type="file" name="audio_file" id="audio_file" accept="audio/*">
+                </div>
             </div>
             
             <div class="checkbox-group">
                 <input type="checkbox" name="is_explicit" id="is_explicit">
-                <label for="is_explicit">Explicit Content</label>
+                <label for="is_explicit">🔞 Explicit Content</label>
             </div>
             
             <div class="checkbox-group" style="margin-top: 10px;">
@@ -296,7 +407,7 @@
             </div>
             
             <div class="btn-group">
-                <button type="submit" class="btn">Add Track</button>
+                <button type="submit" class="btn">➕ Add Track</button>
                 <button type="submit" class="btn btn-secondary" name="finish" value="finish">Add & Continue</button>
                 <a href="{% url 'publish_release' release_id=release.id %}" class="cancel-link">Skip to Publish</a>
             </div>
@@ -313,6 +424,7 @@
                         <th>#</th>
                         <th>Title</th>
                         <th>Duration</th>
+                        <th>Audio</th>
                         <th>Explicit</th>
                         <th>Action</th>
                     </tr>
@@ -323,9 +435,17 @@
                             <td class="track-number">{{ track.track_number }}</td>
                             <td>{{ track.title }}</td>
                             <td>{{ track.duration|default:"--" }}</td>
+                            <td>
+                                {% if track.audio_file %}
+                                    <span class="audio-status audio-uploaded">✅ Uploaded</span>
+                                    <br>
+                                    <span class="file-name" style="font-size: 11px; color: #888;">{{ track.audio_file.name|slice:"14:" }}</span>
+                                {% else %}
+                                    <span class="audio-status audio-missing">❌ Missing</span>
+                                {% endif %}
+                            </td>
                             <td>{% if track.is_explicit %}🔞{% else %}✅{% endif %}</td>
                             <td>
-                                <!-- In add_tracks.html, update the delete form -->
                                 <form method="POST" action="{% url 'delete_track' release_id=release.id track_id=track.id %}" style="display: inline;">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Delete this track?')">Delete</button>
@@ -346,6 +466,13 @@
                 {% if tracks %}Continue to Publish{% else %}Skip to Publish{% endif %}
             </a>
             <a href="{% url 'artistboard' %}" class="cancel-link">Cancel</a>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
+            <p style="color: #e65100; font-size: 14px;">
+                <strong>ℹ️ Note:</strong> Each track should have an audio file uploaded. 
+                Cover art should be 3000x3000 pixels for best quality.
+            </p>
         </div>
     </div>
 </body>

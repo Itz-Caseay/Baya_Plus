@@ -58,7 +58,14 @@ class Release(models.Model):
     release_type = models.CharField(max_length=20, choices=RELEASE_TYPES, default='single')
     genre = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    cover_art = models.ImageField(upload_to='release_covers/', blank=True, null=True)
+    
+    # Album Art - ONE per release (3000x3000)
+    cover_art = models.ImageField(
+        upload_to='release_covers/', 
+        blank=True, 
+        null=True, 
+        help_text="3000x3000 pixels recommended. JPG or PNG format."
+    )
     
     # Release Dates
     release_date = models.DateField(default=timezone.now)
@@ -66,11 +73,8 @@ class Release(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # Track Information
-    track_count = models.PositiveIntegerField(default=1)
-    duration = models.DurationField(blank=True, null=True)  # Total duration
-    
-    # Audio Files
-    audio_file = models.FileField(upload_to='releases/audio/', blank=True, null=True)
+    track_count = models.PositiveIntegerField(default=0)
+    duration = models.CharField(max_length=20, blank=True, null=True)  # Total duration as "MM:SS"
     
     # Status and Visibility
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
@@ -78,7 +82,7 @@ class Release(models.Model):
     is_featured = models.BooleanField(default=False)
     
     # Metadata
-    tags = models.CharField(max_length=500, blank=True, null=True)  # Comma separated tags
+    tags = models.CharField(max_length=500, blank=True, null=True)
     language = models.CharField(max_length=50, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
     
@@ -92,7 +96,7 @@ class Release(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_free = models.BooleanField(default=True)
     
-    # Featured Tracks (if album/EP)
+    # Featured Track (if album/EP)
     featured_track = models.CharField(max_length=200, blank=True, null=True)
     
     # Collaborators
@@ -117,35 +121,23 @@ class Release(models.Model):
     def is_new_release(self):
         """Check if release is from the last 30 days"""
         return (timezone.now().date() - self.release_date).days <= 30
-    
-    @property
-    def formatted_duration(self):
-        """Return duration in HH:MM:SS format"""
-        if self.duration:
-            total_seconds = int(self.duration.total_seconds())
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-            if hours > 0:
-                return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-            return f"{minutes:02d}:{seconds:02d}"
-        return "00:00"
-    
-    @property
-    def display_artist_name(self):
-        """Return artist name from profile or username"""
-        if self.artist_profile and self.artist_profile.artist_name:
-            return self.artist_profile.artist_name
-        return self.artist.username
 
 
 class Track(models.Model):
-    """Individual tracks within a release"""
+    """Individual tracks within a release - each has its own audio file"""
     release = models.ForeignKey(Release, on_delete=models.CASCADE, related_name='tracks')
     title = models.CharField(max_length=200)
     track_number = models.PositiveIntegerField()
-    duration = models.CharField(max_length=20, blank=True, null=True)  # Store as "3:45"
-    audio_file = models.FileField(upload_to='tracks/audio/', blank=True, null=True)  # ← Add this
+    duration = models.CharField(max_length=20, blank=True, null=True, help_text="MM:SS format")
+    
+    # Audio file for THIS track
+    audio_file = models.FileField(
+        upload_to='tracks/audio/', 
+        blank=True, 
+        null=True,
+        help_text="MP3, WAV, or FLAC format"
+    )
+    
     lyrics = models.TextField(blank=True, null=True)
     is_explicit = models.BooleanField(default=False)
     
