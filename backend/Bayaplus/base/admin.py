@@ -42,3 +42,5 @@ class CommentAdmin(admin.ModelAdmin):
 class PlaylistAdmin(admin.ModelAdmin):
     list_display = ['name', 'user', 'is_public', 'created_at']
     search_fields = ['name', 'user__username']
+    
+# admin.site.register(Comment)

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ artist.username }} - Releases | BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .transition-all { transition: all 0.3s ease; }
+        .artist-header-gradient {
+            background: linear-gradient(135deg, #1a0a0a 0%, #0b0b0b 100%);
+        }
+        .cover-art-shadow {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <a href="{% url 'index' %}" class="flex items-center gap-1">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'index' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+                <a href="{% url 'all_releases' %}" class="text-gray-400 hover:text-white text-sm">Browse</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">Dashboard</a>
+                    <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-yellow-400 hover:text-yellow-300 text-sm">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Artist Profile Header -->
+    <section class="relative overflow-hidden">
+        <!-- Background Gradient -->
+        <div class="artist-header-gradient absolute inset-0"></div>
+        
+        <!-- Decorative Elements -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-red-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-yellow-900/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+        
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 py-12 relative z-10">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <!-- Artist Avatar -->
+                <div class="relative shrink-0">
+                    <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-red-900/50 shadow-2xl">
+                        {% if profile and profile.avatar %}
+                            <img src="{{ profile.avatar.url }}" alt="{{ artist.username }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-5xl text-white font-bold">
+                                {{ artist.username|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if profile and profile.role == 'Artist' %}
+                        <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black text-[8px] font-bold px-2 py-1 rounded-full">
+                            <i class="fa-solid fa-check-circle"></i> Artist
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Artist Info -->
+                <div class="text-center md:text-left flex-1">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4">
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
+                            {{ profile.artist_name|default:artist.username }}
+                        </h1>
+                        <span class="text-gray-400 text-sm bg-[#1a1a1a] px-3 py-1 rounded-full">
+                            <i class="fa-solid fa-user"></i> {{ artist.username }}
+                        </span>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm text-gray-400">
+                        <span><i class="fa-solid fa-music text-red-500"></i> {{ total_releases }} Releases</span>
+                        <span><i class="fa-regular fa-heart text-red-500"></i> {{ total_followers|default:"0" }} Followers</span>
+                        <span><i class="fa-regular fa-clock"></i> Joined {{ artist.date_joined|date:"M Y" }}</span>
+                    </div>
+
+                    {% if profile and profile.bio %}
+                        <p class="text-gray-300 text-sm mt-4 max-w-2xl">{{ profile.bio }}</p>
+                    {% endif %}
+
+                    <!-- Social Links -->
+                    <div class="flex items-center justify-center md:justify-start gap-3 mt-4">
+                        <a href="#" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900/30 transition">
+                            <i class="fa-brands fa-instagram text-sm"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900/30 transition">
+                            <i class="fa-brands fa-twitter text-sm"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900/30 transition">
+                            <i class="fa-brands fa-youtube text-sm"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900/30 transition">
+                            <i class="fa-brands fa-spotify text-sm"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900/30 transition">
+                            <i class="fa-brands fa-apple text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-2 shrink-0">
+                    <button class="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2.5 rounded-full text-sm font-bold transition flex items-center gap-2 justify-center">
+                        <i class="fa-solid fa-play text-xs"></i> Follow
+                    </button>
+                    <button class="bg-[#1a1a1a] hover:bg-[#222] text-gray-300 px-6 py-2.5 rounded-full text-sm font-medium transition flex items-center gap-2 justify-center">
+                        <i class="fa-regular fa-share-from-square"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Releases Section -->
+    <section class="container mx-auto max-w-7xl px-4 sm:px-6 py-10">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold">🎵 All Releases</h2>
+                <p class="text-gray-400 text-sm mt-1">{{ total_releases }} releases by {{ profile.artist_name|default:artist.username }}</p>
+            </div>
+            
+            <!-- Sort/Filter -->
+            <div class="flex gap-2">
+                <select class="bg-[#161616] text-gray-300 text-sm px-4 py-2 rounded-lg border border-[#1a1a1a] focus:outline-none focus:border-yellow-400">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="popular">Most Popular</option>
+                </select>
+            </div>
+        </div>
+
+        {% if releases %}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+                {% for release in releases %}
+                    <a href="{% url 'release_detail' release.id %}" class="bg-[#121212] p-3 sm:p-4 rounded-xl hover:bg-[#1a1a1a] transition group">
+                        <div class="relative aspect-square mb-3 rounded-lg overflow-hidden bg-gray-800">
+                            {% if release.cover_art %}
+                                <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105">
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-red-950 to-black flex items-center justify-center">
+                                    <i class="fa-solid fa-music text-4xl text-red-500"></i>
+                                </div>
+                            {% endif %}
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"></div>
+                            <div class="absolute bottom-2 right-2 w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400 text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg translate-y-2 group-hover:translate-y-0">
+                                <i class="fa-solid fa-play text-xs sm:text-sm ml-0.5"></i>
+                            </div>
+                            {% if release.is_featured %}
+                                <div class="absolute top-2 left-2 bg-yellow-400 text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-star"></i> Featured
+                                </div>
+                            {% endif %}
+                            {% if release.is_free %}
+                                <div class="absolute top-2 right-2 bg-green-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    FREE
+                                </div>
+                            {% else %}
+                                <div class="absolute top-2 right-2 bg-yellow-500 text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    ${{ release.price }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <h4 class="text-xs font-bold truncate">{{ release.title }}</h4>
+                        <p class="text-[10px] sm:text-[11px] text-gray-500 mt-1 truncate">
+                            {{ release.get_release_type_display }}
+                        </p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] text-gray-600">
+                                <i class="fa-regular fa-clock"></i> {{ release.release_date|date:"M d, Y" }}
+                            </span>
+                            <span class="text-[9px] text-gray-600">
+                                <i class="fa-regular fa-heart"></i> {{ release.total_likes }}
+                            </span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-16 bg-[#121212] rounded-xl border border-[#1a1a1a]">
+                <div class="text-6xl mb-4">🎵</div>
+                <p class="text-gray-400 text-lg">No releases available</p>
+                <p class="text-gray-500 text-sm mt-2">This artist hasn't published any releases yet.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#1a1a1a] py-8 mt-12">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-1">
+                    <span class="text-red-600 text-xl font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-xl font-light italic">plus</span>
+                </div>
+                <p class="text-gray-500 text-xs">
+                    © 2026 BayaPlus. All rights reserved.
+                </p>
+                <div class="flex gap-4 text-gray-500 text-xs">
+                    <a href="#" class="hover:text-gray-300">Privacy</a>
+                    <a href="#" class="hover:text-gray-300">Terms</a>
+                    <a href="#" class="hover:text-gray-300">Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

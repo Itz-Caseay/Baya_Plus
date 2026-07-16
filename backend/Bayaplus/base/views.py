@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.auth.tokens import default_token_generator
 from .utils import *
+from django.http import JsonResponse
 from django.conf import settings
 from datetime import timedelta
 import re
@@ -18,6 +19,41 @@ from .models import *
 import logging
 
 logger = logging.getLogger(__name__)
+
+def index(request):
+    """Main landing page dashboard"""
+    # Get all published releases
+    releases = Release.objects.filter(status='published', is_public=True).order_by('-release_date')
+    
+    # Get trending releases (by plays/likes)
+    trending = Release.objects.filter(status='published', is_public=True).order_by('-total_plays', '-total_likes')[:10]
+    
+    # Get recent releases
+    recent = Release.objects.filter(status='published', is_public=True).order_by('-created_at')[:12]
+    
+    # Get featured releases (if you have a featured flag)
+    featured = Release.objects.filter(status='published', is_public=True, is_featured=True)[:5]
+    
+    # Get top tracks (if you have a Track model with plays)
+    top_tracks = Track.objects.filter(release__status='published', release__is_public=True).order_by('-plays')[:10]
+    
+    # Get random releases for "Made for you" section
+    import random
+    all_releases = list(Release.objects.filter(status='published', is_public=True))
+    random.shuffle(all_releases)
+    made_for_you = all_releases[:8]
+    
+    context = {
+        'releases': releases,
+        'trending': trending,
+        'recent': recent,
+        'featured': featured,
+        'top_tracks': top_tracks,
+        'made_for_you': made_for_you,
+        'user': request.user,
+    }
+    
+    return render(request, "pages/index.html", context)
 
 def signup(request):
     if request.method == "POST":
@@ -320,9 +356,9 @@ def fanboard(request):
                         <p><a href="/bayaplus/logout/">Logout</a></p>"""
                         )
 
-@login_required(login_url="login")
+@login_required(login_url='login')
 def artistboard(request):
-    profile = UserProfile.objects.get(user=request.user)
+    profile = get_object_or_404(UserProfile, user=request.user)
     releases = Release.objects.filter(artist=request.user).order_by('-created_at')
     
     return render(request, "auth/artistboard.html", {
@@ -334,7 +370,8 @@ def artistboard(request):
         'drafts': releases.filter(status='draft').count(),
         'rejected': releases.filter(status='rejected').count(),
     })
-
+    
+    
 #Artists create releases
 @login_required(login_url='login')
 def create_release(request):
@@ -997,3 +1034,270 @@ def edit_release(request, release_id):
         'release': release,
         'release_types': Release.RELEASE_TYPES,
     })
+    
+def release_detail(request, release_id):
+    """View a single release detail"""
+    release = get_object_or_404(Release, id=release_id, status='published', is_public=True)
+    
+    # Get tracks
+    tracks = release.tracks.all().order_by('track_number')
+    
+    # Get comments
+    comments = release.comments.filter(is_approved=True)[:10]
+    
+    # Check if user liked this release
+    user_liked = False
+    if request.user.is_authenticated:
+        from .models import Like
+        user_liked = Like.objects.filter(user=request.user, release=release).exists()
+    
+    return render(request, "releases/release_detail.html", {
+        'release': release,
+        'tracks': tracks,
+        'comments': comments,
+        'user_liked': user_liked,
+        'total_likes': release.total_likes,
+    })
+    
+@login_required(login_url="login")
+def all_releases(request):
+    """View all public releases (browse page)"""
+    releases = Release.objects.filter(
+        status='published', 
+        is_public=True
+    ).order_by('-release_date')
+    
+    # Filter by release type
+    release_type = request.GET.get('type')
+    if release_type:
+        releases = releases.filter(release_type=release_type)
+    
+    # Search
+    search_query = request.GET.get('q')
+    if search_query:
+        releases = releases.filter(
+            models.Q(title__icontains=search_query) |
+            models.Q(artist__username__icontains=search_query) |
+            models.Q(genre__icontains=search_query) |
+            models.Q(artist_profile__artist_name__icontains=search_query)
+        )
+    
+    # Get all release types for filter
+    release_types = Release.RELEASE_TYPES
+    
+    context = {
+        'releases': releases,
+        'release_types': release_types,
+        'current_type': release_type,
+        'search_query': search_query,
+        'total_releases': releases.count(),
+    }
+    
+    return render(request, "releases/all_releases.html", context)
+    
+@login_required(login_url='login')
+def my_releases(request):
+    """View all releases by the logged-in artist"""
+    # Check if user has an artist profile
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can access this page.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    releases = Release.objects.filter(artist=request.user).order_by('-created_at')
+    
+    return render(request, "releases/my_releases.html", {
+        'releases': releases,
+        'profile': profile,
+        'total_releases': releases.count(),
+        'published': releases.filter(status='published').count(),
+        'pending': releases.filter(status='pending').count(),
+        'drafts': releases.filter(status='draft').count(),
+        'rejected': releases.filter(status='rejected').count(),
+    })
+    
+@login_required(login_url='login')
+def my_drafts(request):
+    """View draft releases"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can access this page.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    releases = Release.objects.filter(artist=request.user, status='draft').order_by('-updated_at')
+    
+    return render(request, "releases/my_drafts.html", {
+        'releases': releases,
+        'profile': profile,
+    })
+
+@login_required(login_url='login')
+def my_pending_releases(request):
+    """View pending releases waiting for admin review"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can access this page.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    releases = Release.objects.filter(artist=request.user, status='pending').order_by('-created_at')
+    
+    return render(request, "releases/my_pending.html", {
+        'releases': releases,
+        'profile': profile,
+    })
+    
+    
+def artist_releases(request, username):
+    """View all public releases by a specific artist"""
+    artist = get_object_or_404(User, username=username)
+    
+    # Check if artist has a profile
+    try:
+        profile = UserProfile.objects.get(user=artist)
+    except UserProfile.DoesNotExist:
+        profile = None
+    
+    releases = Release.objects.filter(
+        artist=artist,
+        status='published',
+        is_public=True
+    ).order_by('-release_date')
+    
+    # Count total likes across all releases (for follower count approximation)
+    total_likes = sum(release.total_likes for release in releases)
+    
+    return render(request, "releases/artist_releases.html", {
+        'artist': artist,
+        'profile': profile,
+        'releases': releases,
+        'total_releases': releases.count(),
+        'total_followers': total_likes,  # Approximate followers
+    })   
+    
+@login_required(login_url='login')
+def like_release(request, release_id):
+    """Like or unlike a release"""
+    release = get_object_or_404(Release, id=release_id)
+    
+    if request.method == "POST":
+        # Check if already liked
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            release=release
+        )
+        
+        if not created:
+            # Unlike
+            like.delete()
+            release.total_likes -= 1
+            release.save()
+            liked = False
+            message = f"Unliked '{release.title}'"
+        else:
+            # Like
+            release.total_likes += 1
+            release.save()
+            liked = True
+            message = f"Liked '{release.title}'!"
+        
+        # Check if it's an AJAX request
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'liked': liked,
+                'total_likes': release.total_likes,
+                'message': message
+            })
+        
+        messages.success(request, message)
+        return redirect('release_detail', release_id=release_id)
+    
+    return redirect('release_detail', release_id=release_id)
+
+def release_detail(request, release_id):
+    """View a single release detail"""
+    release = get_object_or_404(Release, id=release_id, status='published', is_public=True)
+    
+    # Get tracks
+    tracks = release.tracks.all().order_by('track_number')
+    
+    # Get comments
+    comments = release.comments.filter(is_approved=True)[:10]
+    
+    # Check if user liked this release
+    user_liked = False
+    if request.user.is_authenticated:
+        from .models import Like
+        user_liked = Like.objects.filter(user=request.user, release=release).exists()
+    
+    return render(request, "releases/release_detail.html", {
+        'release': release,
+        'tracks': tracks,
+        'comments': comments,
+        'user_liked': user_liked,
+        'total_likes': release.total_likes,
+    })
+    
+@login_required(login_url='login')
+def add_comment(request, release_id):
+    """Add a comment to a release"""
+    release = get_object_or_404(Release, id=release_id, status='published')
+    
+    if request.method == "POST":
+        content = request.POST.get('content')
+        parent_id = request.POST.get('parent_id')
+        
+        if not content or not content.strip():
+            messages.error(request, "Comment cannot be empty.")
+            return redirect('release_detail', release_id=release_id)
+        
+        try:
+            comment = Comment.objects.create(
+                user=request.user,
+                release=release,
+                content=content.strip(),
+                parent_id=parent_id if parent_id else None,
+            )
+            
+            # Update comment count
+            release.total_comments = release.comments.filter(is_approved=True).count()
+            release.save()
+            
+            messages.success(request, "Comment added successfully!")
+        except Exception as e:
+            messages.error(request, f"Error adding comment: {str(e)}")
+    
+    return redirect('release_detail', release_id=release_id)
+
+
+@login_required(login_url='login')
+def delete_comment(request, comment_id):
+    """Delete a comment (owner or admin only)"""
+    comment = get_object_or_404(Comment, id=comment_id)
+    release_id = comment.release.id
+    
+    # Check if user is the comment owner or admin
+    if request.user == comment.user or request.user.is_staff:
+        comment.delete()
+        
+        # Update comment count
+        release = Release.objects.get(id=release_id)
+        release.total_comments = release.comments.filter(is_approved=True).count()
+        release.save()
+        
+        messages.success(request, "Comment deleted successfully.")
+    else:
+        messages.error(request, "You don't have permission to delete this comment.")
+    
+    return redirect('release_detail', release_id=release_id)

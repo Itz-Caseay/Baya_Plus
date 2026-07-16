@@ -189,7 +189,6 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.user.username}: {self.content[:50]}..."
 
-
 class Playlist(models.Model):
     """User playlists"""
     name = models.CharField(max_length=100)
@@ -205,3 +204,5 @@ class Playlist(models.Model):
     
     def __str__(self):
         return f"{self.name} - {self.user.username}"
+    
+    

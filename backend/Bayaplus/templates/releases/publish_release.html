@@ -16,7 +16,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 40px auto;
             background: white;
             padding: 30px;
@@ -69,41 +69,46 @@
             margin: 20px 0;
         }
         
-        .release-preview h3 {
-            color: #333;
-            font-size: 20px;
-        }
-        
-        .release-preview .meta {
-            color: #666;
-            margin: 10px 0;
-        }
-        
-        .release-preview .meta span {
-            display: inline-block;
-            background: #e0e0e0;
-            padding: 3px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-right: 8px;
-        }
-        
-        .rejection-notice {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            padding: 15px 20px;
-            border-radius: 5px;
+        .cover-art-section {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #4CAF50;
             margin: 20px 0;
         }
         
-        .rejection-notice h4 {
-            color: #c62828;
-            margin-bottom: 5px;
+        .cover-art-section h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
         }
         
-        .rejection-notice .reason {
-            color: #333;
-            margin: 5px 0;
+        .cover-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .cover-preview {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        
+        .cover-preview-placeholder {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            background: #f9f9f9;
         }
         
         .tracks-list {
@@ -177,12 +182,14 @@
             background: #555;
         }
         
-        .btn-primary {
+        .btn-upload {
             background: #2196F3;
             color: white;
+            padding: 8px 20px;
+            font-size: 14px;
         }
         
-        .btn-primary:hover {
+        .btn-upload:hover {
             background: #1976D2;
         }
         
@@ -238,30 +245,36 @@
             text-decoration: underline;
         }
         
-        .upload-section {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #2196F3;
+        .requirements {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 5px;
+            border-left: 4px solid #ff9800;
         }
         
-        .upload-section h4 {
-            color: #0d47a1;
+        .requirements h4 {
+            color: #e65100;
             margin-bottom: 10px;
         }
         
-        .file-input {
-            width: 100%;
-            padding: 10px;
-            border: 2px dashed #2196F3;
-            border-radius: 5px;
-            background: white;
-            cursor: pointer;
+        .requirements ul {
+            list-style: none;
+            padding: 0;
         }
         
-        .file-input:hover {
-            background: #f5f5f5;
+        .requirements ul li {
+            padding: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .requirements ul li .check {
+            color: #4CAF50;
+        }
+        
+        .requirements ul li .cross {
+            color: #f44336;
         }
         
         @media (max-width: 600px) {
@@ -281,8 +294,8 @@
 </head>
 <body>
     <div class="container">
-        <h2>📋 Release Summary</h2>
-        <p class="subtitle">Review your release details</p>
+        <h2>📋 Publish Release</h2>
+        <p class="subtitle">Review and publish your release</p>
         
         {% if messages %}
             <ul class="messages">
@@ -292,20 +305,37 @@
             </ul>
         {% endif %}
         
-        <!-- Show rejection notice if release was rejected -->
-        {% if release.status == 'rejected' %}
-            <div class="rejection-notice">
-                <h4>❌ Release Not Approved</h4>
-                <p class="reason">Your release was not approved for publication.</p>
-                <p style="color: #c62828; margin-top: 5px;">
-                    <strong>Reason:</strong> We couldn't find any audio file attached to it
-                </p>
-                <p style="margin-top: 10px; color: #666;">
-                    Please make the necessary changes and resubmit for review.
-                </p>
+        <!-- Cover Art Upload -->
+        <div class="cover-art-section">
+            <h4>🎨 Album Cover Art (3000 x 3000 pixels)</h4>
+            <div class="cover-preview-container">
+                <div>
+                    {% if release.cover_art %}
+                        <img src="{{ release.cover_art.url }}" alt="Cover Art" class="cover-preview">
+                        <p style="margin-top: 5px; font-size: 12px; color: #4CAF50;">✅ Cover art uploaded</p>
+                    {% else %}
+                        <div class="cover-preview-placeholder">
+                            <div>
+                                <span style="font-size: 30px;">🖼️</span>
+                                <p>No cover art</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="file" name="cover_art" accept="image/*" {% if not release.cover_art %}required{% endif %}>
+                        <p style="margin-top: 8px; font-size: 12px; color: #888;">Max file size: 5MB | JPG or PNG</p>
+                        <button type="submit" class="btn btn-upload" style="margin-top: 10px;">
+                            {% if release.cover_art %}🔄 Update Cover Art{% else %}📤 Upload Cover Art{% endif %}
+                        </button>
+                    </form>
+                </div>
             </div>
-        {% endif %}
+        </div>
         
+        <!-- Release Preview -->
         <div class="release-preview">
             <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap;">
                 <div>
@@ -340,6 +370,7 @@
             </div>
         </div>
         
+        <!-- Tracks -->
         <h3 style="margin: 20px 0 10px;">Tracks ({{ track_count }})</h3>
         
         {% if tracks %}
@@ -349,6 +380,11 @@
                         <span>
                             <span class="track-number">{{ track.track_number }}</span>
                             {{ track.title }}
+                            {% if track.audio_file %}
+                                <span style="color: #4CAF50; font-size: 12px;">✅ Audio</span>
+                            {% else %}
+                                <span style="color: #f44336; font-size: 12px;">❌ No Audio</span>
+                            {% endif %}
                         </span>
                         <span>
                             {% if track.is_explicit %}🔞{% endif %}
@@ -363,28 +399,38 @@
             </p>
         {% endif %}
         
-        <!-- Show audio upload section for rejected releases -->
-        {% if release.status == 'rejected' %}
-            <div class="upload-section">
-                <h4>🎵 Upload Audio Files</h4>
-                <p style="color: #666; margin-bottom: 10px;">
-                    Upload your audio files for each track. Supported formats: MP3, WAV, FLAC
-                </p>
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {% for track in tracks %}
-                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
-                            <label style="font-weight: bold;">{{ track.track_number }}. {{ track.title }}</label>
-                            <input type="file" name="audio_{{ track.id }}" class="file-input" accept="audio/*">
-                        </div>
-                    {% endfor %}
-                    <button type="submit" name="action" value="upload_audio" class="btn btn-primary">
-                        📤 Upload Audio
-                    </button>
-                </form>
-            </div>
-        {% endif %}
+        <!-- Requirements Check -->
+        <div class="requirements">
+            <h4>📋 Publishing Requirements</h4>
+            <ul>
+                <li>
+                    {% if release.tracks.count > 0 %}
+                        <span class="check">✅</span>
+                    {% else %}
+                        <span class="cross">❌</span>
+                    {% endif %}
+                    At least 1 track ({{ release.tracks.count }} tracks)
+                </li>
+                <li>
+                    {% if release.cover_art %}
+                        <span class="check">✅</span>
+                    {% else %}
+                        <span class="cross">❌</span>
+                    {% endif %}
+                    Cover art uploaded
+                </li>
+                <li>
+                    {% if tracks_without_audio %}
+                        <span class="cross">❌</span>
+                    {% else %}
+                        <span class="check">✅</span>
+                    {% endif %}
+                    All tracks have audio files
+                </li>
+            </ul>
+        </div>
         
+        <!-- Actions -->
         <div class="btn-group">
             {% if release.status == 'rejected' %}
                 <form method="POST" style="display: inline;">
@@ -397,7 +443,7 @@
                 <button class="btn btn-secondary" disabled style="cursor: not-allowed;">
                     ⏳ Pending Review
                 </button>
-            {% elif track_count > 0 %}
+            {% elif release.tracks.count > 0 and release.cover_art and not tracks_without_audio %}
                 <form method="POST" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" name="action" value="publish" class="btn btn-success">
@@ -406,9 +452,8 @@
                 </form>
             {% else %}
                 <button class="btn btn-secondary" disabled style="cursor: not-allowed;">
-                    🚀 Need at least 1 track to publish
+                    🚀 Complete all requirements above
                 </button>
-                <a href="{% url 'add_tracks' release_id=release.id %}" class="btn btn-warning">➕ Add Tracks</a>
             {% endif %}
             
             <form method="POST" style="display: inline;">
@@ -426,13 +471,6 @@
             </form>
             
             <a href="{% url 'artistboard' %}" class="cancel-link">Back to Dashboard</a>
-        </div>
-        
-        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
-            <p style="color: #e65100; font-size: 14px;">
-                <strong>ℹ️ Note:</strong> Submitting for review will send your release to the admin team. 
-                You'll receive a notification once it's approved.
-            </p>
         </div>
     </div>
 </body>

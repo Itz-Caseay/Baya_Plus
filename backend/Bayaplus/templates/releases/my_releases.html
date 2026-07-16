@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Releases - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-published { background: #4CAF50; color: white; }
+        .status-pending { background: #ff9800; color: white; }
+        .status-draft { background: #666; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl font-bold">🎵 My Releases</h1>
+                <p class="text-gray-400 text-sm">Manage all your releases</p>
+            </div>
+            <a href="{% url 'create_release' %}" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold text-sm transition">
+                <i class="fa-solid fa-plus"></i> New Release
+            </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+                <p class="text-gray-400 text-xs">Total</p>
+                <p class="text-2xl font-bold">{{ total_releases }}</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+                <p class="text-gray-400 text-xs">Published</p>
+                <p class="text-2xl font-bold text-green-500">{{ published }}</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+                <p class="text-gray-400 text-xs">Pending</p>
+                <p class="text-2xl font-bold text-yellow-500">{{ pending }}</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+                <p class="text-gray-400 text-xs">Drafts</p>
+                <p class="text-2xl font-bold text-gray-400">{{ drafts }}</p>
+            </div>
+        </div>
+
+        <!-- Releases List -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl overflow-hidden">
+            {% if releases %}
+                <div class="divide-y divide-[#1a1a1a]">
+                    {% for release in releases %}
+                        <div class="p-4 hover:bg-[#1a1a1a] transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-gradient-to-b from-red-950 to-black rounded-lg border border-red-900/40 flex items-center justify-center overflow-hidden shrink-0">
+                                    {% if release.cover_art %}
+                                        <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <i class="fa-solid fa-music text-2xl text-red-500"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">{{ release.title }}</h3>
+                                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                                        <span>{{ release.get_release_type_display }}</span>
+                                        <span>•</span>
+                                        <span>{{ release.tracks.count }} tracks</span>
+                                        <span>•</span>
+                                        <span>{{ release.created_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="text-xs status-{{ release.status }} px-3 py-1 rounded-full">
+                                    {{ release.get_status_display }}
+                                </span>
+                                <a href="{% url 'edit_release' release.id %}" class="text-gray-400 hover:text-white text-sm">
+                                    <i class="fa-solid fa-edit"></i>
+                                </a>
+                                <a href="{% url 'add_tracks' release.id %}" class="text-blue-400 hover:text-blue-300 text-sm">
+                                    <i class="fa-solid fa-music"></i>
+                                </a>
+                                <a href="{% url 'publish_release' release.id %}" class="text-yellow-400 hover:text-yellow-300 text-sm">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                                {% if release.status == 'published' %}
+                                    <a href="{% url 'release_detail' release.id %}" class="text-green-400 hover:text-green-300 text-sm">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500 text-lg">No releases yet</p>
+                    <a href="{% url 'create_release' %}" class="text-yellow-400 hover:text-yellow-300 font-semibold">
+                        Create your first release →
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-6">
+            <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>
