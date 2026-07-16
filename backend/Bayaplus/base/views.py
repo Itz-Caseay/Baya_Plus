@@ -695,6 +695,7 @@ def send_artist_revision_request(request, release, admin_notes):
     except Exception as e:
         print(f"Error sending revision request: {str(e)}")
         
+
 @login_required(login_url='login')
 def add_tracks(request, release_id):
     # Get the release
@@ -716,6 +717,21 @@ def add_tracks(request, release_id):
             messages.error(request, "Track title is required.")
             return redirect('add_tracks', release_id=release_id)
         
+        if not audio_file:
+            messages.error(request, "Audio file is required for each track.")
+            return redirect('add_tracks', release_id=release_id)
+        
+        # Validate audio file size (max 50MB)
+        if audio_file.size > 50 * 1024 * 1024:
+            messages.error(request, f"Audio file '{audio_file.name}' is too large. Maximum size is 50MB.")
+            return redirect('add_tracks', release_id=release_id)
+        
+        # Validate audio file type
+        allowed_types = ['audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp3', 'audio/mp4', 'audio/x-m4a']
+        if audio_file.content_type not in allowed_types:
+            messages.error(request, f"Please upload a valid audio file (MP3, WAV, or FLAC).")
+            return redirect('add_tracks', release_id=release_id)
+        
         try:
             # Create the track with audio file
             track = Track.objects.create(
@@ -731,10 +747,7 @@ def add_tracks(request, release_id):
             release.track_count = release.tracks.count()
             release.save()
             
-            if audio_file:
-                messages.success(request, f"Track '{track_title}' added with audio file '{audio_file.name}'!")
-            else:
-                messages.warning(request, f"Track '{track_title}' added but no audio file uploaded.")
+            messages.success(request, f"✅ Track '{track_title}' added with audio file '{audio_file.name}'!")
             
             # Check if user wants to add another track
             if request.POST.get('add_another') == 'on' or not request.POST.get('finish'):
@@ -753,10 +766,11 @@ def add_tracks(request, release_id):
         'tracks': tracks,
         'track_count': tracks.count(),
     })
-
+    
+    
 @login_required(login_url='login')
 def upload_cover_art(request, release_id):
-    """Upload cover art for a release"""
+    """Upload cover art for a release (3000x3000 recommended)"""
     release = get_object_or_404(Release, id=release_id, artist=request.user)
     
     if release.artist != request.user:
@@ -776,10 +790,31 @@ def upload_cover_art(request, release_id):
             messages.error(request, "Please upload a valid image file (JPG, PNG, or GIF).")
             return redirect('add_tracks', release_id=release_id)
         
+        # Validate dimensions (optional - you can check image size)
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(cover_art.read()))
+            width, height = img.size
+            
+            if width != height:
+                messages.warning(request, f"Image is {width}x{height}. Recommended: 3000x3000 (square).")
+                # Allow it but warn
+            
+            if width < 500 or height < 500:
+                messages.warning(request, f"Image is {width}x{height}. Recommended: 3000x3000 for best quality.")
+            
+            # Reset file pointer
+            cover_art.seek(0)
+            
+        except:
+            # If PIL is not installed or can't read image
+            pass
+        
         release.cover_art = cover_art
         release.save()
         
-        messages.success(request, f"Cover art uploaded successfully!")
+        messages.success(request, f"✅ Cover art uploaded successfully!")
     
     return redirect('add_tracks', release_id=release_id)
 

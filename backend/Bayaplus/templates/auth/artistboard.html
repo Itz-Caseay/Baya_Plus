@@ -1,98 +1,576 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Artist Dashboard - BayaPlus</title>
+    <title>Add Tracks - BayaPlus</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .stat-card h3 { font-size: 28px; color: #4CAF50; }
-        .stat-card p { color: #666; margin-top: 5px; }
-        .btn { display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-        .btn:hover { background: #45a049; }
-        .btn-warning { background: #ff9800; }
-        .btn-warning:hover { background: #f57c00; }
-        .release-list { background: white; padding: 20px; border-radius: 8px; }
-        .release-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
-        .release-item:last-child { border-bottom: none; }
-        .status-badge { padding: 3px 12px; border-radius: 12px; font-size: 12px; }
-        .status-published { background: #4CAF50; color: white; }
-        .status-pending { background: #ff9800; color: white; }
-        .status-draft { background: #666; color: white; }
-        .status-rejected { background: #f44336; color: white; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .release-info {
+            background: #f9f9f9;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .release-info h3 {
+            color: #333;
+        }
+        
+        .release-info p {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-draft {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .status-published {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-rejected {
+            background: #f44336;
+            color: white;
+        }
+        
+        .cover-art-section {
+            background: #e8f5e9;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px dashed #4CAF50;
+            margin: 20px 0 30px 0;
+        }
+        
+        .cover-art-section h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .cover-art-section .help-text {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .cover-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .cover-preview {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            background: #f9f9f9;
+        }
+        
+        .cover-preview-placeholder {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            background: #f9f9f9;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        label .required {
+            color: red;
+        }
+        
+        label .help-text {
+            font-weight: normal;
+            color: #888;
+            font-size: 12px;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="file"] {
+            padding: 10px;
+            background: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            background: #f0f0f0;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn-secondary {
+            background: #2196F3;
+        }
+        
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .btn-small {
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+        
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        .messages li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .messages .error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+        
+        .messages .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        
+        .messages .warning {
+            background: #fff3e0;
+            color: #e65100;
+            border-color: #e65100;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .tracks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .tracks-table th {
+            background: #f0f0f0;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tracks-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        .tracks-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .track-number {
+            color: #888;
+            font-weight: bold;
+            width: 50px;
+        }
+        
+        .audio-status {
+            font-size: 12px;
+        }
+        
+        .audio-uploaded {
+            color: #4CAF50;
+        }
+        
+        .audio-missing {
+            color: #f44336;
+        }
+        
+        .no-tracks {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+        
+        .cancel-link {
+            color: #666;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 14px;
+        }
+        
+        .cancel-link:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .file-name {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .track-audio-upload {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        
+        .track-audio-upload input[type="file"] {
+            padding: 5px;
+            font-size: 12px;
+        }
+        
+        .track-audio-upload label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .upload-track-form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                width: 100%;
+            }
+            
+            .release-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .cover-preview-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h2>🎵 Welcome, {{ profile.artist_name|default:request.user.username }}!</h2>
-                <p style="opacity: 0.9;">Role: Artist | Email: {% if profile.email_verified %}✅ Verified{% else %}⚠️ Not Verified{% endif %}</p>
-            </div>
-            <div>
-                <a href="{% url 'create_release' %}" class="btn">+ New Release</a>
-                <a href="{% url 'logout' %}" style="color: white; margin-left: 15px;">Logout</a>
-            </div>
-        </div>
+        <h2>🎵 Add Tracks & Album Art</h2>
+        <p class="subtitle">Upload your album cover and add tracks with audio files</p>
         
-        <div class="stats">
-            <div class="stat-card">
-                <h3>{{ total_releases }}</h3>
-                <p>Total Releases</p>
-            </div>
-            <div class="stat-card">
-                <h3 style="color: #4CAF50;">{{ published }}</h3>
-                <p>Published</p>
-            </div>
-            <div class="stat-card">
-                <h3 style="color: #ff9800;">{{ pending }}</h3>
-                <p>Pending Review</p>
-            </div>
-            <div class="stat-card">
-                <h3 style="color: #666;">{{ drafts }}</h3>
-                <p>Drafts</p>
-            </div>
-        </div>
-
-        <!-- In artistboard.html, update the release item links -->
-        <div class="release-item">
+        <div class="release-info">
             <div>
-                <strong>{{ release.title }}</strong>
-                <span style="color: #888; margin-left: 10px;">{{ release.get_release_type_display }}</span>
+                <h3>{{ release.title }}</h3>
+                <p>Type: {{ release.get_release_type_display }} | Tracks: {{ track_count }}</p>
+            </div>
+            <div>
                 <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
             </div>
-            <div>
-                {% comment %} <a href="{% url 'edit_release' release.id %}" style="color: #4CAF50; margin-right: 10px;">Edit</a> {% endcomment %}
-                {% comment %} <a href="{% url 'add_tracks' release.id %}" style="color: #2196F3; margin-right: 10px;">Tracks</a>
-                <a href="{% url 'publish_release' release.id %}" style="color: #ff9800; margin-right: 10px;">Publish</a>
-                <a href="{% url 'release_detail' release.id %}" style="color: #666;">View</a> {% endcomment %}
-            </div>
         </div>
         
-        <div class="release-list">
-            <h3 style="margin-bottom: 15px;">Your Releases</h3>
-            {% if releases %}
-                {% for release in releases %}
-                    <div class="release-item">
-                        <div>
-                            <strong>{{ release.title }}</strong>
-                            <span style="color: #888; margin-left: 10px;">{{ release.get_release_type_display }}</span>
-                            <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
-                        </div>
-                        <div>
-                            <a href="{% url 'edit_release' release.id %}" style="color: #4CAF50; margin-right: 10px;">Edit</a>
-                            <a href="{% url 'add_tracks' release.id %}" style="color: #2196F3; margin-right: 10px;">Tracks</a>
-                            {% comment %} <a href="{% url 'release_detail' release.id %}" style="color: #666;">View</a> {% endcomment %}
-                        </div>
-                    </div>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
                 {% endfor %}
-            {% else %}
-                <p style="text-align: center; padding: 40px; color: #999;">
-                    No releases yet. <a href="{% url 'create_release' %}">Create your first release</a>
-                </p>
-            {% endif %}
+            </ul>
+        {% endif %}
+        
+        <!-- ==================== ALBUM COVER ART SECTION ==================== -->
+        <div class="cover-art-section">
+            <h4>🎨 Album Cover Art (3000 x 3000 pixels)</h4>
+            <p class="help-text">Upload a square image for your release. Recommended: 3000x3000px, JPG or PNG format.</p>
+            
+            <form method="POST" enctype="multipart/form-data" action="{% url 'upload_cover_art' release.id %}">
+                {% csrf_token %}
+                <div class="cover-preview-container">
+                    <div>
+                        {% if release.cover_art %}
+                            <img src="{{ release.cover_art.url }}" alt="Cover Art" class="cover-preview">
+                            <p style="margin-top: 5px; font-size: 12px; color: #4CAF50;">✅ Current cover art</p>
+                        {% else %}
+                            <div class="cover-preview-placeholder">
+                                <div>
+                                    <span style="font-size: 30px;">🖼️</span>
+                                    <p>No cover art</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="file" name="cover_art" accept="image/*" {% if not release.cover_art %}required{% endif %}>
+                        <p style="margin-top: 8px; font-size: 12px; color: #888;">Max file size: 5MB</p>
+                        <button type="submit" class="btn" style="margin-top: 10px; padding: 8px 20px; font-size: 14px;">
+                            {% if release.cover_art %}Update Cover Art{% else %}Upload Cover Art{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- ==================== ADD TRACK SECTION ==================== -->
+        <h3 style="margin: 25px 0 15px;">Add New Track</h3>
+        <div class="upload-track-form">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="track_title">Track Title <span class="required">*</span></label>
+                        <input type="text" name="track_title" id="track_title" placeholder="Enter track title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="track_number">Track Number</label>
+                        <input type="number" name="track_number" id="track_number" placeholder="Auto" min="1">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration">Duration <span class="help-text">(e.g., 3:45)</span></label>
+                        <input type="text" name="duration" id="duration" placeholder="MM:SS">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="audio_file">Audio File <span class="help-text">(MP3, WAV, FLAC)</span> <span class="required">*</span></label>
+                        <input type="file" name="audio_file" id="audio_file" accept="audio/*" required>
+                        <p style="margin-top: 5px; font-size: 12px; color: #888;">Max file size: 50MB</p>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" name="is_explicit" id="is_explicit">
+                    <label for="is_explicit">🔞 Explicit Content</label>
+                </div>
+                
+                <div class="checkbox-group" style="margin-top: 10px;">
+                    <input type="checkbox" name="add_another" id="add_another" checked>
+                    <label for="add_another">Add another track after this</label>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn">➕ Add Track</button>
+                    <button type="submit" class="btn btn-secondary" name="finish" value="finish">Add & Continue</button>
+                    <a href="{% url 'publish_release' release_id=release.id %}" class="cancel-link">Skip to Publish</a>
+                </div>
+            </form>
+        </div>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #f0f0f0;">
+        
+        <!-- ==================== TRACKS LIST ==================== -->
+        <h3 style="margin-bottom: 15px;">Added Tracks ({{ track_count }})</h3>
+        
+        {% if tracks %}
+            <table class="tracks-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Audio File</th>
+                        <th>Explicit</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in tracks %}
+                        <tr>
+                            <td class="track-number">{{ track.track_number }}</td>
+                            <td>{{ track.title }}</td>
+                            <td>{{ track.duration|default:"--" }}</td>
+                            <td>
+                                {% if track.audio_file %}
+                                    <span class="audio-status audio-uploaded">✅ Uploaded</span>
+                                    <br>
+                                    <span class="file-name">{{ track.audio_file.name|slice:"14:" }}</span>
+                                {% else %}
+                                    <span class="audio-status audio-missing">❌ Missing</span>
+                                {% endif %}
+                            </td>
+                            <td>{% if track.is_explicit %}🔞{% else %}✅{% endif %}</td>
+                            <td>
+                                <form method="POST" action="{% url 'delete_track' release_id=release.id track_id=track.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Delete this track?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-tracks">
+                <p>No tracks added yet. Add your first track above!</p>
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 20px;">
+            <a href="{% url 'publish_release' release_id=release.id %}" class="btn btn-secondary">
+                {% if tracks %}Continue to Publish{% else %}Skip to Publish{% endif %}
+            </a>
+            <a href="{% url 'artistboard' %}" class="cancel-link">Cancel</a>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
+            <p style="color: #e65100; font-size: 14px;">
+                <strong>ℹ️ Requirements:</strong>
+                <br>• Cover art: 3000x3000 pixels (JPG or PNG)
+                <br>• Each track must have an audio file (MP3, WAV, or FLAC)
+                <br>• All tracks and cover art are required before publishing
+            </p>
         </div>
     </div>
 </body>
