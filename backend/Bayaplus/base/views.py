@@ -13,10 +13,13 @@ from django.contrib.auth.tokens import default_token_generator
 from .utils import *
 from django.http import JsonResponse
 from django.conf import settings
-from datetime import timedelta
+from datetime import timedelta, datetime
 import re
 from .models import *
 import logging
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import TruncDate, TruncMonth
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -1301,3 +1304,136 @@ def delete_comment(request, comment_id):
         messages.error(request, "You don't have permission to delete this comment.")
     
     return redirect('release_detail', release_id=release_id)
+
+@login_required(login_url='login')
+def analytics(request):
+    """Artist analytics dashboard"""
+    # Check if user has an artist profile
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can access analytics.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    # Get artist's releases
+    releases = Release.objects.filter(artist=request.user)
+    
+    # Basic Stats
+    total_releases = releases.count()
+    published_releases = releases.filter(status='published').count()
+    total_plays = releases.aggregate(Sum('total_plays'))['total_plays__sum'] or 0
+    total_likes = releases.aggregate(Sum('total_likes'))['total_likes__sum'] or 0
+    total_comments = releases.aggregate(Sum('total_comments'))['total_comments__sum'] or 0
+    
+    # Top performing releases
+    top_releases = releases.filter(status='published').order_by('-total_plays')[:5]
+    
+    # Engagement rate (likes + comments / plays)
+    engagement_rate = 0
+    if total_plays > 0:
+        engagement_rate = round(((total_likes + total_comments) / total_plays) * 100, 2)
+    
+    # Monthly stats (last 6 months)
+    six_months_ago = datetime.now().date() - timedelta(days=180)
+    monthly_stats = []
+    
+    for i in range(6):
+        month = datetime.now().date() - timedelta(days=30 * i)
+        month_start = month.replace(day=1)
+        if i == 0:
+            month_end = datetime.now().date()
+        else:
+            next_month = month_start + timedelta(days=32)
+            month_end = next_month.replace(day=1) - timedelta(days=1)
+        
+        month_releases = Release.objects.filter(
+            artist=request.user,
+            created_at__date__gte=month_start,
+            created_at__date__lte=month_end
+        )
+        
+        monthly_stats.append({
+            'month': month.strftime('%b'),
+            'releases': month_releases.count(),
+            'plays': month_releases.aggregate(Sum('total_plays'))['total_plays__sum'] or 0,
+            'likes': month_releases.aggregate(Sum('total_likes'))['total_likes__sum'] or 0,
+        })
+    
+    monthly_stats.reverse()  # Show oldest to newest
+    
+    # Get release type distribution
+    release_types = {}
+    for release in releases:
+        release_type = release.get_release_type_display()
+        release_types[release_type] = release_types.get(release_type, 0) + 1
+    
+    # Get genre distribution
+    genre_stats = {}
+    for release in releases:
+        if release.genre:
+            genre_stats[release.genre] = genre_stats.get(release.genre, 0) + 1
+    
+    # Get top 10 tracks by plays
+    top_tracks = Track.objects.filter(release__artist=request.user).order_by('-plays')[:10]
+    
+    # Calculate growth percentage
+    current_month_total = monthly_stats[-1]['plays'] if monthly_stats else 0
+    previous_month_total = monthly_stats[-2]['plays'] if len(monthly_stats) > 1 else 0
+    growth_percentage = 0
+    if previous_month_total > 0:
+        growth_percentage = round(((current_month_total - previous_month_total) / previous_month_total) * 100, 1)
+    
+    context = {
+        'profile': profile,
+        'total_releases': total_releases,
+        'published_releases': published_releases,
+        'total_plays': total_plays,
+        'total_likes': total_likes,
+        'total_comments': total_comments,
+        'engagement_rate': engagement_rate,
+        'top_releases': top_releases,
+        'monthly_stats': monthly_stats,
+        'release_types': release_types,
+        'genre_stats': genre_stats,
+        'top_tracks': top_tracks,
+        'growth_percentage': growth_percentage,
+        'current_month_plays': current_month_total,
+    }
+    
+    return render(request, "analytics/analytics.html", context)
+
+
+@login_required(login_url='login')
+def release_analytics(request, release_id):
+    """Detailed analytics for a specific release"""
+    release = get_object_or_404(Release, id=release_id, artist=request.user)
+    
+    # Basic stats for this release
+    tracks = release.tracks.all()
+    
+    # Track analytics
+    track_stats = []
+    for track in tracks:
+        track_stats.append({
+            'title': track.title,
+            'plays': track.plays,
+            'duration': track.duration or '--',
+        })
+    
+    # Daily plays for the last 30 days (you would need a Play model for this)
+    # For now, we'll use placeholder data
+    
+    context = {
+        'release': release,
+        'tracks': tracks,
+        'track_stats': track_stats,
+        'total_tracks': tracks.count(),
+        'total_plays': release.total_plays,
+        'total_likes': release.total_likes,
+        'total_comments': release.total_comments,
+    }
+    
+    return render(request, "analytics/release_analytics.html", context)
