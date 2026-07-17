@@ -79,4 +79,7 @@ urlpatterns = [
     path('my-releases/', my_releases, name='my_releases'),  # ← ADD THIS
     path('my-drafts/', my_drafts, name='my_drafts'),
     path('my-pending/', my_pending_releases, name='my_pending_releases'),
+    
+    path('analytics/', analytics, name='analytics'),
+    path('analytics/<int:release_id>/', release_analytics, name='release_analytics'),
 ]
