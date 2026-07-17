@@ -1,479 +1,500 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Tracks - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .transition-all { transition: all 0.3s ease; }
         
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        h2 {
-            color: #4CAF50;
-            margin-bottom: 5px;
-        }
-        
-        .subtitle {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
-        .release-info {
-            background: #f9f9f9;
-            padding: 15px 20px;
-            border-radius: 5px;
-            margin-bottom: 25px;
-            border-left: 4px solid #4CAF50;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .release-info h3 {
-            color: #333;
-        }
-        
-        .release-info p {
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .form-group {
-            margin-bottom: 18px;
-        }
-        
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
-            font-size: 14px;
-        }
-        
-        label .required {
-            color: red;
-        }
-        
-        label .help-text {
-            font-weight: normal;
-            color: #888;
-            font-size: 12px;
-        }
-        
-        input[type="text"],
-        input[type="number"],
-        input[type="file"] {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        
-        input[type="file"] {
-            padding: 10px;
-            background: #f9f9f9;
-            cursor: pointer;
-        }
-        
-        input[type="file"]:hover {
-            background: #f0f0f0;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-            font-weight: normal;
-        }
-        
-        .btn {
-            background: #4CAF50;
+        input, select, textarea {
+            background: #121212;
+            border: 1px solid #1a1a1a;
             color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        input::placeholder, textarea::placeholder {
+            color: #555;
         }
         
-        .btn:hover {
-            background: #45a049;
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
         }
         
         .btn-secondary {
-            background: #2196F3;
+            background: #1a1a1a;
+            transition: all 0.3s ease;
         }
-        
         .btn-secondary:hover {
-            background: #1976D2;
+            background: #222;
+            transform: translateY(-2px);
         }
         
-        .btn-danger {
-            background: #f44336;
-            padding: 6px 15px;
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 12px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 12px;
-        }
-        
-        .btn-danger:hover {
-            background: #d32f2f;
-        }
-        
-        .btn-small {
-            padding: 6px 15px;
-            font-size: 12px;
-        }
-        
-        .messages {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-        }
-        
-        .messages li {
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid;
-        }
-        
-        .messages .error {
-            background: #ffebee;
-            color: #c62828;
-            border-color: #c62828;
-        }
-        
-        .messages .success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-color: #2e7d32;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .tracks-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        
-        .tracks-table th {
-            background: #f0f0f0;
-            padding: 12px;
-            text-align: left;
             font-weight: bold;
-            border-bottom: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        .step-dot.active {
+            background: #fbbf24;
+            color: black;
+        }
+        .step-dot.completed {
+            background: #4CAF50;
+            color: white;
+        }
+        .step-dot.inactive {
+            background: #1a1a1a;
+            color: #555;
+        }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: #1a1a1a;
+            position: relative;
+        }
+        .step-line.active {
+            background: #fbbf24;
+        }
+        .step-line.completed {
+            background: #4CAF50;
         }
         
-        .tracks-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
+        .upload-zone {
+            border: 2px dashed #1a1a1a;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-zone:hover {
+            border-color: #fbbf24;
+            background: #1a1a1a;
+        }
+        .upload-zone.dragover {
+            border-color: #fbbf24;
+            background: #1a1a1a;
+            transform: scale(1.02);
         }
         
-        .tracks-table tr:hover {
-            background: #f9f9f9;
+        .track-item {
+            transition: all 0.3s ease;
+        }
+        .track-item:hover {
+            background: #1a1a1a;
+            transform: translateX(4px);
         }
         
-        .track-number {
-            color: #888;
-            font-weight: bold;
-            width: 50px;
+        .audio-badge {
+            background: #1a1a1a;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 10px;
         }
-        
-        .audio-status {
-            font-size: 12px;
-        }
-        
         .audio-uploaded {
             color: #4CAF50;
         }
-        
         .audio-missing {
             color: #f44336;
         }
-        
-        .no-tracks {
-            text-align: center;
-            padding: 30px;
-            color: #999;
-        }
-        
-        .cancel-link {
-            color: #666;
-            text-decoration: none;
-            margin-left: 15px;
-            font-size: 14px;
-        }
-        
-        .cancel-link:hover {
-            color: #333;
-            text-decoration: underline;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
-        }
-        
-        .file-preview {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        
-        .file-preview .file-name {
-            color: #666;
-            font-size: 12px;
-        }
-        
-        .file-preview .file-size {
-            color: #999;
-            font-size: 11px;
-        }
-        
-        .cover-art-upload {
-            background: #e8f5e9;
-            padding: 20px;
-            border-radius: 8px;
-            border: 2px dashed #4CAF50;
-            margin: 20px 0;
-        }
-        
-        .cover-art-upload h4 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-        }
-        
-        .cover-preview {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn-group {
-                flex-direction: column;
-            }
-            
-            .btn-group .btn {
-                width: 100%;
-            }
-            
-            .release-info {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h2>🎵 Add Tracks</h2>
-        <p class="subtitle">Add tracks and upload audio files to your release</p>
-        
-        <div class="release-info">
-            <div>
-                <h3>{{ release.title }}</h3>
-                <p>Type: {{ release.get_release_type_display }} | Tracks: {{ track_count }}</p>
-            </div>
-            <div>
-                <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <a href="{% url 'index' %}" class="flex items-center gap-1">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
             </div>
         </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
         
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-        
-        <!-- Cover Art Upload Section -->
-        <div class="cover-art-upload">
-            <h4>🎨 Album Cover Art (3000 x 3000 pixels)</h4>
-            <p style="color: #666; margin-bottom: 10px;">
-                Upload a square image for your release cover art. Recommended: 3000x3000 pixels, JPG or PNG format.
-            </p>
-            <form method="POST" enctype="multipart/form-data" action="{% url 'upload_cover_art' release.id %}">
-                {% csrf_token %}
-                <input type="file" name="cover_art" accept="image/*" required>
-                {% if release.cover_art %}
-                    <div class="file-preview">
-                        <span class="file-name">✅ Current: {{ release.cover_art.name }}</span>
-                        <img src="{{ release.cover_art.url }}" alt="Cover Art" class="cover-preview">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center text-red-500">
+                        <i class="fa-solid fa-music text-xl"></i>
                     </div>
-                {% endif %}
-                <button type="submit" class="btn" style="margin-top: 10px; padding: 8px 20px; font-size: 14px;">
-                    Upload Cover Art
-                </button>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-black">Add Tracks</h1>
+                        <p class="text-gray-400 text-sm">Upload your music and complete your release</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">
+                    <i class="fa-regular fa-circle-check text-green-500"></i> 
+                    {{ track_count }} tracks added
+                </span>
+            </div>
+        </div>
+
+        <!-- Release Info -->
+        <div class="gradient-border p-4 sm:p-6 mb-8">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-b from-red-950 to-black flex items-center justify-center shrink-0">
+                    {% if release.cover_art %}
+                        <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <i class="fa-solid fa-music text-2xl text-red-500"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-lg font-bold truncate">{{ release.title }}</h2>
+                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+                        <span>{{ release.get_release_type_display }}</span>
+                        <span>•</span>
+                        <span>{{ release.artist_profile.artist_name|default:release.artist.username }}</span>
+                        <span>•</span>
+                        <span class="text-xs">
+                            <span class="status-badge status-{{ release.status }} px-2 py-0.5 rounded-full">
+                                {{ release.get_status_display }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{% url 'publish_release' release.id %}" class="btn-secondary px-4 py-2 rounded-lg text-xs font-medium text-gray-300 hover:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right"></i> Skip to Publish
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Steps Indicator -->
+        <div class="step-indicator mb-8 px-4">
+            <div class="step-dot completed"><i class="fa-solid fa-check"></i></div>
+            <div class="step-line completed"></div>
+            <div class="step-dot active">2</div>
+            <div class="step-line"></div>
+            <div class="step-dot inactive">3</div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="space-y-2 mb-6">
+                {% for message in messages %}
+                    <div class="text-xs p-3 rounded-lg {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/20 text-red-400{% elif message.tags == 'success' %}bg-green-500/10 border border-green-500/20 text-green-400{% elif message.tags == 'warning' %}bg-yellow-500/10 border border-yellow-500/20 text-yellow-400{% else %}bg-blue-500/10 border border-blue-500/20 text-blue-400{% endif %}">
+                        <i class="fa-solid fa-circle-info mr-2"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Add Track Form -->
+        <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6 mb-8">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="w-1 h-6 bg-yellow-400 rounded-full"></span>
+                Add New Track
+            </h3>
+            
+            <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="track_title" class="block text-sm font-medium text-gray-300 mb-1">
+                            Track Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="track_title" id="track_title" 
+                               placeholder="Enter track title..." 
+                               class="w-full px-4 py-3 rounded-lg text-sm" required>
+                    </div>
+                    <div>
+                        <label for="track_number" class="block text-sm font-medium text-gray-300 mb-1">
+                            Track Number
+                        </label>
+                        <input type="number" name="track_number" id="track_number" 
+                               placeholder="Auto" min="1"
+                               class="w-full px-4 py-3 rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="duration" class="block text-sm font-medium text-gray-300 mb-1">
+                            Duration <span class="text-gray-500 text-xs">(MM:SS)</span>
+                        </label>
+                        <input type="text" name="duration" id="duration" 
+                               placeholder="3:45" 
+                               class="w-full px-4 py-3 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">
+                            <span class="text-red-500">*</span> Audio File
+                        </label>
+                        <div class="upload-zone relative rounded-lg p-6 text-center" id="uploadZone">
+                            <input type="file" name="audio_file" id="audio_file" 
+                                   accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="w-12 h-12 rounded-full bg-red-950/40 flex items-center justify-center text-red-500">
+                                    <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">Drop your audio file here</p>
+                                    <p class="text-xs text-gray-500 mt-1">MP3, WAV, FLAC • Max 50MB</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" name="is_explicit" id="is_explicit" class="accent-yellow-400 w-4 h-4">
+                    <label for="is_explicit" class="text-sm font-medium cursor-pointer">
+                        🔞 Explicit Content
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" name="add_another" id="add_another" checked class="accent-yellow-400 w-4 h-4">
+                    <label for="add_another" class="text-sm font-medium cursor-pointer">
+                        Add another track after this
+                    </label>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[#1a1a1a]">
+                    <button type="submit" class="btn-primary px-8 py-3 rounded-lg font-bold text-black flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add Track
+                    </button>
+                    <button type="submit" name="finish" value="finish" class="btn-secondary px-8 py-3 rounded-lg font-medium text-gray-300 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Add & Continue
+                    </button>
+                </div>
             </form>
         </div>
-        
-        <!-- Add Track Form -->
-        <h3 style="margin: 25px 0 15px;">Add New Track</h3>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="track_title">Track Title <span class="required">*</span></label>
-                    <input type="text" name="track_title" id="track_title" placeholder="Enter track title" required>
+
+        <!-- Track List -->
+        <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-list text-yellow-400"></i>
+                    Added Tracks ({{ track_count }})
+                </h3>
+                {% if track_count > 0 %}
+                    <span class="text-xs text-gray-500">{{ track_count }} tracks</span>
+                {% endif %}
+            </div>
+
+            {% if tracks %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-gray-500 border-b border-[#1a1a1a]">
+                                <th class="pb-3 font-medium w-12">#</th>
+                                <th class="pb-3 font-medium">Title</th>
+                                <th class="pb-3 font-medium">Duration</th>
+                                <th class="pb-3 font-medium">Audio</th>
+                                <th class="pb-3 font-medium">Explicit</th>
+                                <th class="pb-3 font-medium text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for track in tracks %}
+                                <tr class="border-b border-[#1a1a1a] track-item">
+                                    <td class="py-3 text-gray-500 font-bold">{{ track.track_number }}</td>
+                                    <td class="py-3 font-medium">{{ track.title }}</td>
+                                    <td class="py-3 text-gray-400">{{ track.duration|default:"--" }}</td>
+                                    <td class="py-3">
+                                        {% if track.audio_file %}
+                                            <span class="audio-badge audio-uploaded">
+                                                <i class="fa-solid fa-circle-check"></i> Uploaded
+                                            </span>
+                                        {% else %}
+                                            <span class="audio-badge audio-missing">
+                                                <i class="fa-solid fa-circle-xmark"></i> Missing
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3">
+                                        {% if track.is_explicit %}
+                                            <span class="text-red-500 text-xs font-bold">🔞</span>
+                                        {% else %}
+                                            <span class="text-gray-500 text-xs">✓</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 text-right">
+                                        <form method="POST" action="{% url 'delete_track' release_id=release.id track_id=track.id %}" 
+                                              class="inline" 
+                                              onsubmit="return confirm('Delete this track?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="text-red-500 hover:text-red-400 text-xs transition">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                
-                <div class="form-group">
-                    <label for="track_number">Track Number</label>
-                    <input type="number" name="track_number" id="track_number" placeholder="Auto" min="1">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="duration">Duration <span class="help-text">(e.g., 3:45)</span></label>
-                    <input type="text" name="duration" id="duration" placeholder="MM:SS">
-                </div>
-                
-                <div class="form-group">
-                    <label for="audio_file">Audio File <span class="help-text">(MP3, WAV, FLAC)</span></label>
-                    <input type="file" name="audio_file" id="audio_file" accept="audio/*">
-                </div>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" name="is_explicit" id="is_explicit">
-                <label for="is_explicit">🔞 Explicit Content</label>
-            </div>
-            
-            <div class="checkbox-group" style="margin-top: 10px;">
-                <input type="checkbox" name="add_another" id="add_another" checked>
-                <label for="add_another">Add another track after this</label>
-            </div>
-            
-            <div class="btn-group">
-                <button type="submit" class="btn">➕ Add Track</button>
-                <button type="submit" class="btn btn-secondary" name="finish" value="finish">Add & Continue</button>
-                <a href="{% url 'publish_release' release_id=release.id %}" class="cancel-link">Skip to Publish</a>
-            </div>
-        </form>
-        
-        <hr style="margin: 30px 0; border: none; border-top: 2px solid #f0f0f0;">
-        
-        <h3 style="margin-bottom: 15px;">Added Tracks ({{ track_count }})</h3>
-        
-        {% if tracks %}
-            <table class="tracks-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Duration</th>
-                        <th>Audio</th>
-                        <th>Explicit</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for track in tracks %}
-                        <tr>
-                            <td class="track-number">{{ track.track_number }}</td>
-                            <td>{{ track.title }}</td>
-                            <td>{{ track.duration|default:"--" }}</td>
-                            <td>
-                                {% if track.audio_file %}
-                                    <span class="audio-status audio-uploaded">✅ Uploaded</span>
-                                    <br>
-                                    <span class="file-name" style="font-size: 11px; color: #888;">{{ track.audio_file.name|slice:"14:" }}</span>
-                                {% else %}
-                                    <span class="audio-status audio-missing">❌ Missing</span>
+
+                <!-- Summary -->
+                <div class="mt-4 pt-4 border-t border-[#1a1a1a] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="text-xs text-gray-500">
+                        <span class="text-green-500">{{ tracks|length }}</span> tracks added
+                        {% with missing=tracks|length|add:"0" %}
+                            {% for track in tracks %}
+                                {% if not track.audio_file %}
+                                    {% with missing=missing|add:"1" %}{% endwith %}
                                 {% endif %}
-                            </td>
-                            <td>{% if track.is_explicit %}🔞{% else %}✅{% endif %}</td>
-                            <td>
-                                <form method="POST" action="{% url 'delete_track' release_id=release.id track_id=track.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Delete this track?')">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="no-tracks">
-                <p>No tracks added yet. Add your first track above!</p>
+                            {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{% url 'publish_release' release.id %}" class="btn-primary px-6 py-2 rounded-lg font-bold text-black text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-right"></i> Continue to Publish
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="text-5xl mb-4">🎵</div>
+                    <p class="text-gray-500">No tracks added yet</p>
+                    <p class="text-xs text-gray-600 mt-1">Add your first track above</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Help Card -->
+        <div class="mt-6 bg-[#121212] rounded-xl p-4 border border-[#1a1a1a]">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400 shrink-0">
+                    <i class="fa-solid fa-lightbulb text-sm"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium">Track Requirements</h4>
+                    <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                        <li>• <span class="text-gray-300">Audio files</span> must be in MP3, WAV, or FLAC format</li>
+                        <li>• Maximum file size: <span class="text-gray-300">50MB</span> per track</li>
+                        <li>• All tracks must have audio files before publishing</li>
+                        <li>• You can add tracks later by editing this release</li>
+                    </ul>
+                </div>
             </div>
-        {% endif %}
-        
-        <div style="margin-top: 20px;">
-            <a href="{% url 'publish_release' release_id=release.id %}" class="btn btn-secondary">
-                {% if tracks %}Continue to Publish{% else %}Skip to Publish{% endif %}
-            </a>
-            <a href="{% url 'artistboard' %}" class="cancel-link">Cancel</a>
         </div>
-        
-        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
-            <p style="color: #e65100; font-size: 14px;">
-                <strong>ℹ️ Note:</strong> Each track should have an audio file uploaded. 
-                Cover art should be 3000x3000 pixels for best quality.
-            </p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#1a1a1a] py-6 mt-8">
+        <div class="container mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-1">
+                    <span class="text-red-600 text-sm font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-sm font-light italic">plus</span>
+                </div>
+                <p class="text-gray-500 text-xs">
+                    © 2026 BayaPlus. All rights reserved.
+                </p>
+                <div class="flex gap-4 text-gray-500 text-xs">
+                    <a href="#" class="hover:text-gray-300">Privacy</a>
+                    <a href="#" class="hover:text-gray-300">Terms</a>
+                    <a href="#" class="hover:text-gray-300">Support</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </footer>
+
+    <script>
+        // File upload drag & drop visual feedback
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('audio_file');
+        const fileNameDisplay = document.createElement('div');
+        fileNameDisplay.className = 'text-xs text-gray-400 mt-2';
+        uploadZone.appendChild(fileNameDisplay);
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                fileNameDisplay.innerHTML = `
+                    <i class="fa-solid fa-check-circle text-green-500"></i> 
+                    ${file.name} (${fileSize} MB)
+                `;
+                uploadZone.style.borderColor = '#4CAF50';
+                uploadZone.style.background = '#1a2a1a';
+            }
+        });
+
+        // Drag & Drop
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+
 </body>
 </html>

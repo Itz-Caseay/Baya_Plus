@@ -61,7 +61,7 @@ urlpatterns = [
     path('admin/review-release/<int:release_id>/', admin_review_release, name='admin_review_release'),
     
     # View all releases for admin
-    # path('admin/all-releases/', admin_all_releases, name='admin_all_releases'),
+    path('admin/all-releases/', admin_all_releases, name='admin_all_releases'),
     
     # ==================== ARTIST MANAGEMENT URLs ====================
     # View artist's all releases

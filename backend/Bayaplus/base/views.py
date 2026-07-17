@@ -452,6 +452,28 @@ def publish_release(request, release_id):
         messages.error(request, "You don't have permission to publish this release.")
         return redirect('artistboard')
     
+    # Handle cover art upload directly from publish page
+    if request.method == "POST" and request.FILES.get('cover_art'):
+        cover_art = request.FILES['cover_art']
+        
+        # Validate file size (max 5MB)
+        if cover_art.size > 5 * 1024 * 1024:
+            messages.error(request, "Cover art file is too large. Maximum size is 5MB.")
+            return redirect('publish_release', release_id=release_id)
+        
+        # Validate file type
+        if not cover_art.content_type.startswith('image/'):
+            messages.error(request, "Please upload a valid image file (JPG, PNG, or GIF).")
+            return redirect('publish_release', release_id=release_id)
+        
+        # Save the cover art
+        release.cover_art = cover_art
+        release.save()
+        
+        messages.success(request, f"✅ Cover art uploaded successfully!")
+        return redirect('publish_release', release_id=release_id)
+    
+    # Handle other POST actions (publish, draft, delete)
     if request.method == "POST":
         action = request.POST.get('action')
         
@@ -464,7 +486,7 @@ def publish_release(request, release_id):
             # Check if cover art is uploaded
             if not release.cover_art:
                 messages.error(request, "Please upload cover art before publishing.")
-                return redirect('add_tracks', release_id=release_id)
+                return redirect('publish_release', release_id=release_id)
             
             # Check if all tracks have audio files
             tracks_without_audio = release.tracks.filter(audio_file__isnull=True)
@@ -496,8 +518,8 @@ def publish_release(request, release_id):
                 Artist: {release.artist_profile.artist_name or release.artist.username}
                 Type: {release.get_release_type_display()}
                 Tracks: {release.tracks.count()}
-                Audio Files: ✅ Yes ({release.tracks.filter(audio_file__isnull=False).count()} tracks)
-                Cover Art: ✅ Yes
+                Audio Files: {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}
+                Cover Art: {'✅ Yes' if release.cover_art else '❌ No'}
                 
                 Review Link: {admin_approval_link}
                 """
@@ -507,8 +529,8 @@ def publish_release(request, release_id):
                 <p><strong>Artist:</strong> {release.artist_profile.artist_name or release.artist.username}</p>
                 <p><strong>Type:</strong> {release.get_release_type_display()}</p>
                 <p><strong>Tracks:</strong> {release.tracks.count()}</p>
-                <p><strong>Audio Files:</strong> ✅ Yes ({release.tracks.filter(audio_file__isnull=False).count()} tracks)</p>
-                <p><strong>Cover Art:</strong> ✅ Yes</p>
+                <p><strong>Audio Files:</strong> {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</p>
+                <p><strong>Cover Art:</strong> {'✅ Yes' if release.cover_art else '❌ No'}</p>
                 <p><a href="{admin_approval_link}">Click here to review</a></p>
                 """
                 
@@ -542,11 +564,15 @@ def publish_release(request, release_id):
             messages.success(request, f"Release '{release.title}' has been deleted.")
             return redirect('artistboard')
     
+    # GET request - show the form
     tracks = release.tracks.all().order_by('track_number')
+    tracks_without_audio = release.tracks.filter(audio_file__isnull=True)
+    
     return render(request, "releases/publish_release.html", {
         'release': release,
         'tracks': tracks,
         'track_count': tracks.count(),
+        'tracks_without_audio': tracks_without_audio,
     }) 
     
 @staff_member_required(login_url='login')
@@ -565,7 +591,7 @@ def admin_pending_releases(request):
 
 @staff_member_required(login_url='login')
 def admin_review_release(request, release_id):
-    """Admin view to review and approve/reject releases"""
+    """Admin view to review and approve/reject releases with audio playback"""
     release = get_object_or_404(Release, id=release_id)
     
     if request.method == "POST":
@@ -603,9 +629,25 @@ def admin_review_release(request, release_id):
         return redirect('admin_pending_releases')
     
     tracks = release.tracks.all().order_by('track_number')
+    
+    # Prepare track data for audio player
+    track_data = []
+    for track in tracks:
+        track_data.append({
+            'id': track.id,
+            'title': track.title,
+            'track_number': track.track_number,
+            'duration': track.duration or '--',
+            'audio_url': track.audio_file.url if track.audio_file else None,
+            'is_explicit': track.is_explicit,
+        })
+    
     return render(request, "admin/review_release.html", {
         'release': release,
         'tracks': tracks,
+        'track_data': track_data,
+        'track_count': tracks.count(),
+        'has_audio': tracks.filter(audio_file__isnull=False).exists(),
     })
 
 def send_artist_approval_notification(request, release):
@@ -1437,3 +1479,33 @@ def release_analytics(request, release_id):
     }
     
     return render(request, "analytics/release_analytics.html", context)
+
+@staff_member_required(login_url='login')
+def admin_all_releases(request):
+    """Admin view to see all releases"""
+    releases = Release.objects.all().order_by('-created_at')
+    
+    # Filter by status
+    status_filter = request.GET.get('status')
+    if status_filter:
+        releases = releases.filter(status=status_filter)
+    
+    # Search
+    search_query = request.GET.get('q')
+    if search_query:
+        releases = releases.filter(
+            Q(title__icontains=search_query) |
+            Q(artist__username__icontains=search_query) |
+            Q(artist_profile__artist_name__icontains=search_query)
+        )
+    
+    return render(request, "admin/all_releases.html", {
+        'releases': releases,
+        'total': releases.count(),
+        'published': releases.filter(status='published').count(),
+        'pending': releases.filter(status='pending').count(),
+        'drafts': releases.filter(status='draft').count(),
+        'rejected': releases.filter(status='rejected').count(),
+        'status_filter': status_filter,
+        'search_query': search_query,
+    })

@@ -1,444 +1,567 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Review Release - BayaPlus Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header {
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        h1 {
-            color: #333;
-            font-size: 24px;
-        }
-        
-        .admin-badge {
-            background: #2196F3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0b0b0b;
             color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
+            min-height: 100vh;
         }
-        
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0b0b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 3px;
+        }
+
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 12px;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
         .status-badge {
             display: inline-block;
-            padding: 5px 15px;
+            padding: 4px 14px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: bold;
         }
-        
+
         .status-pending {
             background: #ff9800;
             color: white;
         }
-        
+
         .status-published {
             background: #4CAF50;
             color: white;
         }
-        
+
         .status-rejected {
             background: #f44336;
             color: white;
         }
-        
+
         .status-draft {
             background: #666;
             color: white;
         }
-        
-        .release-info {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
+
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
         }
-        
-        .info-row {
-            display: flex;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
         }
-        
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        
-        .info-label {
-            font-weight: bold;
-            width: 150px;
-            color: #555;
-        }
-        
-        .info-value {
-            flex: 1;
-            color: #333;
-        }
-        
-        .tracks-section {
-            margin: 25px 0;
-        }
-        
-        .tracks-section h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .track-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 15px;
-            background: #f9f9f9;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        
-        .track-item:hover {
-            background: #f0f0f0;
-        }
-        
-        .track-number {
-            color: #888;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-        
-        .track-explicit {
-            color: #f44336;
-            font-size: 12px;
-        }
-        
-        .description-box {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #4CAF50;
-            margin: 10px 0;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
-        }
-        
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
+
         .btn-success {
-            background: #4CAF50;
-            color: white;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            transition: all 0.3s ease;
         }
-        
+
         .btn-success:hover {
-            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
         }
-        
+
         .btn-danger {
-            background: #f44336;
-            color: white;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            transition: all 0.3s ease;
         }
-        
+
         .btn-danger:hover {
-            background: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
         }
-        
-        .btn-warning {
-            background: #ff9800;
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background: #f57c00;
-        }
-        
+
         .btn-secondary {
-            background: #666;
-            color: white;
+            background: #1a1a1a;
+            transition: all 0.3s ease;
         }
-        
+
         .btn-secondary:hover {
-            background: #555;
+            background: #222;
+            transform: translateY(-2px);
         }
-        
-        .form-group {
-            margin: 20px 0;
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            transition: all 0.3s ease;
         }
-        
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
         }
-        
-        .form-group textarea {
+
+        .track-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .track-item:hover {
+            background: #1a1a1a;
+        }
+
+        .track-item.active {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 3px solid #fbbf24;
+        }
+
+        .audio-player {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .audio-player audio {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            resize: vertical;
-            min-height: 80px;
+            border-radius: 8px;
         }
-        
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
+
+        .audio-player audio::-webkit-media-controls-panel {
+            background: #1a1a1a;
         }
-        
-        .messages {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-        }
-        
+
         .messages li {
             padding: 12px 15px;
             margin-bottom: 10px;
-            border-radius: 5px;
+            border-radius: 8px;
             border-left: 4px solid;
         }
-        
+
         .messages .error {
-            background: #ffebee;
-            color: #c62828;
-            border-color: #c62828;
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border-color: #f44336;
         }
-        
+
         .messages .success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-color: #2e7d32;
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-color: #4CAF50;
         }
-        
+
         .messages .warning {
-            background: #fff3e0;
-            color: #e65100;
-            border-color: #e65100;
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border-color: #ff9800;
         }
-        
+
         .messages .info {
-            background: #e3f2fd;
-            color: #0d47a1;
-            border-color: #0d47a1;
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+            border-color: #2196F3;
         }
-        
-        .back-link {
-            color: #666;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 15px;
+
+        .cover-art {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #2a2a2a;
         }
-        
-        .back-link:hover {
-            color: #333;
-            text-decoration: underline;
-        }
-        
-        .admin-actions {
-            background: #f5f5f5;
-            padding: 20px;
+
+        textarea {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: white;
+            padding: 12px;
             border-radius: 8px;
-            margin-top: 20px;
+            width: 100%;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            font-size: 14px;
         }
-        
-        .admin-actions h3 {
-            color: #333;
-            margin-bottom: 15px;
+
+        textarea:focus {
+            outline: none;
+            border-color: #fbbf24;
         }
-        
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-            
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .info-row {
-                flex-direction: column;
-            }
-            
-            .info-label {
-                width: 100%;
-                margin-bottom: 3px;
-            }
-            
-            .btn-group {
-                flex-direction: column;
-            }
-            
-            .btn-group .btn {
-                width: 100%;
-            }
+
+        .info-row {
+            display: flex;
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #888;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #eee;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>📋 Review Release</h1>
-                <span class="admin-badge">Admin Panel</span>
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'index' %}" class="flex items-center gap-1">
+                    <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+                </a>
+                <span class="text-xs bg-yellow-400/10 text-yellow-400 px-3 py-1 rounded-full">Admin Panel</span>
             </div>
-            <div>
-                <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'admin_pending_releases' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
             </div>
         </div>
-        
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black">Review Release</h1>
+                <p class="text-gray-400 text-sm">Listen and review the release before approval</p>
+            </div>
+            <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+        </div>
+
+        <!-- Messages -->
         {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
+        <ul class="messages list-none p-0 mb-6">
+            {% for message in messages %}
+            <li class="{{ message.tags }} text-sm">{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
-        
-        <div class="release-info">
-            <div class="info-row">
-                <span class="info-label">Title:</span>
-                <span class="info-value"><strong>{{ release.title }}</strong></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Artist:</span>
-                <span class="info-value">{{ release.artist_profile.artist_name|default:release.artist.username }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ release.artist.email }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Release Type:</span>
-                <span class="info-value">{{ release.get_release_type_display }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Genre:</span>
-                <span class="info-value">{{ release.genre|default:"Not specified" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Release Date:</span>
-                <span class="info-value">{{ release.release_date }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Language:</span>
-                <span class="info-value">{{ release.language|default:"Not specified" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Price:</span>
-                <span class="info-value">{% if release.is_free %}Free{% else %}${{ release.price }}{% endif %}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Tags:</span>
-                <span class="info-value">{{ release.tags|default:"No tags" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Created:</span>
-                <span class="info-value">{{ release.created_at|date:"F d, Y H:i" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Tracks:</span>
-                <span class="info-value">{{ release.tracks.count }}</span>
-            </div>
-        </div>
-        
-        {% if release.description %}
-            <div class="description-box">
-                <h4 style="color: #555; margin-bottom: 5px;">Description:</h4>
-                <p>{{ release.description }}</p>
-            </div>
-        {% endif %}
-        
-        <div class="tracks-section">
-            <h3>🎵 Tracks</h3>
-            {% if tracks %}
-                {% for track in tracks %}
-                    <div class="track-item">
-                        <span>
-                            <span class="track-number">{{ track.track_number }}</span>
-                            {{ track.title }}
-                            {% if track.is_explicit %}
-                                <span class="track-explicit">🔞 Explicit</span>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left Column: Release Info -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Release Details -->
+                <div class="gradient-border p-6">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- Cover Art -->
+                        <div class="md:w-48 shrink-0">
+                            {% if release.cover_art %}
+                            <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="cover-art w-full">
+                            {% else %}
+                            <div class="cover-art w-full bg-gradient-to-br from-red-950 to-black flex items-center justify-center">
+                                <i class="fa-solid fa-music text-4xl text-red-500"></i>
+                            </div>
                             {% endif %}
-                        </span>
-                        <span>{{ track.duration|default:"--" }}</span>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="flex-1">
+                            <h2 class="text-2xl font-bold">{{ release.title }}</h2>
+                            <p class="text-yellow-400 text-sm mt-1">
+                                {{ release.artist_profile.artist_name|default:release.artist.username }}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ release.artist.email }}</p>
+
+                            <div class="mt-4 space-y-1 text-sm">
+                                <div class="info-row">
+                                    <span class="info-label">Type</span>
+                                    <span class="info-value">{{ release.get_release_type_display }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Genre</span>
+                                    <span class="info-value">{{ release.genre|default:"Not specified" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Release Date</span>
+                                    <span class="info-value">{{ release.release_date }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Tracks</span>
+                                    <span class="info-value">{{ track_count }} tracks</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Price</span>
+                                    <span class="info-value">{% if release.is_free %}Free{% else %}${{ release.price }}{% endif %}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Created</span>
+                                    <span class="info-value">{{ release.created_at|date:"F d, Y H:i" }}</span>
+                                </div>
+                            </div>
+
+                            {% if release.description %}
+                            <div class="mt-4 p-3 bg-[#1a1a1a] rounded-lg">
+                                <p class="text-sm text-gray-300">{{ release.description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <p style="color: #999; text-align: center; padding: 20px;">No tracks added yet</p>
-            {% endif %}
-        </div>
-        
-        <div class="admin-actions">
-            <h3>Admin Actions</h3>
-            <form method="POST">
-                {% csrf_token %}
-                
-                <div class="form-group">
-                    <label for="admin_notes">Admin Notes (optional):</label>
-                    <textarea name="admin_notes" id="admin_notes" placeholder="Add notes for the artist..."></textarea>
                 </div>
-                
-                <div class="btn-group">
-                    <button type="submit" name="action" value="approve" class="btn btn-success">
-                        ✅ Approve & Publish
-                    </button>
-                    <button type="submit" name="action" value="reject" class="btn btn-danger">
-                        ❌ Reject
-                    </button>
-                    <button type="submit" name="action" value="request_changes" class="btn btn-warning">
-                        🔄 Request Changes
-                    </button>
-                    <a href="{% url 'admin_pending_releases' %}" class="btn btn-secondary">
-                        ⬅ Back to Pending
-                    </a>
+
+                <!-- Tracks with Audio Player -->
+                <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-headphones text-yellow-400"></i>
+                        Tracks
+                        <span class="text-xs text-gray-500 font-normal">({{ track_count }} tracks)</span>
+                    </h3>
+                    
+                    {% if tracks %}
+                        <!-- Audio Player -->
+                        <div class="audio-player mb-4" id="audioPlayer">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400">
+                                    <i class="fa-solid fa-music"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold" id="currentTrackTitle">Select a track</h4>
+                                    <p class="text-xs text-gray-500" id="currentTrackArtist">{{ release.artist_profile.artist_name|default:release.artist.username }}</p>
+                                </div>
+                            </div>
+                            <audio id="audioPlayerElement" controls style="width: 100%;">
+                                <source id="audioSource" src="" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                <span id="currentTrackDuration">--:--</span>
+                                <span>•</span>
+                                <span id="currentTrackNumber">Track 0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Track List -->
+                        <div class="divide-y divide-[#1a1a1a] max-h-64 overflow-y-auto">
+                            {% for track in tracks %}
+                                <div class="track-item flex items-center justify-between py-3 px-3 rounded-lg {% if forloop.first and track.audio_file %}active{% endif %}" 
+                                     data-track-id="{{ track.id }}"
+                                     data-track-title="{{ track.title }}"
+                                     data-track-number="{{ track.track_number }}"
+                                     data-track-duration="{{ track.duration|default:'--' }}"
+                                     data-audio-url="{% if track.audio_file %}{{ track.audio_file.url }}{% endif %}"
+                                     onclick="playTrack(this)">
+                                    <div class="flex items-center gap-4">
+                                        <span class="text-gray-500 font-bold w-6 text-center">{{ track.track_number }}</span>
+                                        <div>
+                                            <span class="font-medium">{{ track.title }}</span>
+                                            {% if track.is_explicit %}
+                                                <span class="text-red-500 text-xs font-bold ml-2">🔞</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <span class="text-xs text-gray-500">{{ track.duration|default:"--" }}</span>
+                                        {% if track.audio_file %}
+                                            <span class="text-green-500 text-xs"><i class="fa-solid fa-circle-check"></i></span>
+                                            <button class="text-yellow-400 hover:text-yellow-300 text-xs" onclick="event.stopPropagation(); playTrack(this.parentElement.parentElement)">
+                                                <i class="fa-solid fa-play"></i>
+                                            </button>
+                                        {% else %}
+                                            <span class="text-red-500 text-xs"><i class="fa-solid fa-circle-xmark"></i> No audio</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-6">
+                            <p class="text-gray-500">No tracks added yet</p>
+                        </div>
+                    {% endif %}
                 </div>
-            </form>
+            </div>
+
+            <!-- Right Column: Admin Actions -->
+            <div class="space-y-6">
+
+                <!-- Admin Review Form -->
+                <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+                    <h4 class="text-sm font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-gavel text-yellow-400"></i>
+                        Admin Actions
+                    </h4>
+
+                    <form method="POST" class="space-y-4">
+                        {% csrf_token %}
+
+                        <div>
+                            <label for="admin_notes" class="text-xs font-medium text-gray-400 block mb-1">
+                                Admin Notes <span class="text-gray-500">(optional)</span>
+                            </label>
+                            <textarea name="admin_notes" id="admin_notes" placeholder="Add feedback for the artist..."
+                                class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white p-3 rounded-lg resize-y min-h-[80px] focus:border-yellow-400"></textarea>
+                        </div>
+
+                        <div class="space-y-2">
+                            <button type="submit" name="action" value="approve"
+                                class="btn-success w-full py-3 rounded-lg font-bold text-white flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-check"></i> Approve & Publish
+                            </button>
+
+                            <button type="submit" name="action" value="request_changes"
+                                class="btn-warning w-full py-3 rounded-lg font-bold text-white flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-pen"></i> Request Changes
+                            </button>
+
+                            <button type="submit" name="action" value="reject"
+                                class="btn-danger w-full py-3 rounded-lg font-bold text-white flex items-center justify-center gap-2 text-sm"
+                                onclick="return confirm('Are you sure you want to reject this release?')">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Release Stats</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Tracks</span>
+                            <span class="font-bold">{{ track_count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Audio Files</span>
+                            <span class="font-bold text-green-500">{{ tracks|length|add:"0" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Cover Art</span>
+                            <span class="font-bold">{% if release.cover_art %}✅{% else %}❌{% endif %}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Status</span>
+                            <span class="status-badge status-{{ release.status }}">{{ release.get_status_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Links</h4>
+                    <div class="space-y-2 text-sm">
+                        <a href="{% url 'admin_pending_releases' %}" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                            <i class="fa-solid fa-clock text-yellow-400"></i> Pending Releases
+                        </a>
+                        <a href="{% url 'admin_all_releases' %}" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                            <i class="fa-solid fa-list text-yellow-400"></i> All Releases
+                        </a>
+                        <a href="{% url 'artistboard' %}" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                            <i class="fa-solid fa-dashboard text-yellow-400"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <a href="{% url 'artistboard' %}" class="back-link">← Back to Dashboard</a>
+
     </div>
+
+    <script>
+        // Audio Player Controls
+        let currentTrack = null;
+        const audioPlayer = document.getElementById('audioPlayerElement');
+        const audioSource = document.getElementById('audioSource');
+        const currentTrackTitle = document.getElementById('currentTrackTitle');
+        const currentTrackArtist = document.getElementById('currentTrackArtist');
+        const currentTrackDuration = document.getElementById('currentTrackDuration');
+        const currentTrackNumber = document.getElementById('currentTrackNumber');
+
+        function playTrack(element) {
+            // Remove active class from all tracks
+            document.querySelectorAll('.track-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active class to clicked track
+            element.classList.add('active');
+
+            const audioUrl = element.dataset.audioUrl;
+            const trackTitle = element.dataset.trackTitle;
+            const trackNumber = element.dataset.trackNumber;
+            const trackDuration = element.dataset.trackDuration;
+
+            if (audioUrl) {
+                audioSource.src = audioUrl;
+                audioPlayer.load();
+                audioPlayer.play();
+                currentTrackTitle.textContent = trackTitle;
+                currentTrackArtist.textContent = "{{ release.artist_profile.artist_name|default:release.artist.username }}";
+                currentTrackNumber.textContent = `Track ${trackNumber}`;
+                currentTrackDuration.textContent = trackDuration;
+                currentTrack = element;
+            } else {
+                alert('No audio file available for this track.');
+            }
+        }
+
+        // Auto-play first track
+        document.addEventListener('DOMContentLoaded', function () {
+            const firstTrack = document.querySelector('.track-item[data-audio-url]');
+            if (firstTrack) {
+                playTrack(firstTrack);
+            }
+        });
+
+        // Update duration display
+        audioPlayer.addEventListener('loadedmetadata', function () {
+            const duration = audioPlayer.duration;
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            currentTrackDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        });
+
+        // Update progress
+        audioPlayer.addEventListener('timeupdate', function () {
+            // Optional: Add progress bar if needed
+        });
+    </script>
+
 </body>
+
 </html>

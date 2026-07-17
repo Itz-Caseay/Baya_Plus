@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Releases - BayaPlus Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #0b0b0b; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; }
+        .status-pending { background: #ff9800; color: white; }
+        .status-published { background: #4CAF50; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+        .status-draft { background: #666; color: white; }
+        .btn-primary { background: #fbbf24; color: black; }
+        .btn-primary:hover { background: #f59e0b; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'index' %}" class="flex items-center gap-1">
+                    <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+                </a>
+                <span class="text-xs bg-yellow-400/10 text-yellow-400 px-3 py-1 rounded-full">Admin Panel</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'admin_pending_releases' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-clock"></i> Pending
+                </a>
+                <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">Dashboard</a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black">All Releases</h1>
+                <p class="text-gray-400 text-sm">Manage all releases on the platform</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'admin_pending_releases' %}" class="bg-[#1a1a1a] hover:bg-[#222] px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <i class="fa-solid fa-clock"></i> Pending ({{ pending }})
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold">{{ total }}</p>
+                <p class="text-xs text-gray-400">Total</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold text-green-500">{{ published }}</p>
+                <p class="text-xs text-gray-400">Published</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold text-yellow-500">{{ pending }}</p>
+                <p class="text-xs text-gray-400">Pending</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold text-red-500">{{ rejected }}</p>
+                <p class="text-xs text-gray-400">Rejected</p>
+            </div>
+        </div>
+
+        <!-- Filter and Search -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                <a href="{% url 'admin_all_releases' %}" class="px-4 py-2 rounded-lg text-sm font-medium {% if not status_filter %}bg-yellow-400 text-black{% else %}bg-[#1a1a1a] text-gray-400 hover:text-white{% endif %} transition">
+                    All
+                </a>
+                <a href="{% url 'admin_all_releases' %}?status=published" class="px-4 py-2 rounded-lg text-sm font-medium {% if status_filter == 'published' %}bg-yellow-400 text-black{% else %}bg-[#1a1a1a] text-gray-400 hover:text-white{% endif %} transition">
+                    Published
+                </a>
+                <a href="{% url 'admin_all_releases' %}?status=pending" class="px-4 py-2 rounded-lg text-sm font-medium {% if status_filter == 'pending' %}bg-yellow-400 text-black{% else %}bg-[#1a1a1a] text-gray-400 hover:text-white{% endif %} transition">
+                    Pending
+                </a>
+                <a href="{% url 'admin_all_releases' %}?status=draft" class="px-4 py-2 rounded-lg text-sm font-medium {% if status_filter == 'draft' %}bg-yellow-400 text-black{% else %}bg-[#1a1a1a] text-gray-400 hover:text-white{% endif %} transition">
+                    Drafts
+                </a>
+                <a href="{% url 'admin_all_releases' %}?status=rejected" class="px-4 py-2 rounded-lg text-sm font-medium {% if status_filter == 'rejected' %}bg-yellow-400 text-black{% else %}bg-[#1a1a1a] text-gray-400 hover:text-white{% endif %} transition">
+                    Rejected
+                </a>
+            </div>
+            <form method="GET" class="flex gap-2 ml-auto">
+                <input type="text" name="q" placeholder="Search releases..." 
+                       value="{{ search_query|default:'' }}"
+                       class="bg-[#1a1a1a] border border-[#2a2a2a] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-yellow-400 w-full sm:w-48">
+                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg text-sm font-bold transition">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Releases Table -->
+        <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-[#1a1a1a] text-left text-gray-400">
+                            <th class="py-3 px-4 font-medium">Release</th>
+                            <th class="py-3 px-4 font-medium">Artist</th>
+                            <th class="py-3 px-4 font-medium">Type</th>
+                            <th class="py-3 px-4 font-medium">Tracks</th>
+                            <th class="py-3 px-4 font-medium">Status</th>
+                            <th class="py-3 px-4 font-medium">Created</th>
+                            <th class="py-3 px-4 font-medium text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for release in releases %}
+                            <tr class="border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-b from-red-950 to-black flex items-center justify-center shrink-0">
+                                            {% if release.cover_art %}
+                                                <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                                <i class="fa-solid fa-music text-red-500"></i>
+                                            {% endif %}
+                                        </div>
+                                        <span class="font-medium truncate max-w-[120px]">{{ release.title }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-300">
+                                    {{ release.artist_profile.artist_name|default:release.artist.username }}
+                                </td>
+                                <td class="py-3 px-4 text-gray-400">
+                                    {{ release.get_release_type_display }}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    {{ release.tracks.count }}
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="status-{{ release.status }} px-2 py-0.5 rounded-full text-xs font-bold">
+                                        {{ release.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-gray-400 text-xs">
+                                    {{ release.created_at|date:"M d, Y" }}
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{% url 'admin_review_release' release.id %}" class="text-yellow-400 hover:text-yellow-300 text-sm transition">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'release_detail' release.id %}" class="text-gray-400 hover:text-white text-sm transition">
+                                            <i class="fa-solid fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-gray-500">
+                                    <div class="text-4xl mb-2">📭</div>
+                                    <p>No releases found</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-6">
+            <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
