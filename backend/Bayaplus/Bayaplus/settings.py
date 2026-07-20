@@ -129,10 +129,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'edutrackplus12@gmail.com'  # Your Gmail address
-EMAIL_HOST_PASSWORD = 'ptorzzolqblljsfg'  # App password
-DEFAULT_FROM_EMAIL = 'BayaPlus <edutrackplus12@gmail.com>'
+EMAIL_HOST_USER = 'neowilde20@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'sqmsccbhtsppylsf'  # App password
+DEFAULT_FROM_EMAIL = 'BayaPlus <neowilde20@gmail.com>'
 
 # Admin notification settings
-ADMIN_EMAILS = ['edutrackplus12@gmail.com']  # List of admin emails
-ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <edutrackplus12@gmail.com>'
+ADMIN_EMAILS = ['neowilde20@gmail.com']  # List of admin emails
+ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <neowilde20@gmail.com>'
