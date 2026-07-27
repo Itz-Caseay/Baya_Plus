@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlists - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .transition-all { transition: all 0.3s ease; }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <a href="{% url 'index' %}" class="flex items-center gap-1">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'fanboard' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black">🎵 My Playlists</h1>
+                <p class="text-gray-400 text-sm">Create and manage your music collections</p>
+            </div>
+            <button onclick="document.getElementById('createPlaylistModal').classList.remove('hidden')" 
+                    class="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-full text-sm font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> New Playlist
+            </button>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="space-y-2 mb-6">
+                {% for message in messages %}
+                    <div class="text-xs p-3 rounded-lg {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/20 text-red-400{% elif message.tags == 'success' %}bg-green-500/10 border border-green-500/20 text-green-400{% elif message.tags == 'warning' %}bg-yellow-500/10 border border-yellow-500/20 text-yellow-400{% else %}bg-blue-500/10 border border-blue-500/20 text-blue-400{% endif %}">
+                        <i class="fa-solid fa-circle-info mr-2"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Playlists Grid -->
+        {% if playlists %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for playlist in playlists %}
+                    <div class="bg-[#121212] rounded-xl border border-[#1a1a1a] overflow-hidden card-hover cursor-pointer group">
+                        <a href="{% url 'fan_playlist_detail' playlist.id %}" class="block">
+                            <div class="aspect-square bg-gradient-to-br from-red-950 to-red-900 flex items-center justify-center relative">
+                                {% if playlist.releases.first %}
+                                    <img src="{{ playlist.releases.first.cover_art.url }}" alt="{{ playlist.name }}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                        <i class="fa-solid fa-play text-4xl text-yellow-400"></i>
+                                    </div>
+                                {% else %}
+                                    <i class="fa-solid fa-list text-6xl text-red-500/50"></i>
+                                {% endif %}
+                                <div class="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded-full text-xs">
+                                    {{ playlist.releases.count }} tracks
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-sm truncate">{{ playlist.name }}</h3>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {% if playlist.is_public %}
+                                        <i class="fa-solid fa-globe"></i> Public
+                                    {% else %}
+                                        <i class="fa-solid fa-lock"></i> Private
+                                    {% endif %}
+                                    • {{ playlist.created_at|timesince }} ago
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-16 bg-[#121212] rounded-xl border border-[#1a1a1a]">
+                <div class="text-6xl mb-4">🎵</div>
+                <p class="text-gray-400 text-lg">No playlists yet</p>
+                <p class="text-gray-500 text-sm mt-2">Create your first playlist to organize your music</p>
+                <button onclick="document.getElementById('createPlaylistModal').classList.remove('hidden')" 
+                        class="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-full text-sm font-bold transition inline-flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Create Playlist
+                </button>
+            </div>
+        {% endif %}
+
+        <!-- Create Playlist Modal -->
+        <div id="createPlaylistModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden transition-all">
+            <div class="bg-[#121212] rounded-2xl p-6 max-w-md w-full mx-4 border border-[#1a1a1a]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Create Playlist</h2>
+                    <button onclick="document.getElementById('createPlaylistModal').classList.add('hidden')" 
+                            class="text-gray-400 hover:text-white transition">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <form method="POST" action="{% url 'fan_playlist' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="playlist_name" class="block text-sm font-medium text-gray-300 mb-1">
+                                Playlist Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="name" id="playlist_name" 
+                                   placeholder="Enter playlist name..." 
+                                   class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-yellow-400" 
+                                   required>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" name="is_public" id="is_public" checked class="accent-yellow-400 w-4 h-4">
+                            <label for="is_public" class="text-sm font-medium text-gray-300 cursor-pointer">
+                                Make playlist public
+                            </label>
+                        </div>
+                        <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 rounded-lg font-bold transition">
+                            Create Playlist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Close modal on outside click
+        document.getElementById('createPlaylistModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>

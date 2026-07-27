@@ -1,96 +1,70 @@
 from django.urls import path
-from .views import *
+from . import views
+
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('login/', login_user, name="login"),
-    path('signup/', signup, name="signup"),
-    path('logout/', logout_user, name="logout"),
-    path('choose-profile/', choose_profile, name="choose-profile"),
-    path('releases/', all_releases, name='all_releases'),
-    path('fanboard/', fanboard, name="fanboard"),
-    path('artistboard/', artistboard, name="artistboard"),
-    path('activate/<uidb64>/<token>/', activate, name='activate'),
-    path('create-release/', create_release, name='create_release'),
-  
-    path('upload-cover-art/<int:release_id>/', upload_cover_art, name='upload_cover_art'),
+    # ==================== MAIN INDEX ====================
+    path('', views.index, name='index'),  # ← ADD THIS - This is the homepage
     
-    # Add tracks to release
-    path('add-tracks/<int:release_id>/', add_tracks, name='add_tracks'),
+    # ==================== AUTHENTICATION URLs ====================
+    path('signup/', views.signup, name='signup'),
+    path('login/', views.login_user, name='login'),
+    path('logout/', views.logout_user, name='logout'),
+    path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('choose-profile/', views.choose_profile, name='choose-profile'),
     
-    # Publish/Submit release for review
-    path('publish-release/<int:release_id>/', publish_release, name='publish_release'),
+    # ==================== DASHBOARD URLs ====================
+    path('fanboard/', views.fanboard, name='fanboard'),
+    path('artistboard/', views.artistboard, name='artistboard'),
     
-    # Edit release
-    path('edit-release/<int:release_id>/', edit_release, name='edit_release'),
+    # ==================== FAN URLs ====================
+    path('fan/library/', views.fan_library, name='fan_library'),
+    path('fan/playlist/', views.fan_playlist, name='fan_playlist'),
+    path('fan/playlist/<int:playlist_id>/', views.fan_playlist, name='fan_playlist_detail'),
+    path('fan/search/', views.fan_search, name='fan_search'),
     
-    # Delete release
-    path('delete-release/<int:release_id>/', delete_release, name='delete_release'),
-    
-    # Delete track from release
-    path('delete-track/<int:release_id>/<int:track_id>/', delete_track, name='delete_track'),
+    # ==================== RELEASE MANAGEMENT URLs ====================
+    path('create-release/', views.create_release, name='create_release'),
+    path('add-tracks/<int:release_id>/', views.add_tracks, name='add_tracks'),
+    path('publish-release/<int:release_id>/', views.publish_release, name='publish_release'),
+    path('edit-release/<int:release_id>/', views.edit_release, name='edit_release'),
+    path('delete-release/<int:release_id>/', views.delete_release, name='delete_release'),
+    path('delete-track/<int:release_id>/<int:track_id>/', views.delete_track, name='delete_track'),
+    path('upload-cover-art/<int:release_id>/', views.upload_cover_art, name='upload_cover_art'),
     
     # ==================== RELEASE VIEWING URLs ====================
-    # View release detail (public)
-    path('release/<int:release_id>/', release_detail, name='release_detail'),
+    path('release/<int:release_id>/', views.release_detail, name='release_detail'),
+    path('releases/', views.all_releases, name='all_releases'),
+    path('artist/<str:username>/releases/', views.artist_releases, name='artist_releases'),
     
-    # View all releases by an artist
-    path('artist/<str:username>/releases/', artist_releases, name='artist_releases'),
+    # ==================== ARTIST MANAGEMENT URLs ====================
+    path('my-releases/', views.my_releases, name='my_releases'),
+    path('my-drafts/', views.my_drafts, name='my_drafts'),
+    path('my-pending/', views.my_pending_releases, name='my_pending_releases'),
     
-    # View all releases (browse)
-    # path('releases/', all_releases, name='all_releases'),
-    
-    # View trending/popular releases
-    # path('releases/trending/', trending_releases, name='trending_releases'),
+    # ==================== ANALYTICS URLs ====================
+    path('analytics/', views.analytics, name='analytics'),
+    path('analytics/<int:release_id>/', views.release_analytics, name='release_analytics'),
     
     # ==================== INTERACTION URLs ====================
-    # Like a release
-    path('like-release/<int:release_id>/', like_release, name='like_release'),
+    path('like-release/<int:release_id>/', views.like_release, name='like_release'),
+    path('like-track/<int:track_id>/', views.like_track, name='like_track'),
+    path('comment-release/<int:release_id>/', views.add_comment, name='add_comment'),
+    path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
     
-    # Add comment to release
-    path('comment-release/<int:release_id>/', add_comment, name='add_comment'),
+    # ==================== SOCIAL URLs ====================
+    path('follow/<str:username>/', views.follow_artist, name='follow_artist'),
+    path('following/', views.following_list, name='following_list'),
+    path('followers/<str:username>/', views.followers_list, name='followers_list'),
     
-    # Delete comment
-    path('delete-comment/<int:comment_id>/', delete_comment, name='delete_comment'),
+    # ==================== STAFF/ADMIN URLs ====================
+    path('staff/pending/', views.admin_pending_releases, name='admin_pending_releases'),
+    path('staff/review/<int:release_id>/', views.admin_review_release, name='admin_review_release'),
+    path('staff/all/', views.admin_all_releases, name='admin_all_releases'),
     
-    # ==================== ADMIN REVIEW URLs ====================
-    # View all pending releases (admin only)
-    path('admin/pending-releases/', admin_pending_releases, name='admin_pending_releases'),
-    
-    # Review a specific release (admin only)
-    path('admin/review-release/<int:release_id>/', admin_review_release, name='admin_review_release'),
-    
-    # View all releases for admin
-    path('admin/all-releases/', admin_all_releases, name='admin_all_releases'),
-    path('followers/<str:username>/', followers_list, name='followers_list'),
-    path('follow/<str:username>/', follow_artist, name='follow_artist'),
-    path('following/', following_list, name='following_list'),
-    path('settings/profile/', profile_settings, name='profile_settings'),
-    
-    # ==================== ARTIST MANAGEMENT URLs ====================
-    # View artist's all releases
-    # path('my-releases/', my_releases, name='my_releases'),
-    
-    # View artist's drafts
-    # path('my-drafts/', my_drafts, name='my_drafts'),
-    
-    # View artist's pending releases
-    # path('my-pending/', my_pending_releases, name='my_pending_releases'),
+    # ==================== SETTINGS URLs ====================
+    path('settings/profile/', views.profile_settings, name='profile_settings'),
     
     # ==================== TEST URL ====================
-    # path('test-email/', test_email, name='test_email'),
-    # ==================== ARTIST MANAGEMENT URLs ====================
-    path('my-releases/', my_releases, name='my_releases'),  # ← ADD THIS
-    path('my-drafts/', my_drafts, name='my_drafts'),
-    path('my-pending/', my_pending_releases, name='my_pending_releases'),
-    
-    path('analytics/', analytics, name='analytics'),
-    path('analytics/<int:release_id>/', release_analytics, name='release_analytics'),
-    
-    # Fan URLs
-    path('fanboard/', fanboard, name='fanboard'),
-    path('fan/library/', fan_library, name='fan_library'),
-    path('fan/playlist/', fan_playlist, name='fan_playlist'),
-    path('fan/playlist/<int:playlist_id>/', fan_playlist, name='fan_playlist_detail'),
-    path('fan/search/', fan_search, name='fan_search'),
+    # path('test-email/', views.test_email, name='test_email'),
 ]

@@ -376,49 +376,24 @@ def fanboard(request):
         is_public=True
     ).order_by('-total_plays', '-total_likes')[:8]
     
-    # Get new releases (last 30 days)
-    thirty_days_ago = datetime.now().date() - timedelta(days=30)
-    new_releases = Release.objects.filter(
-        status='published',
-        is_public=True,
-        release_date__gte=thirty_days_ago
-    ).order_by('-release_date')[:8]
+    # Get liked releases and tracks
+    liked_releases = Like.objects.filter(user=request.user, release__isnull=False).select_related('release')
+    liked_tracks = Like.objects.filter(user=request.user, track__isnull=False).select_related('track')
     
-    # Get recommended releases (based on likes - simple algorithm)
-    # Get releases liked by users who like similar artists
-    liked_releases = Like.objects.filter(user=request.user).values_list('release', flat=True)
-    if liked_releases:
-        # Get genres from liked releases
-        liked_genres = Release.objects.filter(id__in=liked_releases).values_list('genre', flat=True)
-        recommended = Release.objects.filter(
-            status='published',
-            is_public=True,
-            genre__in=liked_genres
-        ).exclude(id__in=liked_releases).order_by('-total_likes')[:6]
-    else:
-        recommended = Release.objects.filter(
-            status='published', 
-            is_public=True
-        ).order_by('-total_likes')[:6]
-    
-    # Get top charts
-    top_charts = Release.objects.filter(
-        status='published',
-        is_public=True
-    ).order_by('-total_plays')[:10]
+    # Get playlists count
+    playlists_count = Playlist.objects.filter(user=request.user).count()
     
     context = {
         'profile': profile,
         'followed_releases': followed_releases,
         'trending': trending,
-        'new_releases': new_releases,
-        'recommended': recommended,
-        'top_charts': top_charts,
+        'liked_releases': liked_releases,
+        'liked_tracks': liked_tracks,
         'following_count': followed_artists.count(),
+        'playlists_count': playlists_count,
     }
     
     return render(request, "fan/fanboard.html", context)
-
 
 @login_required(login_url='login')
 def fan_library(request):
@@ -495,9 +470,9 @@ def fan_playlist(request, playlist_id=None):
             is_public=is_public
         )
         messages.success(request, f"Playlist '{name}' created successfully!")
-        return redirect('fan_playlist', playlist_id=playlist.id)
+        return redirect('fan_playlist_detail', playlist_id=playlist.id)
     
-    # Handle edit playlist
+    # Handle edit/delete playlist
     if playlist_id:
         playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
         
@@ -509,7 +484,7 @@ def fan_playlist(request, playlist_id=None):
                 playlist.is_public = request.POST.get('is_public') == 'on'
                 playlist.save()
                 messages.success(request, "Playlist updated successfully!")
-                return redirect('fan_playlist', playlist_id=playlist.id)
+                return redirect('fan_playlist_detail', playlist_id=playlist.id)
             
             elif action == 'add_release':
                 release_id = request.POST.get('release_id')
@@ -519,14 +494,14 @@ def fan_playlist(request, playlist_id=None):
                     messages.success(request, f"Added '{release.title}' to playlist!")
                 else:
                     messages.info(request, "Release already in playlist.")
-                return redirect('fan_playlist', playlist_id=playlist.id)
+                return redirect('fan_playlist_detail', playlist_id=playlist.id)
             
             elif action == 'remove_release':
                 release_id = request.POST.get('release_id')
                 release = get_object_or_404(Release, id=release_id)
                 playlist.releases.remove(release)
                 messages.success(request, f"Removed '{release.title}' from playlist.")
-                return redirect('fan_playlist', playlist_id=playlist.id)
+                return redirect('fan_playlist_detail', playlist_id=playlist.id)
             
             elif action == 'delete':
                 playlist.delete()
@@ -550,7 +525,6 @@ def fan_playlist(request, playlist_id=None):
         'profile': profile,
         'playlists': playlists,
     })
-
 
 @login_required(login_url='login')
 def fan_search(request):
@@ -1448,16 +1422,18 @@ def artist_releases(request, username):
     except UserProfile.DoesNotExist:
         profile = None
     
+    # Get published releases
     releases = Release.objects.filter(
         artist=artist,
         status='published',
         is_public=True
     ).order_by('-release_date')
     
+    # Count total likes for follower count
+    total_likes = sum(release.total_likes for release in releases)
+    
     # Check if current user follows this artist
     is_following = False
-    followers_count = Follow.objects.filter(following=artist).count()
-    
     if request.user.is_authenticated:
         is_following = Follow.objects.filter(
             follower=request.user,
@@ -1469,9 +1445,9 @@ def artist_releases(request, username):
         'profile': profile,
         'releases': releases,
         'total_releases': releases.count(),
-        'followers_count': followers_count,
+        'followers_count': total_likes,  # Using likes as follower count
         'is_following': is_following,
-    })   
+    })
  
 @login_required(login_url='login')
 def like_release(request, release_id):
@@ -1790,6 +1766,11 @@ def follow_artist(request, username):
     
     # Prevent self-follow
     if request.user == artist:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'You cannot follow yourself.'
+            })
         messages.error(request, "You cannot follow yourself.")
         return redirect('artist_releases', username=username)
     
@@ -1809,17 +1790,20 @@ def follow_artist(request, username):
         is_following = True
         message = f"Following {artist.username}"
     
+    # Get updated follower count
+    followers_count = Follow.objects.filter(following=artist).count()
+    
     # Check if it's an AJAX request
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        followers_count = Follow.objects.filter(following=artist).count()
         return JsonResponse({
+            'success': True,
             'is_following': is_following,
             'followers_count': followers_count,
             'message': message
         })
     
     messages.success(request, message)
-    return redirect(request.META.get('HTTP_REFERER', 'artist_releases', username=username))
+    return redirect('artist_releases', username=username)
 
 @login_required(login_url='login')
 def following_list(request):
