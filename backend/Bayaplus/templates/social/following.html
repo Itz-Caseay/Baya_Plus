@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Following - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#0b0b0b] text-white">
+    <div class="container mx-auto max-w-4xl px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">Following ({{ total_following }})</h1>
+        
+        {% if following %}
+            <div class="space-y-3">
+                {% for follow in following %}
+                    <div class="bg-[#121212] p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-xl font-bold">
+                                {{ follow.following.username|first|upper }}
+                            </div>
+                            <div>
+                                <h3 class="font-bold">{{ follow.following.username }}</h3>
+                                <p class="text-sm text-gray-400">Artist</p>
+                            </div>
+                        </div>
+                        <a href="{% url 'artist_releases' follow.following.username %}" class="text-yellow-400 hover:text-yellow-300 text-sm">
+                            View Profile
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center py-8">You're not following any artists yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
