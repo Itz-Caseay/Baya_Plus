@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BayaPlus - Artist Dashboard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         ::-webkit-scrollbar { width: 6px; }
@@ -49,7 +47,7 @@
                 <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-chart-line text-lg"></i> Analytics
                 </a>
-                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-gear text-lg"></i> Settings
                 </a>
                 <a href="{% url 'logout' %}" class="flex items-center gap-4 text-red-400 hover:text-red-300 px-4 py-2.5 rounded-lg text-sm font-medium transition">
@@ -92,7 +90,7 @@
                 <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-chart-line text-lg"></i> Analytics
                 </a>
-                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-gear text-lg"></i> Settings
                 </a>
             </nav>
@@ -111,9 +109,13 @@
             </div>
             <div class="flex items-center justify-between p-2 rounded-lg bg-[#141414] border border-[#222]">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-red-950 flex items-center justify-center text-white font-bold text-sm">
-                        {{ profile.artist_name|default:request.user.username|make_list|first|upper }}
-                    </div>
+                    {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}" alt="{{ profile.artist_name }}" class="w-8 h-8 rounded-full object-cover">
+                    {% else %}
+                        <div class="w-8 h-8 rounded-full bg-red-950 flex items-center justify-center text-white font-bold text-sm">
+                            {{ profile.artist_name|default:request.user.username|make_list|first|upper }}
+                        </div>
+                    {% endif %}
                     <div class="text-left">
                         <h4 class="text-xs font-bold text-white">{{ profile.artist_name|default:request.user.username }}</h4>
                         <p class="text-[10px] text-gray-500">Artist</p>
@@ -162,28 +164,52 @@
             </div>
         </header>
 
-        <!-- Profile Hero Card -->
-        <section class="relative rounded-2xl bg-gradient-to-r from-red-950 to-red-900 border border-red-900/40 min-h-[11rem] sm:h-52 overflow-hidden flex items-center p-6 sm:p-8">
-            <div class="space-y-2 sm:space-y-3 z-10">
+        <!-- Profile Hero Card - With Social Links -->
+        <section class="relative rounded-2xl min-h-[11rem] sm:h-52 overflow-hidden flex items-center p-6 sm:p-8 bg-gradient-to-r from-red-950 to-red-900 border border-red-900/40">
+            
+            <!-- Profile Picture - Very subtle on the right -->
+            <div class="absolute right-0 bottom-0 top-0 w-48 sm:w-64 pointer-events-none">
+                <div class="absolute inset-0 bg-cover bg-center opacity-20 sm:opacity-40 mix-blend-luminosity" 
+                     style="background-image: url('{% if profile.avatar %}{{ profile.avatar.url }}{% else %}https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=500&q=80{% endif %}'); background-size: cover; background-position: center;">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-r from-red-950 via-red-900/60 to-transparent"></div>
+            </div>
+            
+            <!-- Content -->
+            <div class="relative z-10 space-y-2 sm:space-y-3 max-w-[55%]">
                 <div class="flex items-center gap-2">
-                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight">{{ profile.artist_name|default:request.user.username }}</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">{{ profile.artist_name|default:request.user.username }}</h2>
                     {% if profile.email_verified %}
                         <i class="fa-solid fa-circle-check text-blue-500 text-base sm:text-lg"></i>
                     {% endif %}
                 </div>
                 <p class="text-[11px] sm:text-xs text-gray-300 font-medium">Music Artist • {{ releases|length }} Releases</p>
                 <p class="text-xs sm:text-sm font-semibold text-white">
-                    {{ published }} <span class="text-[11px] sm:text-xs font-normal text-gray-400">published releases</span>
+                    {{ published }} <span class="text-[11px] sm:text-xs font-normal text-gray-300">published releases</span>
                 </p>
-                <div class="flex items-center gap-4 text-gray-400 pt-2 text-xs sm:text-sm">
-                    <a href="#" class="hover:text-white"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="hover:text-white"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#" class="hover:text-white"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="#" class="hover:text-white"><i class="fa-brands fa-youtube"></i></a>
+                
+                <!-- Social Links -->
+                <div class="flex items-center gap-3 text-gray-300 pt-1 text-xs sm:text-sm">
+                    {% if profile.instagram %}
+                        <a href="{{ profile.instagram }}" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                    {% endif %}
+                    {% if profile.twitter %}
+                        <a href="{{ profile.twitter }}" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                    {% endif %}
+                    {% if profile.tiktok %}
+                        <a href="{{ profile.tiktok }}" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-tiktok"></i></a>
+                    {% endif %}
+                    {% if profile.youtube %}
+                        <a href="{{ profile.youtube }}" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
+                    {% endif %}
+                    {% if profile.spotify %}
+                        <a href="{{ profile.spotify }}" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-spotify"></i></a>
+                    {% endif %}
                 </div>
             </div>
-            <div class="absolute -right-6 sm:right-12 bottom-0 top-0 w-56 sm:w-72 bg-cover bg-top mix-blend-luminosity opacity-30 sm:opacity-90 pointer-events-none" style="background-image: url('https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=500&q=80');"></div>
-            <a href="{% url 'create_release' %}" class="absolute top-4 right-4 sm:top-6 sm:right-6 bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] sm:text-xs font-bold py-1.5 px-3 sm:px-4 rounded-full flex items-center gap-1.5 transition">
+            
+            <!-- New Release Button -->
+            <a href="{% url 'create_release' %}" class="absolute top-4 right-4 sm:top-6 sm:right-6 bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] sm:text-xs font-bold py-1.5 px-3 sm:px-4 rounded-full flex items-center gap-1.5 transition z-10">
                 <i class="fa-solid fa-plus"></i> New Release
             </a>
         </section>
@@ -350,6 +376,13 @@
                     <div class="flex items-center gap-3 text-gray-400 group-hover:text-white">
                         <i class="fa-solid fa-chart-line"></i>
                         <span class="text-xs text-gray-300 font-medium">View Analytics</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+                </a>
+                <a href="{% url 'profile_settings' %}" class="flex items-center justify-between p-2 rounded-lg hover:bg-[#121212] group transition">
+                    <div class="flex items-center gap-3 text-gray-400 group-hover:text-white">
+                        <i class="fa-solid fa-gear"></i>
+                        <span class="text-xs text-gray-300 font-medium">Settings</span>
                     </div>
                     <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
                 </a>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        
+        input, textarea, select {
+            background: #121212;
+            border: 1px solid #1a1a1a;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        input::placeholder, textarea::placeholder {
+            color: #555;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #222;
+            transform: translateY(-2px);
+        }
+        
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 12px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        .social-input {
+            padding-left: 40px;
+        }
+        .social-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+        .social-icon.instagram { color: #E4405F; }
+        .social-icon.twitter { color: #1DA1F2; }
+        .social-icon.tiktok { color: #00f2ea; }
+        .social-icon.youtube { color: #FF0000; }
+        .social-icon.spotify { color: #1DB954; }
+        .social-icon.apple { color: #A2AAAD; }
+        .social-icon.soundcloud { color: #FF5500; }
+        .social-icon.facebook { color: #1877F2; }
+        .social-icon.website { color: #fbbf24; }
+        
+        .avatar-upload {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #2a2a2a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .avatar-upload:hover {
+            border-color: #fbbf24;
+        }
+        .avatar-upload img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-upload .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .avatar-upload:hover .overlay {
+            opacity: 1;
+        }
+        .avatar-upload input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .messages li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .messages .error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border-color: #f44336;
+        }
+        .messages .success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .messages .warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border-color: #ff9800;
+        }
+        .messages .info {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+            border-color: #2196F3;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <a href="{% url 'index' %}" class="flex items-center gap-1">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto max-w-4xl px-4 sm:px-6 py-8">
+        
+        <!-- Page Header -->
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-12 h-12 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400">
+                <i class="fa-solid fa-gear text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black">Profile Settings</h1>
+                <p class="text-gray-400 text-sm">Manage your artist profile and social links</p>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <ul class="messages list-none p-0 mb-6">
+                {% for message in messages %}
+                    <li class="{{ message.tags }} text-sm">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Settings Form -->
+        <div class="gradient-border p-6 sm:p-8">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Avatar Upload -->
+                <div>
+                    <h3 class="text-sm font-bold mb-3">Profile Picture</h3>
+                    <div class="flex flex-col sm:flex-row items-center gap-6">
+                        <div class="avatar-upload">
+                            {% if profile.avatar %}
+                                <img src="{{ profile.avatar.url }}" alt="{{ profile.artist_name }}">
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-4xl font-bold">
+                                    {{ profile.artist_name|default:request.user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="overlay">
+                                <i class="fa-solid fa-camera text-2xl text-white"></i>
+                            </div>
+                            <input type="file" name="avatar" accept="image/*">
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Upload a profile picture</p>
+                            <p class="text-xs text-gray-500 mt-1">Recommended: Square image, max 5MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="border-t border-[#1a1a1a] pt-6">
+                    <h3 class="text-sm font-bold mb-4">Basic Information</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="artist_name" class="block text-sm font-medium text-gray-300 mb-1">
+                                Artist Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="artist_name" id="artist_name" 
+                                   value="{{ profile.artist_name|default:'' }}"
+                                   placeholder="Your artist/stage name"
+                                   class="w-full px-4 py-3 rounded-lg text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="bio" class="block text-sm font-medium text-gray-300 mb-1">
+                                Bio <span class="text-gray-500 text-xs">(Max 500 characters)</span>
+                            </label>
+                            <textarea name="bio" id="bio" rows="4" maxlength="500"
+                                      placeholder="Tell your fans about yourself..."
+                                      class="w-full px-4 py-3 rounded-lg text-sm resize-y">{{ profile.bio|default:'' }}</textarea>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span id="bioCount">{{ profile.bio|default:''|length }}</span> / 500 characters
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="border-t border-[#1a1a1a] pt-6">
+                    <h3 class="text-sm font-bold mb-4">Social Links</h3>
+                    <p class="text-xs text-gray-500 mb-4">Connect your social media accounts</p>
+                    
+                    <div class="space-y-3">
+                        <!-- Instagram -->
+                        <div class="relative">
+                            <i class="fa-brands fa-instagram social-icon instagram"></i>
+                            <input type="url" name="instagram" id="instagram" 
+                                   value="{{ profile.instagram|default:'' }}"
+                                   placeholder="Instagram URL (e.g., https://instagram.com/yourhandle)"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- Twitter -->
+                        <div class="relative">
+                            <i class="fa-brands fa-x-twitter social-icon twitter"></i>
+                            <input type="url" name="twitter" id="twitter" 
+                                   value="{{ profile.twitter|default:'' }}"
+                                   placeholder="Twitter URL (e.g., https://twitter.com/yourhandle)"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- TikTok -->
+                        <div class="relative">
+                            <i class="fa-brands fa-tiktok social-icon tiktok"></i>
+                            <input type="url" name="tiktok" id="tiktok" 
+                                   value="{{ profile.tiktok|default:'' }}"
+                                   placeholder="TikTok URL (e.g., https://tiktok.com/@yourhandle)"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- YouTube -->
+                        <div class="relative">
+                            <i class="fa-brands fa-youtube social-icon youtube"></i>
+                            <input type="url" name="youtube" id="youtube" 
+                                   value="{{ profile.youtube|default:'' }}"
+                                   placeholder="YouTube URL (e.g., https://youtube.com/@yourchannel)"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- Spotify -->
+                        <div class="relative">
+                            <i class="fa-brands fa-spotify social-icon spotify"></i>
+                            <input type="url" name="spotify" id="spotify" 
+                                   value="{{ profile.spotify|default:'' }}"
+                                   placeholder="Spotify URL (e.g., https://open.spotify.com/artist/...)"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- Apple Music -->
+                        <div class="relative">
+                            <i class="fa-brands fa-apple social-icon apple"></i>
+                            <input type="url" name="apple_music" id="apple_music" 
+                                   value="{{ profile.apple_music|default:'' }}"
+                                   placeholder="Apple Music URL"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- SoundCloud -->
+                        <div class="relative">
+                            <i class="fa-brands fa-soundcloud social-icon soundcloud"></i>
+                            <input type="url" name="soundcloud" id="soundcloud" 
+                                   value="{{ profile.soundcloud|default:'' }}"
+                                   placeholder="SoundCloud URL"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- Facebook -->
+                        <div class="relative">
+                            <i class="fa-brands fa-facebook social-icon facebook"></i>
+                            <input type="url" name="facebook" id="facebook" 
+                                   value="{{ profile.facebook|default:'' }}"
+                                   placeholder="Facebook URL"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+
+                        <!-- Website -->
+                        <div class="relative">
+                            <i class="fa-solid fa-globe social-icon website"></i>
+                            <input type="url" name="website" id="website" 
+                                   value="{{ profile.website|default:'' }}"
+                                   placeholder="Your website URL"
+                                   class="w-full px-4 py-3 rounded-lg text-sm social-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="border-t border-[#1a1a1a] pt-6 flex flex-col sm:flex-row gap-3">
+                    <button type="submit" class="btn-primary px-8 py-3 rounded-lg font-bold text-black flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-save"></i> Save Settings
+                    </button>
+                    <a href="{% url 'artistboard' %}" class="btn-secondary px-8 py-3 rounded-lg font-medium text-gray-300 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="mt-6 bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+            <h4 class="text-sm font-bold mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-eye text-yellow-400"></i>
+                Profile Preview
+            </h4>
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-2xl font-bold overflow-hidden">
+                    {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}" alt="{{ profile.artist_name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        {{ profile.artist_name|default:request.user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="font-bold">{{ profile.artist_name|default:request.user.username }}</p>
+                    <p class="text-xs text-gray-400">{{ profile.role }}</p>
+                    <div class="flex gap-2 mt-1">
+                        {% if profile.instagram %}<i class="fa-brands fa-instagram text-gray-500 text-xs"></i>{% endif %}
+                        {% if profile.twitter %}<i class="fa-brands fa-x-twitter text-gray-500 text-xs"></i>{% endif %}
+                        {% if profile.tiktok %}<i class="fa-brands fa-tiktok text-gray-500 text-xs"></i>{% endif %}
+                        {% if profile.youtube %}<i class="fa-brands fa-youtube text-gray-500 text-xs"></i>{% endif %}
+                        {% if profile.spotify %}<i class="fa-brands fa-spotify text-gray-500 text-xs"></i>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if profile.bio %}
+                <p class="text-sm text-gray-400 mt-3">{{ profile.bio }}</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+        // Character counter for bio
+        const bioTextarea = document.getElementById('bio');
+        const bioCount = document.getElementById('bioCount');
+        
+        if (bioTextarea) {
+            bioTextarea.addEventListener('input', function() {
+                bioCount.textContent = this.value.length;
+            });
+        }
+
+        // Avatar preview
+        document.querySelector('.avatar-upload input[type="file"]').addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.querySelector('.avatar-upload img');
+                    if (img) {
+                        img.src = e.target.result;
+                    } else {
+                        const container = document.querySelector('.avatar-upload');
+                        const newImg = document.createElement('img');
+                        newImg.src = e.target.result;
+                        container.appendChild(newImg);
+                        // Remove the text placeholder if exists
+                        const placeholder = container.querySelector('div');
+                        if (placeholder) placeholder.remove();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -65,6 +65,7 @@ urlpatterns = [
     path('followers/<str:username>/', followers_list, name='followers_list'),
     path('follow/<str:username>/', follow_artist, name='follow_artist'),
     path('following/', following_list, name='following_list'),
+    path('settings/profile/', profile_settings, name='profile_settings'),
     
     # ==================== ARTIST MANAGEMENT URLs ====================
     # View artist's all releases
@@ -85,4 +86,11 @@ urlpatterns = [
     
     path('analytics/', analytics, name='analytics'),
     path('analytics/<int:release_id>/', release_analytics, name='release_analytics'),
+    
+    # Fan URLs
+    path('fanboard/', fanboard, name='fanboard'),
+    path('fan/library/', fan_library, name='fan_library'),
+    path('fan/playlist/', fan_playlist, name='fan_playlist'),
+    path('fan/playlist/<int:playlist_id>/', fan_playlist, name='fan_playlist_detail'),
+    path('fan/search/', fan_search, name='fan_search'),
 ]

@@ -350,14 +350,248 @@ def choose_profile(request):
 
     return render(request, "auth/choose-profile.html")
 
+@login_required(login_url='login')
 def fanboard(request):
-    profile = UserProfile.objects.get(user=request.user)
-    return HttpResponse(f"""
-                        <h2>Welcome, { request.user.username }</h2> 
-                        <h3>Role: {profile.role}</h3>
-                        <h3>Email Verified: {profile.email_verified}</h3>
-                        <p><a href="/bayaplus/logout/">Logout</a></p>"""
-                        )
+    """Fan dashboard - shows personalized content"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Fan':
+            messages.error(request, "Only fans can access this page.")
+            return redirect('artistboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    # Get recent releases from followed artists
+    followed_artists = Follow.objects.filter(follower=request.user).values_list('following', flat=True)
+    followed_releases = Release.objects.filter(
+        artist__in=followed_artists,
+        status='published',
+        is_public=True
+    ).order_by('-release_date')[:10]
+    
+    # Get trending releases (by plays and likes)
+    trending = Release.objects.filter(
+        status='published', 
+        is_public=True
+    ).order_by('-total_plays', '-total_likes')[:8]
+    
+    # Get new releases (last 30 days)
+    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    new_releases = Release.objects.filter(
+        status='published',
+        is_public=True,
+        release_date__gte=thirty_days_ago
+    ).order_by('-release_date')[:8]
+    
+    # Get recommended releases (based on likes - simple algorithm)
+    # Get releases liked by users who like similar artists
+    liked_releases = Like.objects.filter(user=request.user).values_list('release', flat=True)
+    if liked_releases:
+        # Get genres from liked releases
+        liked_genres = Release.objects.filter(id__in=liked_releases).values_list('genre', flat=True)
+        recommended = Release.objects.filter(
+            status='published',
+            is_public=True,
+            genre__in=liked_genres
+        ).exclude(id__in=liked_releases).order_by('-total_likes')[:6]
+    else:
+        recommended = Release.objects.filter(
+            status='published', 
+            is_public=True
+        ).order_by('-total_likes')[:6]
+    
+    # Get top charts
+    top_charts = Release.objects.filter(
+        status='published',
+        is_public=True
+    ).order_by('-total_plays')[:10]
+    
+    context = {
+        'profile': profile,
+        'followed_releases': followed_releases,
+        'trending': trending,
+        'new_releases': new_releases,
+        'recommended': recommended,
+        'top_charts': top_charts,
+        'following_count': followed_artists.count(),
+    }
+    
+    return render(request, "fan/fanboard.html", context)
+
+
+@login_required(login_url='login')
+def fan_library(request):
+    """Fan's music library - liked songs and releases"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Fan':
+            messages.error(request, "Only fans can access this page.")
+            return redirect('artistboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    # Get liked releases
+    liked_releases = Like.objects.filter(
+        user=request.user,
+        release__isnull=False
+    ).select_related('release').order_by('-created_at')
+    
+    # Get liked tracks
+    liked_tracks = Like.objects.filter(
+        user=request.user,
+        track__isnull=False
+    ).select_related('track', 'track__release').order_by('-created_at')
+    
+    # Get followed artists
+    followed_artists = Follow.objects.filter(
+        follower=request.user
+    ).select_related('following')
+    
+    context = {
+        'profile': profile,
+        'liked_releases': liked_releases,
+        'liked_tracks': liked_tracks,
+        'followed_artists': followed_artists,
+        'total_likes': liked_releases.count() + liked_tracks.count(),
+        'total_following': followed_artists.count(),
+    }
+    
+    return render(request, "fan/library.html", context)
+
+
+@login_required(login_url='login')
+def fan_playlist(request, playlist_id=None):
+    """Manage playlists - create, view, edit, delete"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Fan':
+            messages.error(request, "Only fans can access this page.")
+            return redirect('artistboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    # Get all user's playlists
+    playlists = Playlist.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Handle create playlist
+    if request.method == "POST" and request.POST.get('action') == 'create':
+        name = request.POST.get('name')
+        is_public = request.POST.get('is_public') == 'on'
+        
+        if not name:
+            messages.error(request, "Playlist name is required.")
+            return redirect('fan_playlist')
+        
+        if Playlist.objects.filter(user=request.user, name=name).exists():
+            messages.error(request, "You already have a playlist with this name.")
+            return redirect('fan_playlist')
+        
+        playlist = Playlist.objects.create(
+            user=request.user,
+            name=name,
+            is_public=is_public
+        )
+        messages.success(request, f"Playlist '{name}' created successfully!")
+        return redirect('fan_playlist', playlist_id=playlist.id)
+    
+    # Handle edit playlist
+    if playlist_id:
+        playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
+        
+        if request.method == "POST":
+            action = request.POST.get('action')
+            
+            if action == 'update':
+                playlist.name = request.POST.get('name', playlist.name)
+                playlist.is_public = request.POST.get('is_public') == 'on'
+                playlist.save()
+                messages.success(request, "Playlist updated successfully!")
+                return redirect('fan_playlist', playlist_id=playlist.id)
+            
+            elif action == 'add_release':
+                release_id = request.POST.get('release_id')
+                release = get_object_or_404(Release, id=release_id, status='published')
+                if release not in playlist.releases.all():
+                    playlist.releases.add(release)
+                    messages.success(request, f"Added '{release.title}' to playlist!")
+                else:
+                    messages.info(request, "Release already in playlist.")
+                return redirect('fan_playlist', playlist_id=playlist.id)
+            
+            elif action == 'remove_release':
+                release_id = request.POST.get('release_id')
+                release = get_object_or_404(Release, id=release_id)
+                playlist.releases.remove(release)
+                messages.success(request, f"Removed '{release.title}' from playlist.")
+                return redirect('fan_playlist', playlist_id=playlist.id)
+            
+            elif action == 'delete':
+                playlist.delete()
+                messages.success(request, "Playlist deleted successfully!")
+                return redirect('fan_playlist')
+        
+        # Get releases not already in playlist
+        available_releases = Release.objects.filter(
+            status='published',
+            is_public=True
+        ).exclude(id__in=playlist.releases.all())
+        
+        return render(request, "fan/playlist_detail.html", {
+            'profile': profile,
+            'playlist': playlist,
+            'playlists': playlists,
+            'available_releases': available_releases,
+        })
+    
+    return render(request, "fan/playlists.html", {
+        'profile': profile,
+        'playlists': playlists,
+    })
+
+
+@login_required(login_url='login')
+def fan_search(request):
+    """Search for artists, releases, and tracks"""
+    query = request.GET.get('q', '')
+    search_type = request.GET.get('type', 'all')
+    
+    artists = []
+    releases = []
+    tracks = []
+    
+    if query:
+        if search_type in ['all', 'artists']:
+            artists = User.objects.filter(
+                Q(username__icontains=query) |
+                Q(fullname__icontains=query) |
+                Q(userprofile__artist_name__icontains=query)
+            ).filter(userprofile__role='Artist')
+        
+        if search_type in ['all', 'releases']:
+            releases = Release.objects.filter(
+                Q(title__icontains=query) |
+                Q(artist__username__icontains=query) |
+                Q(genre__icontains=query)
+            ).filter(status='published', is_public=True)
+        
+        if search_type in ['all', 'tracks']:
+            tracks = Track.objects.filter(
+                Q(title__icontains=query)
+            ).filter(release__status='published', release__is_public=True)
+    
+    context = {
+        'query': query,
+        'search_type': search_type,
+        'artists': artists,
+        'releases': releases,
+        'tracks': tracks,
+        'total_results': len(artists) + len(releases) + len(tracks),
+    }
+    
+    return render(request, "fan/search.html", context)
 
 @login_required(login_url='login')
 def artistboard(request):
@@ -1277,6 +1511,37 @@ def like_release(request, release_id):
         return redirect('release_detail', release_id=release_id)
     
     return redirect('release_detail', release_id=release_id)
+
+
+@login_required(login_url='login')
+def like_track(request, track_id):
+    """Like or unlike a track"""
+    track = get_object_or_404(Track, id=track_id)
+    
+    if request.method == "POST":
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            track=track
+        )
+        
+        if not created:
+            like.delete()
+            liked = False
+            message = f"Unliked '{track.title}'"
+        else:
+            liked = True
+            message = f"Liked '{track.title}'!"
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'liked': liked,
+                'message': message
+            })
+        
+        messages.success(request, message)
+        return redirect('release_detail', release_id=track.release.id)
+    
+    return redirect('release_detail', release_id=track.release.id)
 
 def release_detail(request, release_id):
     """View a single release detail"""
