@@ -25,8 +25,42 @@ class UserProfile(models.Model):
     email_verified = models.BooleanField(default=False)
     payment_verified = models.BooleanField(default=False)
     
+    # Profile fields
+    bio = models.TextField(blank=True, null=True, max_length=500)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    
+    # Social links
+    instagram = models.URLField(blank=True, null=True, max_length=200)
+    twitter = models.URLField(blank=True, null=True, max_length=200)
+    tiktok = models.URLField(blank=True, null=True, max_length=200)
+    youtube = models.URLField(blank=True, null=True, max_length=200)
+    spotify = models.URLField(blank=True, null=True, max_length=200)
+    apple_music = models.URLField(blank=True, null=True, max_length=200)
+    soundcloud = models.URLField(blank=True, null=True, max_length=200)
+    facebook = models.URLField(blank=True, null=True, max_length=200)
+    website = models.URLField(blank=True, null=True, max_length=200)
+    
     def __str__(self):
         return f"{self.user.username} role: {self.role}"
+    
+    def get_social_links(self):
+        """Return a dictionary of social links"""
+        return {
+            'instagram': self.instagram,
+            'twitter': self.twitter,
+            'tiktok': self.tiktok,
+            'youtube': self.youtube,
+            'spotify': self.spotify,
+            'apple_music': self.apple_music,
+            'soundcloud': self.soundcloud,
+            'facebook': self.facebook,
+            'website': self.website,
+        }
+    
+    def has_social_links(self):
+        """Check if any social links are set"""
+        links = self.get_social_links()
+        return any(link for link in links.values())
     
 class Release(models.Model):
     # Release Types

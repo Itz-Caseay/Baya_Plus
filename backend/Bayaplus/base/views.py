@@ -1578,3 +1578,74 @@ def followers_list(request, username):
         'followers': followers,
         'total_followers': followers.count(),
     })
+    
+@login_required(login_url='login')
+def profile_settings(request):
+    """Artist profile settings page"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role != 'Artist':
+            messages.error(request, "Only artists can access settings.")
+            return redirect('fanboard')
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    if request.method == "POST":
+        # Get form data
+        artist_name = request.POST.get('artist_name')
+        bio = request.POST.get('bio')
+        
+        # Social links
+        instagram = request.POST.get('instagram')
+        twitter = request.POST.get('twitter')
+        tiktok = request.POST.get('tiktok')
+        youtube = request.POST.get('youtube')
+        spotify = request.POST.get('spotify')
+        apple_music = request.POST.get('apple_music')
+        soundcloud = request.POST.get('soundcloud')
+        facebook = request.POST.get('facebook')
+        website = request.POST.get('website')
+        
+        # Validate artist name uniqueness
+        if artist_name and artist_name != profile.artist_name:
+            if UserProfile.objects.filter(artist_name=artist_name).exclude(user=request.user).exists():
+                messages.error(request, "This artist name is already taken.")
+                return redirect('profile_settings')
+        
+        # Update profile
+        profile.artist_name = artist_name or profile.artist_name
+        profile.bio = bio
+        
+        # Update social links
+        profile.instagram = instagram or None
+        profile.twitter = twitter or None
+        profile.tiktok = tiktok or None
+        profile.youtube = youtube or None
+        profile.spotify = spotify or None
+        profile.apple_music = apple_music or None
+        profile.soundcloud = soundcloud or None
+        profile.facebook = facebook or None
+        profile.website = website or None
+        
+        # Handle avatar upload
+        if request.FILES.get('avatar'):
+            avatar = request.FILES['avatar']
+            # Validate file size (max 5MB)
+            if avatar.size > 5 * 1024 * 1024:
+                messages.error(request, "Avatar file is too large. Maximum size is 5MB.")
+                return redirect('profile_settings')
+            # Validate file type
+            if not avatar.content_type.startswith('image/'):
+                messages.error(request, "Please upload a valid image file.")
+                return redirect('profile_settings')
+            profile.avatar = avatar
+        
+        profile.save()
+        
+        messages.success(request, "Profile updated successfully!")
+        return redirect('profile_settings')
+    
+    return render(request, "settings/profile_settings.html", {
+        'profile': profile,
+    })
