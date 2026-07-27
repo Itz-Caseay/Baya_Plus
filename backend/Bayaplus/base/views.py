@@ -1220,17 +1220,25 @@ def artist_releases(request, username):
         is_public=True
     ).order_by('-release_date')
     
-    # Count total likes across all releases (for follower count approximation)
-    total_likes = sum(release.total_likes for release in releases)
+    # Check if current user follows this artist
+    is_following = False
+    followers_count = Follow.objects.filter(following=artist).count()
+    
+    if request.user.is_authenticated:
+        is_following = Follow.objects.filter(
+            follower=request.user,
+            following=artist
+        ).exists()
     
     return render(request, "releases/artist_releases.html", {
         'artist': artist,
         'profile': profile,
         'releases': releases,
         'total_releases': releases.count(),
-        'total_followers': total_likes,  # Approximate followers
+        'followers_count': followers_count,
+        'is_following': is_following,
     })   
-    
+ 
 @login_required(login_url='login')
 def like_release(request, release_id):
     """Like or unlike a release"""
@@ -1508,4 +1516,65 @@ def admin_all_releases(request):
         'rejected': releases.filter(status='rejected').count(),
         'status_filter': status_filter,
         'search_query': search_query,
+    })
+    
+@login_required(login_url='login')
+def follow_artist(request, username):
+    """Follow or unfollow an artist"""
+    artist = get_object_or_404(User, username=username)
+    
+    # Prevent self-follow
+    if request.user == artist:
+        messages.error(request, "You cannot follow yourself.")
+        return redirect('artist_releases', username=username)
+    
+    # Check if already following
+    follow, created = Follow.objects.get_or_create(
+        follower=request.user,
+        following=artist
+    )
+    
+    if not created:
+        # Unfollow
+        follow.delete()
+        is_following = False
+        message = f"Unfollowed {artist.username}"
+    else:
+        # Follow
+        is_following = True
+        message = f"Following {artist.username}"
+    
+    # Check if it's an AJAX request
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        followers_count = Follow.objects.filter(following=artist).count()
+        return JsonResponse({
+            'is_following': is_following,
+            'followers_count': followers_count,
+            'message': message
+        })
+    
+    messages.success(request, message)
+    return redirect(request.META.get('HTTP_REFERER', 'artist_releases', username=username))
+
+@login_required(login_url='login')
+def following_list(request):
+    """View all artists the user is following"""
+    following = Follow.objects.filter(follower=request.user).select_related('following')
+    
+    return render(request, "social/following.html", {
+        'following': following,
+        'total_following': following.count(),
+    })
+
+
+@login_required(login_url='login')
+def followers_list(request, username):
+    """View all followers of an artist"""
+    artist = get_object_or_404(User, username=username)
+    followers = Follow.objects.filter(following=artist).select_related('follower')
+    
+    return render(request, "social/followers.html", {
+        'artist': artist,
+        'followers': followers,
+        'total_followers': followers.count(),
     })

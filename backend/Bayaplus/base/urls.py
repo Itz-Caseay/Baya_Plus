@@ -62,6 +62,9 @@ urlpatterns = [
     
     # View all releases for admin
     path('admin/all-releases/', admin_all_releases, name='admin_all_releases'),
+    path('followers/<str:username>/', followers_list, name='followers_list'),
+    path('follow/<str:username>/', follow_artist, name='follow_artist'),
+    path('following/', following_list, name='following_list'),
     
     # ==================== ARTIST MANAGEMENT URLs ====================
     # View artist's all releases
