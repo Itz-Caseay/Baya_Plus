@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.auth.tokens import default_token_generator
 from .utils import *
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from datetime import timedelta, datetime
 import re
@@ -2404,8 +2404,10 @@ def admin_review_request(request, request_id):
 # In views.py - Update the get_track_audio function
 # In views.py - Update the streaming function
 
+# In views.py - Streaming functions
+
 def get_track_audio(request, track_id):
-    """Stream audio file - with range request support and play tracking"""
+    """Stream audio file with range request support"""
     track = get_object_or_404(Track, id=track_id)
     
     # Check if track is from a published release
@@ -2419,11 +2421,13 @@ def get_track_audio(request, track_id):
     # Serve the file with range request support
     import os
     from django.http import FileResponse, HttpResponse
-    from django.conf import settings
     import mimetypes
     import re
     
     file_path = audio_file.path
+    if not os.path.exists(file_path):
+        return HttpResponse("Audio file not found on server", status=404)
+    
     file_size = os.path.getsize(file_path)
     
     range_header = request.META.get('HTTP_RANGE', '').strip()
@@ -2447,8 +2451,8 @@ def get_track_audio(request, track_id):
                 response['Accept-Ranges'] = 'bytes'
                 response['Content-Length'] = str(end - start + 1)
                 return response
-        except:
-            pass
+        except Exception as e:
+            print(f"Range request error: {e}")
     
     # Fallback to serving the whole file
     response = FileResponse(open(file_path, 'rb'), content_type=mimetypes.guess_type(file_path)[0] or 'audio/mpeg')
@@ -2456,6 +2460,35 @@ def get_track_audio(request, track_id):
     response['Content-Length'] = str(file_size)
     return response
 
+
+def track_info(request, track_id):
+    """Get track information for playback"""
+    try:
+        track = get_object_or_404(Track, id=track_id)
+        
+        # Check if track has audio file
+        if not track.audio_file:
+            return JsonResponse({
+                'error': 'No audio file found for this track'
+            }, status=404)
+        
+        data = {
+            'id': track.id,
+            'title': track.title,
+            'artist': track.release.artist_profile.artist_name or track.release.artist.username,
+            'duration': track.duration or '--',
+            'cover_art': track.release.cover_art.url if track.release.cover_art else None,
+            'release_id': track.release.id,
+            'release_title': track.release.title,
+            'audio_url': f'/bayaplus/stream/{track.id}/',
+        }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
 
 @login_required(login_url='login')
 def track_play_start(request, track_id):
@@ -2485,9 +2518,11 @@ def track_play_start(request, track_id):
 def track_play_update(request, play_id):
     """Update play progress and count as stream if 30+ seconds played"""
     if request.method == "POST":
+        import json
+        data = json.loads(request.body)
         play_history = get_object_or_404(PlayHistory, id=play_id, user=request.user)
-        duration_played = int(request.POST.get('duration_played', 0))
-        completed = request.POST.get('completed') == 'true'
+        duration_played = int(data.get('duration_played', 0))
+        completed = data.get('completed', False)
         
         # Update play history
         play_history.duration_played = duration_played
@@ -2495,49 +2530,30 @@ def track_play_update(request, play_id):
         play_history.save()
         
         # If played 30+ seconds, count as a stream
+        counted_as_stream = False
         if duration_played >= 30:
-            # Increment track plays (if not already counted)
+            # Increment track plays
             track = play_history.track
-            if not hasattr(play_history, '_counted') or not play_history._counted:
-                track.plays += 1
-                track.save()
-                
-                # Update release plays
-                release = track.release
-                release.total_plays += 1
-                release.save()
-                
-                play_history._counted = True
-                play_history.save()
+            track.plays += 1
+            track.save()
+            
+            # Update release plays
+            release = track.release
+            release.total_plays += 1
+            release.save()
+            
+            counted_as_stream = True
         
         return JsonResponse({
             'success': True,
             'duration_played': duration_played,
-            'counted_as_stream': duration_played >= 30,
+            'counted_as_stream': counted_as_stream,
             'message': 'Play progress updated'
         })
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-def track_info(request, track_id):
-    """Get track information for playback"""
-    track = get_object_or_404(Track, id=track_id)
-    
-    data = {
-        'id': track.id,
-        'title': track.title,
-        'artist': track.release.artist_profile.artist_name or track.release.artist.username,
-        'duration': track.duration or '--',
-        'cover_art': track.release.cover_art.url if track.release.cover_art else None,
-        'release_id': track.release.id,
-        'release_title': track.release.title,
-        'audio_url': track.audio_file.url if track.audio_file else None,
-    }
-    
-    return JsonResponse(data)
-
-# In views.py
 def release_tracks(request, release_id):
     """Get all tracks for a release"""
     release = get_object_or_404(Release, id=release_id, status='published', is_public=True)
@@ -2560,3 +2576,48 @@ def release_tracks(request, release_id):
     }
     
     return JsonResponse(data)
+
+
+@login_required(login_url='login')
+def get_queue(request):
+    """Get user's current queue"""
+    try:
+        queue = Queue.objects.get(user=request.user)
+        queue_items = QueueItem.objects.filter(queue=queue).select_related('track', 'track__release')
+        
+        tracks_data = []
+        for item in queue_items:
+            track = item.track
+            tracks_data.append({
+                'id': track.id,
+                'title': track.title,
+                'artist': track.release.artist_profile.artist_name or track.release.artist.username,
+                'duration': track.duration or '--',
+                'cover_art': track.release.cover_art.url if track.release.cover_art else None,
+                'position': item.position,
+                'is_current': item.position == queue.current_index,
+                'release_id': track.release.id,
+            })
+        
+        current_data = None
+        if queue_items:
+            current_item = queue_items.filter(position=queue.current_index).first()
+            if current_item:
+                track = current_item.track
+                current_data = {
+                    'id': track.id,
+                    'title': track.title,
+                    'artist': track.release.artist_profile.artist_name or track.release.artist.username,
+                    'duration': track.duration or '--',
+                    'cover_art': track.release.cover_art.url if track.release.cover_art else None,
+                    'release_id': track.release.id,
+                }
+        
+        return JsonResponse({
+            'queue': tracks_data,
+            'current': current_data,
+            'total': len(tracks_data),
+        })
+        
+    except Queue.DoesNotExist:
+        return JsonResponse({'queue': [], 'current': None, 'total': 0})
