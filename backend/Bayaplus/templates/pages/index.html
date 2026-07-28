@@ -16,6 +16,163 @@
         .status-draft { background: #666; color: white; }
         .status-rejected { background: #f44336; color: white; }
         .transition-all { transition: all 0.3s ease; }
+        
+        /* Queue item styles */
+        .queue-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .queue-item:hover {
+            background: #1a1a1a;
+        }
+        .queue-item.active {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 2px solid #fbbf24;
+        }
+        
+        /* Player styles */
+        .player-progress-bar {
+            height: 4px;
+            background: #2a2a2a;
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+        .player-progress-bar:hover {
+            height: 6px;
+        }
+        .player-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        .player-progress-dot {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #fbbf24;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            left: 0%;
+        }
+        .player-progress-bar:hover .player-progress-dot {
+            opacity: 1;
+        }
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+        }
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+        }
+        
+        /* Admin crown button */
+        .admin-crown-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        .admin-crown-btn:hover {
+            color: #fbbf24;
+            transform: scale(1.1);
+        }
+        .admin-crown-btn .crown-icon {
+            font-size: 18px;
+        }
+        .admin-crown-btn .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background: #a855f7;
+            border-radius: 50%;
+            border: 2px solid #0b0b0b;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+        
+        /* Admin dropdown */
+        .admin-dropdown {
+            position: absolute;
+            top: 110%;
+            right: 0;
+            background: #121212;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        .admin-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .admin-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+        .admin-dropdown a:hover {
+            background: #1a1a1a;
+            color: white;
+        }
+        .admin-dropdown a i {
+            font-size: 14px;
+            color: #a855f7;
+        }
+        .admin-dropdown .dropdown-title {
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.5px;
+        }
+        .admin-dropdown .divider {
+            height: 1px;
+            background: #1a1a1a;
+            margin: 4px 8px;
+        }
     </style>
 </head>
 <body class="bg-[#0b0b0b] text-white font-sans h-screen flex flex-col justify-between overflow-hidden">
@@ -44,17 +201,10 @@
                         <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                             <i class="fa-solid fa-radio text-lg"></i> Radio
                         </a>
-                        
                         {% if user.is_authenticated %}
-                            {% if user.userprofile.role == 'Artist' %}
-                                <a href="{% url 'artistboard' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
-                                </a>
-                            {% elif user.userprofile.role == 'Fan' %}
-                                <a href="{% url 'fanboard' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
-                                </a>
-                            {% endif %}
+                            <a href="{% if user.userprofile.role == 'Artist' %}{% url 'artistboard' %}{% else %}{% url 'fanboard' %}{% endif %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                                <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                            </a>
                         {% endif %}
                     </div>
 
@@ -76,31 +226,6 @@
                             <i class="fa-solid fa-heart"></i> Liked Songs
                         </a>
                     </div>
-                    
-                    <!-- Artist Quick Access -->
-                    {% if user.is_authenticated %}
-                        {% if user.userprofile.role == 'Artist' %}
-                            <div class="space-y-2 pt-4 border-t border-[#1a1a1a]">
-                                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Artist Tools</p>
-                                <a href="{% url 'create_release' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
-                                    <i class="fa-solid fa-music"></i> New Release
-                                </a>
-                                <a href="{% url 'my_releases' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
-                                    <i class="fa-solid fa-compact-disc"></i> My Releases
-                                </a>
-                            </div>
-                        {% elif user.userprofile.role == 'Fan' %}
-                            <div class="space-y-2 pt-4 border-t border-[#1a1a1a]">
-                                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Fan Tools</p>
-                                <a href="{% url 'fan_library' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
-                                    <i class="fa-solid fa-heart"></i> My Library
-                                </a>
-                                <a href="{% url 'fan_playlist' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
-                                    <i class="fa-solid fa-list"></i> Playlists
-                                </a>
-                            </div>
-                        {% endif %}
-                    {% endif %}
                 </nav>
             </div>
 
@@ -118,7 +243,7 @@
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto space-y-8">
+        <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto space-y-8 pb-32">
             
             <!-- Header -->
             <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -147,26 +272,40 @@
                         <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"></i>
                         <input type="text" placeholder="Search songs, artists..." class="w-full bg-[#161616] pl-11 pr-4 py-2.5 rounded-full text-xs text-gray-200 placeholder-gray-500 focus:outline-none border border-transparent focus:border-gray-700">
                     </div>
+                    
+                    <!-- Admin Crown Button -->
+                    {% if user.is_authenticated and not user.is_staff %}
+                        <div class="relative">
+                            <button class="admin-crown-btn" id="adminCrownBtn" title="Become Admin">
+                                <i class="fa-solid fa-crown crown-icon"></i>
+                                <span class="badge"></span>
+                            </button>
+                            <!-- Dropdown -->
+                            <div class="admin-dropdown" id="adminDropdown">
+                                <div class="dropdown-title">👑 Admin Access</div>
+                                <a href="{% url 'admin_apply' %}">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                    Become an Admin
+                                </a>
+                                <div class="divider"></div>
+                                <a href="#" style="color: #6b7280; font-size: 12px;">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    Help manage BayaPlus
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Notification Bell -->
                     <button class="relative text-gray-400 hover:text-white text-lg shrink-0">
                         <i class="fa-regular fa-bell"></i>
                         <span class="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                     </button>
                     
-                    <!-- Conditional Dashboard Link -->
                     {% if user.is_authenticated %}
-                        {% if user.userprofile.role == 'Artist' %}
-                            <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm shrink-0" title="Artist Dashboard">
-                                <i class="fa-solid fa-microphone"></i>
-                            </a>
-                        {% elif user.userprofile.role == 'Fan' %}
-                            <a href="{% url 'fanboard' %}" class="text-gray-400 hover:text-white text-sm shrink-0" title="Fan Dashboard">
-                                <i class="fa-solid fa-headphones"></i>
-                            </a>
-                        {% else %}
-                            <a href="{% url 'index' %}" class="text-gray-400 hover:text-white text-sm shrink-0">
-                                <i class="fa-solid fa-user"></i>
-                            </a>
-                        {% endif %}
+                        <a href="{% if user.userprofile.role == 'Artist' %}{% url 'artistboard' %}{% else %}{% url 'fanboard' %}{% endif %}" class="text-gray-400 hover:text-white text-sm shrink-0">
+                            <i class="fa-solid fa-user"></i>
+                        </a>
                         <a href="{% url 'logout' %}" class="text-gray-400 hover:text-white text-sm shrink-0">
                             <i class="fa-solid fa-sign-out-alt"></i>
                         </a>
@@ -258,7 +397,9 @@
                             </div>
                             <div class="flex items-center gap-4 text-gray-500 text-xs shrink-0 pl-2">
                                 <span>{{ track.duration|default:"--" }}</span>
-                                <button class="hover:text-white"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                <button class="hover:text-white" onclick="playTrack({{ track.id }})">
+                                    <i class="fa-solid fa-play text-xs"></i>
+                                </button>
                             </div>
                         </div>
                     {% empty %}
@@ -276,124 +417,61 @@
                     <i class="fa-solid fa-chart-simple text-red-500 text-xs"></i>
                 </div>
 
-                <div class="relative rounded-xl overflow-hidden aspect-square bg-gradient-to-b from-red-900 to-black p-6 flex flex-col justify-end items-center text-center shadow-2xl border border-red-950">
-                    <div class="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity" style="background-image: url('{% if featured.0.cover_art %}{{ featured.0.cover_art.url }}{% else %}https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80{% endif %}');"></div>
-                    <h3 class="text-3xl font-serif italic text-yellow-400 drop-shadow mb-1 z-10">
-                        {% if featured.0.title %}{{ featured.0.title|slice:":15" }}{% else %}No Track{% endif %}
-                    </h3>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest z-10">
-                        {% if featured.0.artist_profile.artist_name %}{{ featured.0.artist_profile.artist_name }}{% endif %}
-                    </p>
+                <div class="relative rounded-xl overflow-hidden aspect-square bg-gradient-to-b from-red-900 to-black p-6 flex flex-col justify-end items-center text-center shadow-2xl border border-red-950" id="now-playing-cover">
+                    <div class="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity" id="now-playing-bg" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');"></div>
+                    <h3 class="text-3xl font-serif italic text-yellow-400 drop-shadow mb-1 z-10" id="now-playing-title">Select a song</h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest z-10" id="now-playing-artist">-</p>
                 </div>
 
                 <div class="flex justify-between items-start pt-2">
                     <div>
-                        <h4 class="text-sm font-bold">{% if featured.0.title %}{{ featured.0.title }}{% else %}No Track{% endif %}</h4>
-                        <p class="text-xs text-gray-500">{% if featured.0.artist_profile.artist_name %}{{ featured.0.artist_profile.artist_name }}{% endif %}</p>
+                        <h4 class="text-sm font-bold" id="now-playing-title-small">No track playing</h4>
+                        <p class="text-xs text-gray-500" id="now-playing-artist-small">-</p>
                     </div>
-                    <button class="text-red-500 hover:text-red-400 text-sm"><i class="fa-solid fa-heart"></i></button>
+                    <button class="text-red-500 hover:text-red-400 text-sm" id="like-btn">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
                 </div>
 
+                <!-- Progress Bar -->
                 <div class="space-y-1">
-                    <div class="w-full bg-gray-800 h-1 rounded-full relative cursor-pointer">
-                        <div class="bg-yellow-400 h-full w-[45%] rounded-full relative">
-                            <span class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow"></span>
-                        </div>
+                    <div class="player-progress-bar" id="progress-bar">
+                        <div class="player-progress" id="progress"></div>
+                        <div class="player-progress-dot" id="progress-dot"></div>
                     </div>
                     <div class="flex justify-between text-[10px] text-gray-500">
-                        <span>1:36</span>
-                        <span>3:24</span>
+                        <span id="current-time">0:00</span>
+                        <span id="duration">0:00</span>
                     </div>
                 </div>
 
+                <!-- Controls -->
                 <div class="flex justify-between items-center px-4 py-2">
-                    <button class="text-gray-500 hover:text-white text-xs"><i class="fa-solid fa-shuffle"></i></button>
-                    <button class="text-white hover:text-gray-300"><i class="fa-solid fa-backward-step"></i></button>
-                    <button class="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-lg transition"><i class="fa-solid fa-pause"></i></button>
-                    <button class="text-white hover:text-gray-300"><i class="fa-solid fa-forward-step"></i></button>
-                    <button class="text-gray-500 hover:text-white text-xs"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="text-gray-500 hover:text-white text-xs" id="shuffle-btn">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                    <button class="text-white hover:text-gray-300" id="prev-btn">
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button class="play-btn" id="play-btn">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button class="text-white hover:text-gray-300" id="next-btn">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                    <button class="text-gray-500 hover:text-white text-xs" id="repeat-btn">
+                        <i class="fa-solid fa-repeat"></i>
+                    </button>
                 </div>
             </div>
 
             <div class="space-y-3 mt-6 border-t border-[#1a1a1a] pt-4">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-red-500 uppercase tracking-wide">Quick Links</span>
+                    <span class="text-xs font-bold text-red-500 uppercase tracking-wide">Queue</span>
+                    <span class="text-xs text-gray-500" id="queue-count">0 songs</span>
                 </div>
-                
-                <div class="space-y-2.5">
-                    {% if user.is_authenticated %}
-                        {% if user.userprofile.role == 'Artist' %}
-                            <a href="{% url 'create_release' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                                <div class="w-8 h-8 bg-yellow-400/20 rounded-lg flex items-center justify-center text-yellow-400">
-                                    <i class="fa-solid fa-plus"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold">New Release</h5>
-                                    <p class="text-[10px] text-gray-500">Upload your music</p>
-                                </div>
-                            </a>
-                            <a href="{% url 'artistboard' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                                <div class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center text-red-500">
-                                    <i class="fa-solid fa-microphone"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold">Artist Dashboard</h5>
-                                    <p class="text-[10px] text-gray-500">Manage your music</p>
-                                </div>
-                            </a>
-                        {% elif user.userprofile.role == 'Fan' %}
-                            <a href="{% url 'fan_library' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                                <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-500">
-                                    <i class="fa-solid fa-heart"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold">My Library</h5>
-                                    <p class="text-[10px] text-gray-500">Your liked music</p>
-                                </div>
-                            </a>
-                            <a href="{% url 'fanboard' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                                <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-500">
-                                    <i class="fa-solid fa-headphones"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold">Fan Dashboard</h5>
-                                    <p class="text-[10px] text-gray-500">Your music hub</p>
-                                </div>
-                            </a>
-                        {% endif %}
-                    {% else %}
-                        <a href="{% url 'login' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                            <div class="w-8 h-8 bg-yellow-400/20 rounded-lg flex items-center justify-center text-yellow-400">
-                                <i class="fa-solid fa-sign-in-alt"></i>
-                            </div>
-                            <div>
-                                <h5 class="text-xs font-bold">Sign In</h5>
-                                <p class="text-[10px] text-gray-500">Access your account</p>
-                            </div>
-                        </a>
-                        <a href="{% url 'signup' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-500">
-                                <i class="fa-solid fa-user-plus"></i>
-                            </div>
-                            <div>
-                                <h5 class="text-xs font-bold">Sign Up</h5>
-                                <p class="text-[10px] text-gray-500">Create an account</p>
-                            </div>
-                        </a>
-                    {% endif %}
-                    
-                    <!-- Admin Apply Link - Show for all authenticated users -->
-                    {% if user.is_authenticated and not user.is_staff %}
-                        <a href="{% url 'admin_apply' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-500">
-                                <i class="fa-solid fa-user-shield"></i>
-                            </div>
-                            <div>
-                                <h5 class="text-xs font-bold">Become Admin</h5>
-                                <p class="text-[10px] text-gray-500">Apply for admin access</p>
-                            </div>
-                        </a>
-                    {% endif %}
+                <div class="space-y-1 max-h-40 overflow-y-auto" id="queue-list">
+                    <p class="text-xs text-gray-500 text-center py-4">Queue is empty</p>
                 </div>
             </div>
         </aside>
@@ -402,28 +480,22 @@
     <!-- BOTTOM PLAYER (Now Playing Bar) -->
     <footer class="h-20 bg-[#0f0f0f] border-t border-[#1a1a1a] px-4 sm:px-6 flex items-center justify-between z-20 shrink-0">
         <div class="flex items-center gap-3 w-1/2 sm:w-1/4 min-w-0">
-            {% if featured.0.cover_art %}
-                <img src="{{ featured.0.cover_art.url }}" class="w-10 h-10 sm:w-11 sm:h-11 rounded object-cover shrink-0">
-            {% else %}
-                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded bg-red-950 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-music text-red-500"></i>
-                </div>
-            {% endif %}
-            <div class="truncate">
-                <h4 class="text-xs font-bold truncate">{% if featured.0.title %}{{ featured.0.title }}{% else %}No Track{% endif %}</h4>
-                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 truncate">
-                    {% if featured.0.artist_profile.artist_name %}{{ featured.0.artist_profile.artist_name }}{% endif %}
-                </p>
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded bg-red-950 flex items-center justify-center shrink-0" id="bottom-player-cover">
+                <i class="fa-solid fa-music text-red-500"></i>
             </div>
-            <button class="text-red-500 hover:text-red-400 text-xs ml-1 sm:ml-2 shrink-0"><i class="fa-solid fa-heart"></i></button>
+            <div class="truncate">
+                <h4 class="text-xs font-bold truncate" id="bottom-player-title">No Track</h4>
+                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 truncate" id="bottom-player-artist">-</p>
+            </div>
+            <button class="text-red-500 hover:text-red-400 text-xs ml-1 sm:ml-2 shrink-0"><i class="fa-regular fa-heart"></i></button>
         </div>
 
         <div class="flex flex-col items-center gap-2 w-1/2 sm:w-2/4 max-w-xl">
             <div class="flex items-center gap-4 sm:gap-6">
                 <button class="text-red-500 hover:text-red-400 text-xs hidden sm:block"><i class="fa-solid fa-shuffle"></i></button>
-                <button class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-backward-step"></i></button>
-                <button class="w-8 h-8 sm:w-9 sm:h-9 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs sm:text-sm transition"><i class="fa-solid fa-pause"></i></button>
-                <button class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-forward-step"></i></button>
+                <button class="text-gray-400 hover:text-white text-sm" id="bottom-prev"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="w-8 h-8 sm:w-9 sm:h-9 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs sm:text-sm transition" id="bottom-play"><i class="fa-solid fa-play"></i></button>
+                <button class="text-gray-400 hover:text-white text-sm" id="bottom-next"><i class="fa-solid fa-forward-step"></i></button>
                 <button class="text-gray-400 hover:text-white text-xs hidden sm:block"><i class="fa-solid fa-repeat"></i></button>
             </div>
         </div>
@@ -431,14 +503,526 @@
         <div class="hidden sm:flex items-center justify-end gap-4 w-1/4">
             <button class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-list-ul"></i></button>
             <div class="flex items-center gap-2">
-                <button class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-volume-high"></i></button>
-                <div class="w-16 md:w-20 bg-gray-800 h-1 rounded-full relative cursor-pointer">
-                    <div class="bg-yellow-400 h-full w-[70%] rounded-full"></div>
+                <button class="text-gray-400 hover:text-white text-xs" id="bottom-volume-btn"><i class="fa-solid fa-volume-high"></i></button>
+                <div class="volume-bar w-16 md:w-20 relative cursor-pointer" id="bottom-volume-bar">
+                    <div class="volume-progress" id="bottom-volume-progress" style="width: 70%;"></div>
                 </div>
             </div>
             <button class="text-gray-400 hover:text-white text-xs ml-2"><i class="fa-solid fa-expand"></i></button>
         </div>
     </footer>
+
+    <!-- Admin Crown Dropdown Script -->
+    <script>
+        // Admin Crown Dropdown Toggle
+        const adminCrownBtn = document.getElementById('adminCrownBtn');
+        const adminDropdown = document.getElementById('adminDropdown');
+        
+        if (adminCrownBtn && adminDropdown) {
+            adminCrownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                adminDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!adminCrownBtn.contains(e.target) && !adminDropdown.contains(e.target)) {
+                    adminDropdown.classList.remove('show');
+                }
+            });
+            
+            // Close dropdown on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    adminDropdown.classList.remove('show');
+                }
+            });
+        }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- BAYAPLUS MUSIC PLAYER JAVASCRIPT -->
+    <!-- ============================================ -->
+    <script>
+        // ============================================
+        // BAYAPLUS MUSIC PLAYER
+        // ============================================
+        
+        // Audio Player State
+        let audio = new Audio();
+        let currentTrack = null;
+        let isPlaying = false;
+        let playId = null;
+        let durationTracked = 0;
+        let volume = 70;
+        let isShuffled = false;
+        let repeatMode = 'none';
+        let queue = [];
+        let currentIndex = 0;
+
+        // DOM Elements
+        const playBtn = document.getElementById('play-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const bottomPlay = document.getElementById('bottom-play');
+        const bottomPrev = document.getElementById('bottom-prev');
+        const bottomNext = document.getElementById('bottom-next');
+        const progress = document.getElementById('progress');
+        const progressDot = document.getElementById('progress-dot');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const titleEl = document.getElementById('now-playing-title');
+        const artistEl = document.getElementById('now-playing-artist');
+        const titleSmallEl = document.getElementById('now-playing-title-small');
+        const artistSmallEl = document.getElementById('now-playing-artist-small');
+        const coverBg = document.getElementById('now-playing-bg');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        const likeBtn = document.getElementById('like-btn');
+        const queueList = document.getElementById('queue-list');
+        const queueCount = document.getElementById('queue-count');
+        const bottomTitle = document.getElementById('bottom-player-title');
+        const bottomArtist = document.getElementById('bottom-player-artist');
+        const bottomCover = document.getElementById('bottom-player-cover');
+        const volumeBtn = document.getElementById('bottom-volume-btn');
+        const volumeProgress = document.getElementById('bottom-volume-progress');
+        const volumeBar = document.getElementById('bottom-volume-bar');
+
+        // ============================================
+        // PLAY TRACK FUNCTION
+        // ============================================
+        function playTrack(trackId, trackData = null) {
+            if (trackData) {
+                loadTrack(trackData);
+            } else {
+                fetch(`/bayaplus/api/track/${trackId}/info/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadTrack(data);
+                    })
+                    .catch(error => console.error('Error loading track:', error));
+            }
+        }
+
+        // ============================================
+        // PLAY RELEASE FUNCTION
+        // ============================================
+        function playRelease(releaseId) {
+            fetch(`/bayaplus/api/release/${releaseId}/tracks/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tracks && data.tracks.length > 0) {
+                        queue = data.tracks;
+                        currentIndex = 0;
+                        updateQueueUI();
+                        playTrack(queue[0].id);
+                    }
+                })
+                .catch(error => console.error('Error loading release tracks:', error));
+        }
+
+        // ============================================
+        // LOAD TRACK FUNCTION
+        // ============================================
+        function loadTrack(track) {
+            currentTrack = track;
+            
+            // Update UI
+            titleEl.textContent = track.title;
+            artistEl.textContent = track.artist;
+            titleSmallEl.textContent = track.title;
+            artistSmallEl.textContent = track.artist;
+            bottomTitle.textContent = track.title;
+            bottomArtist.textContent = track.artist;
+            
+            if (track.cover_art) {
+                coverBg.style.backgroundImage = `url('${track.cover_art}')`;
+                bottomCover.innerHTML = `<img src="${track.cover_art}" class="w-full h-full object-cover rounded">`;
+            } else {
+                bottomCover.innerHTML = `<i class="fa-solid fa-music text-red-500"></i>`;
+            }
+            
+            // Load audio
+            audio.src = `/bayaplus/stream/${track.id}/`;
+            audio.load();
+            
+            // Reset progress
+            progress.style.width = '0%';
+            progressDot.style.left = '0%';
+            currentTimeEl.textContent = '0:00';
+            durationTracked = 0;
+            
+            // Start play tracking
+            startPlayTracking(track.id);
+            
+            audio.play();
+        }
+
+        // ============================================
+        // PLAY TRACKING (30-second rule)
+        // ============================================
+        function startPlayTracking(trackId) {
+            fetch(`/bayaplus/api/track/${trackId}/play/start/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    playId = data.play_id;
+                    durationTracked = 0;
+                }
+            })
+            .catch(error => console.error('Error starting play tracking:', error));
+        }
+
+        function updatePlayTracking() {
+            if (!playId) return;
+            
+            durationTracked += 1;
+            
+            // Update every 5 seconds
+            if (durationTracked % 5 === 0) {
+                fetch(`/bayaplus/api/track/play/update/${playId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        duration_played: durationTracked,
+                        completed: durationTracked >= 30
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.counted_as_stream) {
+                        console.log('✅ Track counted as a stream!');
+                    }
+                })
+                .catch(error => console.error('Error updating play tracking:', error));
+            }
+        }
+
+        // ============================================
+        // TOGGLE PLAY/PAUSE
+        // ============================================
+        function togglePlay() {
+            if (audio.src) {
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+            } else if (queue.length > 0) {
+                playTrack(queue[0].id);
+            }
+        }
+
+        // ============================================
+        // PLAY NEXT / PREVIOUS
+        // ============================================
+        function playNext() {
+            if (isShuffled) {
+                const randomIndex = Math.floor(Math.random() * queue.length);
+                currentIndex = randomIndex;
+            } else {
+                currentIndex = (currentIndex + 1) % queue.length;
+            }
+            
+            if (queue.length > 0) {
+                playTrack(queue[currentIndex].id);
+            }
+        }
+
+        function playPrevious() {
+            if (audio.currentTime > 3) {
+                audio.currentTime = 0;
+                return;
+            }
+            currentIndex = (currentIndex - 1 + queue.length) % queue.length;
+            if (queue.length > 0) {
+                playTrack(queue[currentIndex].id);
+            }
+        }
+
+        // ============================================
+        // UPDATE QUEUE UI
+        // ============================================
+        function updateQueueUI() {
+            if (queueList) {
+                if (queue.length === 0) {
+                    queueList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Queue is empty</p>';
+                    queueCount.textContent = '0 songs';
+                    return;
+                }
+                
+                queueCount.textContent = `${queue.length} songs`;
+                let html = '';
+                queue.forEach((track, index) => {
+                    const isActive = index === currentIndex;
+                    html += `
+                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[#1a1a1a] transition queue-item ${isActive ? 'active bg-yellow-400/10 border-l-2 border-yellow-400' : ''}" 
+                             onclick="playTrack(${track.id})" style="cursor: pointer;">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-xs text-gray-500 w-4 text-center">${index + 1}</span>
+                                <div class="w-6 h-6 rounded bg-red-950 flex items-center justify-center shrink-0 overflow-hidden">
+                                    ${track.cover_art ? `<img src="${track.cover_art}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-music text-red-500 text-xs"></i>`}
+                                </div>
+                                <div class="truncate">
+                                    <p class="text-xs font-medium truncate">${track.title}</p>
+                                    <p class="text-[10px] text-gray-500 truncate">${track.artist}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500">${track.duration || '--'}</span>
+                        </div>
+                    `;
+                });
+                queueList.innerHTML = html;
+            }
+        }
+
+        // ============================================
+        // SET VOLUME
+        // ============================================
+        function setVolume(value) {
+            volume = Math.min(100, Math.max(0, value));
+            audio.volume = volume / 100;
+            if (volumeProgress) {
+                volumeProgress.style.width = volume + '%';
+            }
+            
+            // Update volume icon
+            if (volumeBtn) {
+                if (volume === 0) {
+                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-mute"></i>';
+                } else if (volume < 50) {
+                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
+                } else {
+                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                }
+            }
+        }
+
+        // ============================================
+        // GET CSRF TOKEN
+        // ============================================
+        function getCSRFToken() {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const trimmed = cookie.trim();
+                    if (trimmed.startsWith('csrftoken=')) {
+                        cookieValue = decodeURIComponent(trimmed.substring(10));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // ============================================
+        // FORMAT TIME
+        // ============================================
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        
+        // Play/Pause Buttons
+        if (playBtn) {
+            playBtn.addEventListener('click', togglePlay);
+        }
+        if (bottomPlay) {
+            bottomPlay.addEventListener('click', togglePlay);
+        }
+
+        // Next/Previous Buttons
+        if (nextBtn) {
+            nextBtn.addEventListener('click', playNext);
+        }
+        if (prevBtn) {
+            prevBtn.addEventListener('click', playPrevious);
+        }
+        if (bottomNext) {
+            bottomNext.addEventListener('click', playNext);
+        }
+        if (bottomPrev) {
+            bottomPrev.addEventListener('click', playPrevious);
+        }
+
+        // Audio Events
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }
+            if (bottomPlay) {
+                bottomPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+            if (bottomPlay) {
+                bottomPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                if (progress) {
+                    progress.style.width = percent + '%';
+                }
+                if (progressDot) {
+                    progressDot.style.left = percent + '%';
+                }
+                if (currentTimeEl) {
+                    currentTimeEl.textContent = formatTime(audio.currentTime);
+                }
+                updatePlayTracking();
+            }
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (durationEl) {
+                durationEl.textContent = formatTime(audio.duration);
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            if (repeatMode === 'one') {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                playNext();
+            }
+        });
+
+        // Progress Bar Click
+        if (progressBar) {
+            progressBar.addEventListener('click', (e) => {
+                if (audio.duration) {
+                    const rect = progressBar.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = percent * audio.duration;
+                }
+            });
+        }
+
+        // Volume
+        if (volumeBar) {
+            volumeBar.addEventListener('click', (e) => {
+                const rect = volumeBar.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                setVolume(percent * 100);
+            });
+        }
+
+        if (volumeBtn) {
+            volumeBtn.addEventListener('click', () => {
+                if (audio.volume > 0) {
+                    setVolume(0);
+                } else {
+                    setVolume(70);
+                }
+            });
+        }
+
+        // Shuffle
+        if (shuffleBtn) {
+            shuffleBtn.addEventListener('click', () => {
+                isShuffled = !isShuffled;
+                shuffleBtn.style.color = isShuffled ? '#fbbf24' : '';
+            });
+        }
+
+        // Repeat
+        if (repeatBtn) {
+            repeatBtn.addEventListener('click', () => {
+                const modes = ['none', 'all', 'one'];
+                const icons = ['fa-repeat', 'fa-repeat', 'fa-repeat-1'];
+                const currentIdx = modes.indexOf(repeatMode);
+                repeatMode = modes[(currentIdx + 1) % modes.length];
+                repeatBtn.style.color = repeatMode !== 'none' ? '#fbbf24' : '';
+                repeatBtn.innerHTML = `<i class="fa-solid ${icons[(currentIdx + 1) % icons.length]}"></i>`;
+            });
+        }
+
+        // Like
+        if (likeBtn) {
+            likeBtn.addEventListener('click', () => {
+                const icon = likeBtn.querySelector('i');
+                if (icon.classList.contains('fa-regular')) {
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid', 'text-red-500');
+                } else {
+                    icon.classList.remove('fa-solid', 'text-red-500');
+                    icon.classList.add('fa-regular');
+                }
+            });
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
+            }
+            if (e.code === 'ArrowRight' && e.ctrlKey) {
+                e.preventDefault();
+                playNext();
+            }
+            if (e.code === 'ArrowLeft' && e.ctrlKey) {
+                e.preventDefault();
+                playPrevious();
+            }
+        });
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            setVolume(70);
+            updateQueueUI();
+            
+            fetch('/bayaplus/api/queue/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.queue && data.queue.length > 0) {
+                        queue = data.queue;
+                        if (data.current) {
+                            currentIndex = queue.findIndex(t => t.id === data.current.id);
+                            if (currentIndex === -1) currentIndex = 0;
+                        }
+                        updateQueueUI();
+                    }
+                })
+                .catch(error => console.error('Error loading queue:', error));
+        });
+
+        console.log('🎵 BayaPlus Player Loaded!');
+        console.log('📋 Controls: Space = Play/Pause, Ctrl+Right = Next, Ctrl+Left = Previous');
+        console.log('📋 30-second rule: Tracks count as streams after 30 seconds of playback');
+    </script>
 
 </body>
 </html>

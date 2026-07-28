@@ -202,8 +202,8 @@ class Track(models.Model):
     lyrics = models.TextField(blank=True, null=True)
     is_explicit = models.BooleanField(default=False)
     
-    # Statistics
-    plays = models.PositiveIntegerField(default=0)
+    # Statistics - This field already exists
+    plays = models.PositiveIntegerField(default=0)  # This is the field causing the conflict
     
     class Meta:
         ordering = ['track_number']
@@ -281,3 +281,48 @@ class Follow(models.Model):
     
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
+    
+
+# In models.py - Add Streaming models
+
+# In models.py - Fix the PlayHistory model
+
+class PlayHistory(models.Model):
+    """Track user's listening history"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='play_history')
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='play_history')  # Changed related_name
+    played_at = models.DateTimeField(auto_now_add=True)
+    duration_played = models.IntegerField(default=0)  # seconds played
+    completed = models.BooleanField(default=False)  # if they listened to the whole track
+    
+    class Meta:
+        ordering = ['-played_at']
+    
+    def __str__(self):
+        return f"{self.user.username} played {self.track.title}"
+
+
+class Queue(models.Model):
+    """User's playback queue"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='queue')
+    tracks = models.ManyToManyField(Track, through='QueueItem')
+    current_index = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s Queue"
+
+
+class QueueItem(models.Model):
+    """Individual items in the queue"""
+    queue = models.ForeignKey(Queue, on_delete=models.CASCADE, related_name='queue_items')
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='queue_items')
+    position = models.IntegerField()
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['position']
+        unique_together = ['queue', 'position']
+    
+    def __str__(self):
+        return f"{self.track.title} at position {self.position}"

@@ -2399,3 +2399,164 @@ def admin_review_request(request, request_id):
     }
     
     return render(request, "admin/admin_request_review.html", context)
+
+
+# In views.py - Update the get_track_audio function
+# In views.py - Update the streaming function
+
+def get_track_audio(request, track_id):
+    """Stream audio file - with range request support and play tracking"""
+    track = get_object_or_404(Track, id=track_id)
+    
+    # Check if track is from a published release
+    if track.release.status != 'published' or not track.release.is_public:
+        return HttpResponse("Track not available", status=404)
+    
+    audio_file = track.audio_file
+    if not audio_file:
+        return HttpResponse("Audio file not found", status=404)
+    
+    # Serve the file with range request support
+    import os
+    from django.http import FileResponse, HttpResponse
+    from django.conf import settings
+    import mimetypes
+    import re
+    
+    file_path = audio_file.path
+    file_size = os.path.getsize(file_path)
+    
+    range_header = request.META.get('HTTP_RANGE', '').strip()
+    
+    if range_header:
+        try:
+            range_match = re.search(r'bytes=(\d+)-(\d*)', range_header)
+            if range_match:
+                start = int(range_match.group(1))
+                end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+                
+                if start >= file_size or end >= file_size:
+                    return HttpResponse(status=416)
+                
+                response = HttpResponse(
+                    open(file_path, 'rb').read(end - start + 1),
+                    status=206,
+                    content_type=mimetypes.guess_type(file_path)[0] or 'audio/mpeg'
+                )
+                response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+                response['Accept-Ranges'] = 'bytes'
+                response['Content-Length'] = str(end - start + 1)
+                return response
+        except:
+            pass
+    
+    # Fallback to serving the whole file
+    response = FileResponse(open(file_path, 'rb'), content_type=mimetypes.guess_type(file_path)[0] or 'audio/mpeg')
+    response['Accept-Ranges'] = 'bytes'
+    response['Content-Length'] = str(file_size)
+    return response
+
+
+@login_required(login_url='login')
+def track_play_start(request, track_id):
+    """Track when a user starts playing a track"""
+    if request.method == "POST":
+        track = get_object_or_404(Track, id=track_id)
+        
+        # Create play history entry
+        play_history = PlayHistory.objects.create(
+            user=request.user,
+            track=track,
+            duration_played=0,
+            completed=False
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'play_id': play_history.id,
+            'track_id': track.id,
+            'message': 'Play started'
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required(login_url='login')
+def track_play_update(request, play_id):
+    """Update play progress and count as stream if 30+ seconds played"""
+    if request.method == "POST":
+        play_history = get_object_or_404(PlayHistory, id=play_id, user=request.user)
+        duration_played = int(request.POST.get('duration_played', 0))
+        completed = request.POST.get('completed') == 'true'
+        
+        # Update play history
+        play_history.duration_played = duration_played
+        play_history.completed = completed
+        play_history.save()
+        
+        # If played 30+ seconds, count as a stream
+        if duration_played >= 30:
+            # Increment track plays (if not already counted)
+            track = play_history.track
+            if not hasattr(play_history, '_counted') or not play_history._counted:
+                track.plays += 1
+                track.save()
+                
+                # Update release plays
+                release = track.release
+                release.total_plays += 1
+                release.save()
+                
+                play_history._counted = True
+                play_history.save()
+        
+        return JsonResponse({
+            'success': True,
+            'duration_played': duration_played,
+            'counted_as_stream': duration_played >= 30,
+            'message': 'Play progress updated'
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def track_info(request, track_id):
+    """Get track information for playback"""
+    track = get_object_or_404(Track, id=track_id)
+    
+    data = {
+        'id': track.id,
+        'title': track.title,
+        'artist': track.release.artist_profile.artist_name or track.release.artist.username,
+        'duration': track.duration or '--',
+        'cover_art': track.release.cover_art.url if track.release.cover_art else None,
+        'release_id': track.release.id,
+        'release_title': track.release.title,
+        'audio_url': track.audio_file.url if track.audio_file else None,
+    }
+    
+    return JsonResponse(data)
+
+# In views.py
+def release_tracks(request, release_id):
+    """Get all tracks for a release"""
+    release = get_object_or_404(Release, id=release_id, status='published', is_public=True)
+    tracks = release.tracks.all().order_by('track_number')
+    
+    data = {
+        'release_id': release.id,
+        'release_title': release.title,
+        'tracks': [
+            {
+                'id': track.id,
+                'title': track.title,
+                'artist': release.artist_profile.artist_name or release.artist.username,
+                'duration': track.duration or '--',
+                'cover_art': release.cover_art.url if release.cover_art else None,
+                'track_number': track.track_number,
+            }
+            for track in tracks
+        ]
+    }
+    
+    return JsonResponse(data)

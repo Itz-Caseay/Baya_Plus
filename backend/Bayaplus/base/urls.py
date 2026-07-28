@@ -81,4 +81,11 @@ urlpatterns = [
     path('admin-apply/', views.admin_apply, name='admin_apply'),
     path('staff/admin-requests/', views.admin_manage_requests, name='admin_manage_requests'),
     path('staff/admin-request/<int:request_id>/', views.admin_review_request, name='admin_review_request'),
+    # Streaming URLs
+    path('stream/<int:track_id>/', views.get_track_audio, name='stream_track'),
+    path('api/track/<int:track_id>/info/', views.track_info, name='track_info'),
+    path('api/track/<int:track_id>/play/start/', views.track_play_start, name='track_play_start'),
+    path('api/track/play/update/<int:play_id>/', views.track_play_update, name='track_play_update'),
+    path('api/release/<int:release_id>/tracks/', views.release_tracks, name='release_tracks'),
+    path('api/queue/', views.get_queue, name='get_queue'),
 ]
