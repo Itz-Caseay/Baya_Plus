@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.core.mail import EmailMessage, send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -22,6 +23,37 @@ from django.db.models.functions import TruncDate, TruncMonth
 import json
 
 logger = logging.getLogger(__name__)
+
+def test_admin_email(request):
+    """Test sending email to admins"""
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        send_mail(
+            'Test Admin Email from BayaPlus',
+            'This is a test email to verify admin email configuration.',
+            settings.ADMIN_EMAIL_FROM,
+            settings.ADMIN_EMAILS,
+            fail_silently=False,
+        )
+        return HttpResponse(f"✅ Test email sent successfully to: {', '.join(settings.ADMIN_EMAILS)}")
+    except Exception as e:
+        return HttpResponse(f"❌ Test email failed: {str(e)}")
+
+def test_email(request):
+    try:
+        send_mail(
+            'Test Email from BayaPlus',
+            'This is a test email to verify email configuration.',
+            settings.DEFAULT_FROM_EMAIL,
+            ['your-test-email@gmail.com'],  # Replace with your email
+            fail_silently=False,
+        )
+        return HttpResponse("✅ Test email sent successfully! Check your inbox.")
+    except Exception as e:
+        return HttpResponse(f"❌ Test email failed: {str(e)}")
+
 
 def index(request):
     """Main landing page dashboard"""
@@ -90,109 +122,61 @@ def signup(request):
                     token = default_token_generator.make_token(user)
                     verification_link = f"http://{current_site.domain}/bayaplus/activate/{uid}/{token}/"
                     
-                    # Create email content
-                    mail_subject = 'Activate Your BayaPlus Account'
+                    print("\n" + "="*60)
+                    print("🔗 VERIFICATION LINK:")
+                    print(verification_link)
+                    print("="*60 + "\n")
                     
-                    # Plain text version
-                    text_content = f"""
-                    Hi {user.fullname},
-
-                    Welcome to BayaPlus! Please confirm your email address to activate your account.
-
-                    Click the link below to verify your email:
-                    {verification_link}
-
-                    If you didn't create an account with BayaPlus, please ignore this email.
-
-                    Thanks,
-                    The BayaPlus Team
-                    """
-                    
-                    # HTML version
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; }}
-                            .header {{ background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                            .content {{ padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px; }}
-                            .btn {{ display: inline-block; padding: 12px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }}
-                            .btn:hover {{ background: #45a049; }}
-                            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
-                            .link {{ background: #f0f0f0; padding: 10px; word-break: break-all; border-radius: 5px; font-family: monospace; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="header">
-                            <h1>🎵 BayaPlus</h1>
-                        </div>
-                        <div class="content">
-                            <h2>Hi {user.fullname},</h2>
-                            <p>Welcome to BayaPlus! Please confirm your email address to activate your account.</p>
-                            <p style="text-align: center;">
-                                <a href="{verification_link}" class="btn">Verify Email Address</a>
-                            </p>
-                            <p>Or copy and paste this link in your browser:</p>
-                            <div class="link">{verification_link}</div>
-                            <br>
-                            <p>If you didn't create an account with BayaPlus, please ignore this email.</p>
-                            <p>This link will expire in 24 hours.</p>
-                        </div>
-                        <div class="footer">
-                            <p>&copy; 2026 BayaPlus. All rights reserved.</p>
-                            <p>This is an automated message, please do not reply to this email.</p>
-                        </div>
-                    </body>
-                    </html>
-                    """
-                    
-                    # Send email with both plain text and HTML versions
+                    # Try to send email
                     try:
-                        msg = EmailMultiAlternatives(
-                            mail_subject,
-                            text_content,
-                            settings.DEFAULT_FROM_EMAIL,
-                            [email]
-                        )
-                        msg.attach_alternative(html_content, "text/html")
-                        msg.send()
+                        mail_subject = 'Activate Your BayaPlus Account'
+                        html_message = render_to_string('auth/acc_active_email.html', {
+                            'user': user,
+                            'domain': current_site.domain,
+                            'uid': uid,
+                            'token': token,
+                        })
                         
-                        print(f"✅ Verification email sent successfully to {email}")
+                        # Check if using console backend
+                        if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+                            email_message = EmailMessage(
+                                mail_subject,
+                                html_message,
+                                'BayaPlus <noreply@bayaplus.com>',
+                                [email]
+                            )
+                            email_message.content_subtype = "html"
+                            email_message.send()
+                            print(f"✅ Email sent to console")
+                        else:
+                            # SMTP - with better error handling
+                            try:
+                                email_message = EmailMessage(
+                                    mail_subject,
+                                    html_message,
+                                    settings.DEFAULT_FROM_EMAIL,
+                                    [email]
+                                )
+                                email_message.content_subtype = "html"
+                                email_message.send()
+                                print(f"✅ Email sent successfully to {email}")
+                            except Exception as smtp_error:
+                                print(f"❌ SMTP Error: {str(smtp_error)}")
+                                raise
                         
-                        # Return success page
-                        return HttpResponse(f"""
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <style>
-                                    body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }}
-                                    h2 {{ color: #4CAF50; }}
-                                    .btn {{ display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }}
-                                    .info {{ background: #e3f2fd; padding: 20px; border-radius: 5px; margin: 20px 0; }}
-                                </style>
-                            </head>
-                            <body>
-                                <h2>🎉 Registration Successful!</h2>
-                                <div class="info">
-                                    <p>📧 A verification email has been sent to <strong>{email}</strong></p>
-                                    <p>Please check your inbox (and spam folder) to activate your account.</p>
-                                </div>
-                                <p><a href="/bayaplus/login/" class="btn">Go to Login</a></p>
-                            </body>
-                            </html>
-                        """)
+                        return render(request, "auth/registration_success.html", {
+                            'email': email,
+                            'verification_link': verification_link,
+                        })
                         
                     except Exception as e:
                         print(f"❌ Email sending failed: {str(e)}")
-                        return HttpResponse(f"""
-                            <h2>Registration Successful but Email Failed!</h2>
-                            <p>Your account was created but we couldn't send the verification email.</p>
-                            <p><strong>Error:</strong> {str(e)}</p>
-                            <p>Please contact support or try again later.</p>
-                            <p><a href="/bayaplus/login/">Go to Login</a></p>
-                        """)
-                        
+                        return render(request, "auth/registration_error.html", {
+                            'error_message': str(e),
+                            'email': email,
+                            'verification_link': verification_link,
+                        })
+                    
                 except Exception as e:
                     messages.error(request, f"Error creating account: {str(e)}")
                     return redirect('signup')
@@ -664,24 +648,20 @@ def publish_release(request, release_id):
     if request.method == "POST" and request.FILES.get('cover_art'):
         cover_art = request.FILES['cover_art']
         
-        # Validate file size (max 5MB)
         if cover_art.size > 5 * 1024 * 1024:
             messages.error(request, "Cover art file is too large. Maximum size is 5MB.")
             return redirect('publish_release', release_id=release_id)
         
-        # Validate file type
         if not cover_art.content_type.startswith('image/'):
             messages.error(request, "Please upload a valid image file (JPG, PNG, or GIF).")
             return redirect('publish_release', release_id=release_id)
         
-        # Save the cover art
         release.cover_art = cover_art
         release.save()
         
         messages.success(request, f"✅ Cover art uploaded successfully!")
         return redirect('publish_release', release_id=release_id)
     
-    # Handle other POST actions (publish, draft, delete)
     if request.method == "POST":
         action = request.POST.get('action')
         
@@ -711,53 +691,141 @@ def publish_release(request, release_id):
             try:
                 from django.core.mail import EmailMultiAlternatives
                 from django.contrib.sites.shortcuts import get_current_site
+                from django.template.loader import render_to_string
                 
                 current_site = get_current_site(request)
-                admin_approval_link = f"http://{current_site.domain}/bayaplus/admin/review-release/{release.id}/"
+                admin_approval_link = f"http://{current_site.domain}/bayaplus/staff/review/{release.id}/"
                 
-                subject = f"New Release Pending Approval: {release.title}"
+                subject = f"🎵 New Release Pending Approval: {release.title}"
                 
+                # Admin email addresses - Update these!
+                admin_emails = [
+                    'edutrackplus12@gmail.com',  # Replace with actual admin emails
+                    # 'admin2@example.com',
+                ]
+                
+                # Plain text version
                 text_content = f"""
                 New Release Notification - BayaPlus Admin
                 
                 A new release has been submitted for review.
                 
+                Release Details:
+                -----------------
                 Title: {release.title}
                 Artist: {release.artist_profile.artist_name or release.artist.username}
                 Type: {release.get_release_type_display()}
+                Genre: {release.genre or 'Not specified'}
                 Tracks: {release.tracks.count()}
-                Audio Files: {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}
+                Release Date: {release.release_date}
+                Price: {'Free' if release.is_free else f'${release.price}'}
                 Cover Art: {'✅ Yes' if release.cover_art else '❌ No'}
+                Audio Files: {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}
                 
                 Review Link: {admin_approval_link}
+                
+                This is an automated notification from BayaPlus.
                 """
                 
+                # HTML version
                 html_content = f"""
-                <h2>New Release: {release.title}</h2>
-                <p><strong>Artist:</strong> {release.artist_profile.artist_name or release.artist.username}</p>
-                <p><strong>Type:</strong> {release.get_release_type_display()}</p>
-                <p><strong>Tracks:</strong> {release.tracks.count()}</p>
-                <p><strong>Audio Files:</strong> {'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</p>
-                <p><strong>Cover Art:</strong> {'✅ Yes' if release.cover_art else '❌ No'}</p>
-                <p><a href="{admin_approval_link}">Click here to review</a></p>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; }}
+                        .header {{ background: linear-gradient(135deg, #dc2626, #fbbf24); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                        .content {{ padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px; }}
+                        .details {{ background: white; padding: 20px; border-radius: 5px; margin: 15px 0; }}
+                        .detail-row {{ display: flex; padding: 8px 0; border-bottom: 1px solid #eee; }}
+                        .detail-row:last-child {{ border-bottom: none; }}
+                        .label {{ font-weight: bold; color: #555; width: 120px; }}
+                        .value {{ color: #333; }}
+                        .btn {{ display: inline-block; padding: 12px 30px; background: #fbbf24; color: black; text-decoration: none; border-radius: 5px; font-weight: bold; }}
+                        .btn:hover {{ background: #f59e0b; }}
+                        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+                        .status-badge {{ display: inline-block; padding: 3px 12px; background: #ff9800; color: white; border-radius: 20px; font-size: 12px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🎵 BayaPlus</h1>
+                    </div>
+                    <div class="content">
+                        <h2>📢 New Release Pending Approval</h2>
+                        <p>A new release has been submitted for review.</p>
+                        
+                        <div class="details">
+                            <h3>Release Details</h3>
+                            <div class="detail-row">
+                                <span class="label">Title:</span>
+                                <span class="value"><strong>{release.title}</strong></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Artist:</span>
+                                <span class="value">{release.artist_profile.artist_name or release.artist.username}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Type:</span>
+                                <span class="value">{release.get_release_type_display()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Genre:</span>
+                                <span class="value">{release.genre or 'Not specified'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Tracks:</span>
+                                <span class="value">{release.tracks.count()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Cover Art:</span>
+                                <span class="value">{'✅ Yes' if release.cover_art else '❌ No'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Audio Files:</span>
+                                <span class="value">{'✅ Yes' if release.tracks.filter(audio_file__isnull=False).exists() else '❌ No'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Status:</span>
+                                <span class="value"><span class="status-badge">Pending Review</span></span>
+                            </div>
+                        </div>
+                        
+                        <p style="text-align: center;">
+                            <a href="{admin_approval_link}" class="btn">📋 Review Release</a>
+                        </p>
+                        <p style="text-align: center; font-size: 12px; color: #999;">
+                            Or copy this link: {admin_approval_link}
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; 2026 BayaPlus. All rights reserved.</p>
+                        <p>This is an automated notification.</p>
+                    </div>
+                </body>
+                </html>
                 """
                 
-                from_email = 'BayaPlus Admin <edutrackplus12@gmail.com>'
+                # Send email to all admins
+                for admin_email in admin_emails:
+                    try:
+                        msg = EmailMultiAlternatives(
+                            subject,
+                            text_content,
+                            'BayaPlus Admin <noreply@bayaplus.com>',
+                            [admin_email]
+                        )
+                        msg.attach_alternative(html_content, "text/html")
+                        msg.send()
+                        print(f"✅ Admin notification sent to {admin_email}")
+                    except Exception as e:
+                        print(f"❌ Failed to send to {admin_email}: {str(e)}")
                 
-                msg = EmailMultiAlternatives(
-                    subject,
-                    text_content,
-                    from_email,
-                    ['edutrackplus12@gmail.com']
-                )
-                msg.attach_alternative(html_content, "text/html")
-                msg.send()
-                
-                messages.success(request, f"✅ Release '{release.title}' submitted for admin review!")
+                messages.success(request, f"✅ Release '{release.title}' submitted for admin review! Admin emails have been sent.")
                 
             except Exception as e:
-                print(f"Error sending admin notification: {str(e)}")
-                messages.warning(request, f"Release submitted but admin notification failed.")
+                print(f"❌ Error sending admin notifications: {str(e)}")
+                messages.warning(request, f"Release submitted but admin notifications failed: {str(e)}")
             
             return redirect('artistboard')
             
@@ -772,7 +840,6 @@ def publish_release(request, release_id):
             messages.success(request, f"Release '{release.title}' has been deleted.")
             return redirect('artistboard')
     
-    # GET request - show the form
     tracks = release.tracks.all().order_by('track_number')
     tracks_without_audio = release.tracks.filter(audio_file__isnull=True)
     
@@ -1898,3 +1965,220 @@ def profile_settings(request):
     return render(request, "settings/profile_settings.html", {
         'profile': profile,
     })
+    
+@staff_member_required(login_url='login')
+def admin_dashboard(request):
+    """Main admin dashboard with overview stats"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    # Admin doesn't need a UserProfile, but if they have one, use it
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        profile = None
+    
+    # Statistics
+    total_releases = Release.objects.count()
+    total_artists = UserProfile.objects.filter(role='Artist').count()
+    total_fans = UserProfile.objects.filter(role='Fan').count()
+    total_users = User.objects.count()
+    
+    # Release stats
+    pending_releases = Release.objects.filter(status='pending').count()
+    published_releases = Release.objects.filter(status='published').count()
+    rejected_releases = Release.objects.filter(status='rejected').count()
+    draft_releases = Release.objects.filter(status='draft').count()
+    
+    # Recent releases
+    recent_releases = Release.objects.all().order_by('-created_at')[:10]
+    
+    # Recent users
+    recent_users = User.objects.all().order_by('-date_joined')[:5]
+    
+    # Pending releases for quick review
+    pending_list = Release.objects.filter(status='pending').order_by('-created_at')[:5]
+    
+    context = {
+        'profile': profile,
+        'total_releases': total_releases,
+        'total_artists': total_artists,
+        'total_fans': total_fans,
+        'total_users': total_users,
+        'pending_releases': pending_releases,
+        'published_releases': published_releases,
+        'rejected_releases': rejected_releases,
+        'draft_releases': draft_releases,
+        'recent_releases': recent_releases,
+        'recent_users': recent_users,
+        'pending_list': pending_list,
+    }
+    
+    return render(request, "admin/admin_dashboard.html", context)
+
+
+@staff_member_required(login_url='login')
+def admin_profile(request):
+    """Admin profile management - only accessible by staff/admin users"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    # Admin might not have a UserProfile, handle gracefully
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        profile = None
+    
+    if request.method == "POST":
+        fullname = request.POST.get('fullname')
+        email = request.POST.get('email')
+        bio = request.POST.get('bio')
+        
+        # Update user
+        user = request.user
+        if fullname:
+            user.fullname = fullname
+        if email:
+            user.email = email
+        user.save()
+        
+        # Update or create profile (for admin avatar and bio)
+        if profile:
+            profile.bio = bio
+            profile.save()
+        else:
+            # Create profile for admin without setting a role
+            profile = UserProfile.objects.create(
+                user=user,
+                role='Artist',  # Default role, but admin won't use it
+                bio=bio
+            )
+        
+        # Handle avatar upload
+        if request.FILES.get('avatar'):
+            avatar = request.FILES['avatar']
+            if avatar.size > 5 * 1024 * 1024:
+                messages.error(request, "Avatar file is too large. Maximum size is 5MB.")
+                return redirect('admin_profile')
+            if not avatar.content_type.startswith('image/'):
+                messages.error(request, "Please upload a valid image file.")
+                return redirect('admin_profile')
+            profile.avatar = avatar
+            profile.save()
+        
+        messages.success(request, "Profile updated successfully!")
+        return redirect('admin_profile')
+    
+    context = {
+        'profile': profile,
+        'user': request.user,
+    }
+    
+    return render(request, "admin/admin_profile.html", context)
+
+
+@staff_member_required(login_url='login')
+def admin_all_users(request):
+    """Admin view to manage all users"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    # Get all users with filters
+    users = User.objects.all().order_by('-date_joined')
+    
+    # Filter by role (using UserProfile)
+    role_filter = request.GET.get('role')
+    if role_filter:
+        if role_filter == 'artist':
+            users = users.filter(userprofile__role='Artist')
+        elif role_filter == 'fan':
+            users = users.filter(userprofile__role='Fan')
+        elif role_filter == 'admin':
+            users = users.filter(is_staff=True)
+    
+    # Search
+    search_query = request.GET.get('q')
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(fullname__icontains=search_query)
+        )
+    
+    context = {
+        'users': users,
+        'total_users': users.count(),
+        'role_filter': role_filter,
+        'search_query': search_query,
+    }
+    
+    return render(request, "admin/admin_users.html", context)
+
+
+@staff_member_required(login_url='login')
+def admin_user_detail(request, user_id):
+    """Admin view to see user details and manage them"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    user_detail = get_object_or_404(User, id=user_id)
+    
+    # Get user profile
+    try:
+        profile = UserProfile.objects.get(user=user_detail)
+    except UserProfile.DoesNotExist:
+        profile = None
+    
+    # Get user's releases (if artist)
+    releases = Release.objects.filter(artist=user_detail).order_by('-created_at')
+    
+    # Get user's followers (if artist)
+    followers = Follow.objects.filter(following=user_detail).count() if profile and profile.role == 'Artist' else 0
+    
+    # Get user's following
+    following = Follow.objects.filter(follower=user_detail).count()
+    
+    # Get user's likes
+    likes = Like.objects.filter(user=user_detail).count()
+    
+    if request.method == "POST":
+        action = request.POST.get('action')
+        
+        if action == 'toggle_active':
+            user_detail.is_active = not user_detail.is_active
+            user_detail.save()
+            status = "activated" if user_detail.is_active else "deactivated"
+            messages.success(request, f"User {user_detail.username} has been {status}.")
+            
+        elif action == 'toggle_staff':
+            user_detail.is_staff = not user_detail.is_staff
+            user_detail.save()
+            status = "granted admin" if user_detail.is_staff else "removed admin"
+            messages.success(request, f"Admin privileges {status} for {user_detail.username}.")
+            
+        elif action == 'delete_user':
+            if user_detail == request.user:
+                messages.error(request, "You cannot delete your own account.")
+            else:
+                username = user_detail.username
+                user_detail.delete()
+                messages.success(request, f"User {username} has been deleted.")
+                return redirect('admin_all_users')
+        
+        return redirect('admin_user_detail', user_id=user_id)
+    
+    context = {
+        'user_detail': user_detail,
+        'profile': profile,
+        'releases': releases,
+        'followers': followers,
+        'following': following,
+        'likes': likes,
+        'total_releases': releases.count(),
+    }
+    
+    return render(request, "admin/admin_user_detail.html", context)

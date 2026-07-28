@@ -18,6 +18,7 @@ class UserProfile(models.Model):
     ROLES = (
         ('Artist', 'Artist'),
         ('Fan', 'Fan'),
+        # No Admin role needed - admins use is_staff flag
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=10, choices=ROLES, blank=False)
@@ -25,11 +26,11 @@ class UserProfile(models.Model):
     email_verified = models.BooleanField(default=False)
     payment_verified = models.BooleanField(default=False)
     
-    # Profile fields
+    # Profile fields for all users (including admins)
     bio = models.TextField(blank=True, null=True, max_length=500)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     
-    # Social links
+    # Social links (for artists)
     instagram = models.URLField(blank=True, null=True, max_length=200)
     twitter = models.URLField(blank=True, null=True, max_length=200)
     tiktok = models.URLField(blank=True, null=True, max_length=200)

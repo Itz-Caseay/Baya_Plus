@@ -66,5 +66,15 @@ urlpatterns = [
     path('settings/profile/', views.profile_settings, name='profile_settings'),
     
     # ==================== TEST URL ====================
-    # path('test-email/', views.test_email, name='test_email'),
+    path('test-email/', views.test_email, name='test_email'),
+    path('test-admin-email/', views.test_admin_email, name='test_admin_email'),
+    
+    # Admin URLs
+    path('staff/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('staff/profile/', views.admin_profile, name='admin_profile'),
+    path('staff/users/', views.admin_all_users, name='admin_all_users'),
+    path('staff/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('staff/pending/', views.admin_pending_releases, name='admin_pending_releases'),
+    path('staff/review/<int:release_id>/', views.admin_review_release, name='admin_review_release'),
+    path('staff/all/', views.admin_all_releases, name='admin_all_releases'),
 ]

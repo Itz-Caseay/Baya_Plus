@@ -134,5 +134,10 @@ EMAIL_HOST_PASSWORD = 'sqmsccbhtsppylsf'  # App password
 DEFAULT_FROM_EMAIL = 'BayaPlus <neowilde20@gmail.com>'
 
 # Admin notification settings
-ADMIN_EMAILS = ['neowilde20@gmail.com', 'edutrackplus12@gmail.com']  # List of admin emails
-ADMIN_NOTIFICATION_EMAIL = 'BayaPlus Admin <neowilde20@gmail.com>'
+ADMIN_EMAILS = [
+    'edutrackplus12@gmail.com',
+    'neowilde20@gmail.com',# Your admin email
+    # Add more admin emails here
+]
+
+ADMIN_EMAIL_FROM = 'BayaPlus Admin <noreply@bayaplus.com>'

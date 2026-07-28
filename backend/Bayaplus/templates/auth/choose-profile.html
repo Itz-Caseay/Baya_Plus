@@ -1,28 +1,214 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Profile - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .container { background: #f9f9f9; padding: 30px; border-radius: 10px; }
-        h2 { color: #4CAF50; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
-        .btn:hover { background: #45a049; }
-        .messages { list-style: none; padding: 0; }
-        .messages li { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .error { background: #ffebee; color: #c62828; }
-        .success { background: #e8f5e9; color: #2e7d32; }
-        .info { background: #e3f2fd; color: #0d47a1; }
+        body {
+            background: #0b0b0b;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        input, select {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        input::placeholder {
+            color: #555;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #d1d5db;
+            font-size: 14px;
+        }
+        label .required {
+            color: #ef4444;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            color: black;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+        }
+        .btn-secondary {
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            color: #9ca3af;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary:hover {
+            background: #222;
+            color: white;
+        }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .messages li {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            font-size: 14px;
+        }
+        .messages .error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border-color: #f44336;
+        }
+        .messages .success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .messages .warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border-color: #ff9800;
+        }
+        .messages .info {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+            border-color: #2196F3;
+        }
+        .role-card {
+            background: #1a1a1a;
+            border: 2px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .role-card:hover {
+            border-color: #fbbf24;
+            background: #222;
+        }
+        .role-card.selected {
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+        .role-card input[type="radio"] {
+            display: none;
+        }
+        .role-card .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .role-card .title {
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+        }
+        .role-card .desc {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .role-card .check {
+            opacity: 0;
+            transition: all 0.3s ease;
+            color: #fbbf24;
+        }
+        .role-card.selected .check {
+            opacity: 1;
+        }
+        .small-text {
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 12px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>🎵 Choose Your Profile</h2>
-        <p>Welcome, <strong>{{ request.user.fullname }}</strong>! Please choose your role:</p>
+
+    <div class="gradient-border p-6 sm:p-8 max-w-lg w-full">
         
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <div class="flex items-center justify-center gap-1 mb-4">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </div>
+            
+            <div class="user-avatar">
+                {{ request.user.fullname|default:request.user.username|first|upper }}
+            </div>
+            
+            <h2 class="text-xl font-bold text-white">Choose Your Profile</h2>
+            <p class="text-gray-400 text-sm mt-1">
+                Welcome, <strong class="text-yellow-400">{{ request.user.fullname|default:request.user.username }}</strong>!
+            </p>
+            <p class="text-gray-500 text-xs">Select how you want to use BayaPlus</p>
+        </div>
+
+        <!-- Messages -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -30,42 +216,119 @@
                 {% endfor %}
             </ul>
         {% endif %}
-        
+
+        <!-- Form -->
         <form method="POST">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="role">Select Role:</label>
-                <select name="role" id="role" required>
-                    <option value="">-- Select Role --</option>
-                    <option value="Artist">Artist</option>
-                    <option value="Fan">Fan</option>
-                </select>
-            </div>
             
+            <!-- Role Selection Cards -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <label class="role-card" id="artist-card">
+                    <input type="radio" name="role" value="Artist" onchange="toggleArtistName(true)">
+                    <div class="text-center">
+                        <div class="icon">🎵</div>
+                        <div class="title">Artist</div>
+                        <div class="desc">Upload & share your music</div>
+                        <div class="check mt-2"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                </label>
+                
+                <label class="role-card" id="fan-card">
+                    <input type="radio" name="role" value="Fan" onchange="toggleArtistName(false)">
+                    <div class="text-center">
+                        <div class="icon">🎧</div>
+                        <div class="title">Fan</div>
+                        <div class="desc">Discover & enjoy music</div>
+                        <div class="check mt-2"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Artist Name Field -->
             <div class="form-group" id="artist-name-group" style="display: none;">
-                <label for="artist_name">Artist Name:</label>
-                <input type="text" name="artist_name" id="artist_name" placeholder="Enter your artist name">
-                <small style="color: #666;">This name will be visible to fans</small>
+                <label for="artist_name">
+                    Artist Name <span class="required">*</span>
+                </label>
+                <input type="text" name="artist_name" id="artist_name" 
+                       placeholder="Enter your artist/stage name">
+                <p class="small-text">
+                    <i class="fa-solid fa-info-circle text-yellow-400"></i>
+                    This name will be visible to your fans
+                </p>
             </div>
-            
-            <button type="submit" class="btn">Create Profile</button>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary mt-2">
+                <i class="fa-solid fa-check"></i> Create Profile
+            </button>
         </form>
-        
-        <p style="margin-top: 20px;">
-            <a href="/bayaplus/logout/">Logout</a>
+
+        <!-- Footer Links -->
+        <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#1a1a1a]">
+            <span class="text-xs text-gray-600">
+                <i class="fa-regular fa-circle-question"></i> Need help?
+            </span>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'logout' %}" class="btn-secondary">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Support Text -->
+        <p class="text-center text-xs text-gray-600 mt-3">
+            By creating a profile, you agree to our 
+            <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a>
         </p>
     </div>
-    
+
     <script>
         // Show/hide artist name field based on role selection
-        document.getElementById('role').addEventListener('change', function() {
-            var artistNameGroup = document.getElementById('artist-name-group');
-            if (this.value === 'Artist') {
-                artistNameGroup.style.display = 'block';
+        function toggleArtistName(isArtist) {
+            const group = document.getElementById('artist-name-group');
+            const artistCard = document.getElementById('artist-card');
+            const fanCard = document.getElementById('fan-card');
+            
+            if (isArtist) {
+                group.style.display = 'block';
+                artistCard.classList.add('selected');
+                fanCard.classList.remove('selected');
+                document.getElementById('artist_name').required = true;
             } else {
-                artistNameGroup.style.display = 'none';
+                group.style.display = 'none';
+                fanCard.classList.add('selected');
+                artistCard.classList.remove('selected');
+                document.getElementById('artist_name').required = false;
+            }
+        }
+
+        // Click on card to select
+        document.getElementById('artist-card').addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                this.querySelector('input[type="radio"]').checked = true;
+                toggleArtistName(true);
+            }
+        });
+
+        document.getElementById('fan-card').addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                this.querySelector('input[type="radio"]').checked = true;
+                toggleArtistName(false);
+            }
+        });
+
+        // Auto-select if already checked
+        document.addEventListener('DOMContentLoaded', function() {
+            const artistRadio = document.querySelector('input[value="Artist"]');
+            const fanRadio = document.querySelector('input[value="Fan"]');
+            
+            if (artistRadio && artistRadio.checked) {
+                toggleArtistName(true);
+            } else if (fanRadio && fanRadio.checked) {
+                toggleArtistName(false);
             }
         });
     </script>
+
 </body>
 </html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #0b0b0b;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #4CAF50, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+        }
+        .btn-secondary {
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #222;
+            transform: translateY(-2px);
+        }
+        .icon-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .bounce {
+            animation: bounce 1s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="gradient-border p-8 max-w-md w-full">
+        <div class="text-center">
+            <!-- Success Icon -->
+            <div class="w-20 h-20 rounded-full icon-success flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/20 bounce">
+                <i class="fa-solid fa-check text-black text-3xl"></i>
+            </div>
+            
+            <h2 class="text-2xl font-black text-white mb-2">
+                🎉 Registration Successful!
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">
+                A verification email has been sent to <strong class="text-yellow-400">{{ email }}</strong>
+            </p>
+            
+            <!-- Email sent info -->
+            <div class="bg-[#1a1a1a] rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-3 text-left">
+                    <div class="w-10 h-10 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400 shrink-0">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-300 text-sm font-medium">Check your inbox</p>
+                        <p class="text-gray-500 text-xs">We've sent a verification link to your email</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Verification Link -->
+            <div class="bg-[#1a1a1a] rounded-xl p-4 mb-6 border border-[#2a2a2a]">
+                <p class="text-gray-400 text-xs mb-2">🔗 Your verification link:</p>
+                <div class="bg-[#0b0b0b] rounded-lg p-3">
+                    <p class="text-yellow-400 text-xs font-mono break-all">{{ verification_link }}</p>
+                </div>
+                <button onclick="navigator.clipboard.writeText('{{ verification_link }}')" 
+                        class="mt-2 text-yellow-400 hover:text-yellow-300 text-xs transition">
+                    <i class="fa-regular fa-copy"></i> Copy link
+                </button>
+            </div>
+            
+            <!-- What to do next -->
+            <div class="bg-[#1a1a1a] rounded-xl p-4 mb-6">
+                <p class="text-gray-300 text-sm font-medium mb-3">What's next?</p>
+                <div class="grid grid-cols-1 gap-2 text-sm">
+                    <div class="flex items-center gap-3 text-gray-400 p-2 rounded-lg hover:bg-[#222] transition">
+                        <span class="w-7 h-7 rounded-full bg-[#2a2a2a] flex items-center justify-center text-yellow-400 text-xs flex-shrink-0">1</span>
+                        <span>Check your email inbox (and spam folder)</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-400 p-2 rounded-lg hover:bg-[#222] transition">
+                        <span class="w-7 h-7 rounded-full bg-[#2a2a2a] flex items-center justify-center text-yellow-400 text-xs flex-shrink-0">2</span>
+                        <span>Click the verification link in the email</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-400 p-2 rounded-lg hover:bg-[#222] transition">
+                        <span class="w-7 h-7 rounded-full bg-[#2a2a2a] flex items-center justify-center text-yellow-400 text-xs flex-shrink-0">3</span>
+                        <span>Login to your account and start exploring!</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+                <a href="{% url 'login' %}" class="btn-primary w-full py-3 rounded-lg font-bold text-black flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Go to Login
+                </a>
+                <a href="{% url 'index' %}" class="btn-secondary w-full py-3 rounded-lg font-medium text-gray-300 flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-house"></i>
+                    Return Home
+                </a>
+            </div>
+            
+            <!-- Resend Email -->
+            <p class="text-xs text-gray-600 mt-4">
+                Didn't receive the email?
+                <a href="#" class="text-yellow-400 hover:underline">Resend verification email</a>
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

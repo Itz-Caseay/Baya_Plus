@@ -1,12 +1,32 @@
-{% autoescape off %}
-Hi {{ user.fullname }},
-
-Please click on the link below to confirm your registration and activate your account:
-
-http://{{ domain }}{% url 'activate' uidb64=uid token=token %}
-
-If you didn't create an account with us, please ignore this email.
-
-Thanks,
-Your Team
-{% endautoescape %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; }
+        .header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .btn { display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 BayaPlus</h1>
+    </div>
+    <div class="content">
+        <h2>Hi {{ user.fullname }},</h2>
+        <p>Welcome to BayaPlus! Please confirm your email address to activate your account.</p>
+        <p style="text-align: center;">
+            <a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}" class="btn">Verify Email</a>
+        </p>
+        <p>Or copy and paste this link in your browser:</p>
+        <p style="background: #f0f0f0; padding: 10px; word-break: break-all;">
+            http://{{ domain }}{% url 'activate' uidb64=uid token=token %}
+        </p>
+        <p>If you didn't create an account with BayaPlus, please ignore this email.</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2026 BayaPlus. All rights reserved.</p>
+    </div>
+</body>
+</html>
