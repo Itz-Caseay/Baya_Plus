@@ -2,11 +2,12 @@
 from django.urls import path
 from . import views
 
-app_name = 'base'
+# Don't use app_name if it's causing issues, or keep it consistent
+# app_name = 'base'
 
 urlpatterns = [
     # ==================== MAIN INDEX ====================
-    path('', views.index, name='index'),  # ← ADD THIS LINE
+    path('', views.index, name='index'),
     
     # ==================== AUTHENTICATION URLs ====================
     path('signup/', views.signup, name='signup'),
