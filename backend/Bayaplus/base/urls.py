@@ -77,4 +77,8 @@ urlpatterns = [
     path('staff/pending/', views.admin_pending_releases, name='admin_pending_releases'),
     path('staff/review/<int:release_id>/', views.admin_review_release, name='admin_review_release'),
     path('staff/all/', views.admin_all_releases, name='admin_all_releases'),
+    # Admin Request URLs
+    path('admin-apply/', views.admin_apply, name='admin_apply'),
+    path('staff/admin-requests/', views.admin_manage_requests, name='admin_manage_requests'),
+    path('staff/admin-request/<int:request_id>/', views.admin_review_request, name='admin_review_request'),
 ]

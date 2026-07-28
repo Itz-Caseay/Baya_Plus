@@ -62,7 +62,33 @@ class UserProfile(models.Model):
         """Check if any social links are set"""
         links = self.get_social_links()
         return any(link for link in links.values())
+
+class AdminRequest(models.Model):
+    """Model for users requesting admin access"""
+    STATUS_CHOICES = (
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_requests')
+    reason = models.TextField(max_length=500, help_text="Why do you want to become an admin?")
+    experience = models.TextField(max_length=500, blank=True, null=True, help_text="Relevant experience")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_admin_requests')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - Admin Request ({self.status})"
+ 
 class Release(models.Model):
     # Release Types
     RELEASE_TYPES = (

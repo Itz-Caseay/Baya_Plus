@@ -44,9 +44,12 @@
                 <a href="{% url 'fan_playlist' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-list text-lg"></i> Playlists
                 </a>
-                <a href="{% url 'fan_search' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                    <i class="fa-solid fa-search text-lg"></i> Search
-                </a>
+                <!-- In user dashboard sidebar -->
+                {% if not user.is_staff %}
+                    <a href="{% url 'admin_apply' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-user-shield text-lg"></i> Become Admin
+                    </a>
+                {% endif %}
                 <a href="{% url 'all_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                     <i class="fa-solid fa-compact-disc text-lg"></i> Browse
                 </a>

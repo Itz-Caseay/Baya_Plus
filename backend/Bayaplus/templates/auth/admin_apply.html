@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Admin - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #0b0b0b;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        input, textarea {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #d1d5db;
+            font-size: 14px;
+        }
+        label .required {
+            color: #ef4444;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            transition: all 0.3s ease;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            color: black;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+        }
+        .btn-secondary {
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            color: #9ca3af;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-secondary:hover {
+            background: #222;
+            color: white;
+        }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .messages li {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            font-size: 14px;
+        }
+        .messages .error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border-color: #f44336;
+        }
+        .messages .success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .messages .warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border-color: #ff9800;
+        }
+        .messages .info {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+            border-color: #2196F3;
+        }
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 12px;
+        }
+        .info-box {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            border-left: 3px solid #fbbf24;
+        }
+        .info-box li {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-bottom: 4px;
+            list-style: none;
+        }
+        .info-box li i {
+            color: #fbbf24;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="gradient-border p-6 sm:p-8 max-w-2xl w-full">
+        <div class="text-center mb-6">
+            <div class="flex items-center justify-center gap-1 mb-4">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </div>
+            
+            <div class="user-avatar">
+                {{ user.fullname|default:user.username|first|upper }}
+            </div>
+            
+            <h2 class="text-2xl font-bold text-white">👑 Apply for Admin Access</h2>
+            <p class="text-gray-400 text-sm mt-1">Help manage and grow the BayaPlus community</p>
+            <p class="text-xs text-gray-500 mt-1">Welcome, <strong class="text-yellow-400">{{ user.fullname|default:user.username }}</strong>!</p>
+        </div>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="reason">Why do you want to become an admin? <span class="required">*</span></label>
+                    <textarea name="reason" id="reason" 
+                              placeholder="Tell us why you're interested in helping manage BayaPlus... (Minimum 50 characters)"
+                              required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Be specific about your motivation and what you can contribute.</p>
+                </div>
+                
+                <div>
+                    <label for="experience">Relevant Experience <span class="text-gray-500 text-xs">(Optional)</span></label>
+                    <textarea name="experience" id="experience" 
+                              placeholder="Any previous experience in community management, moderation, or similar roles..."></textarea>
+                </div>
+                
+                <div class="info-box">
+                    <p class="text-sm font-bold text-yellow-400 mb-2">
+                        <i class="fa-solid fa-info-circle"></i> What admins can do:
+                    </p>
+                    <ul>
+                        <li><i class="fa-solid fa-check-circle text-green-500"></i> Review and approve/reject releases</li>
+                        <li><i class="fa-solid fa-check-circle text-green-500"></i> Manage users (activate/deactivate)</li>
+                        <li><i class="fa-solid fa-check-circle text-green-500"></i> View platform analytics</li>
+                        <li><i class="fa-solid fa-check-circle text-green-500"></i> Help maintain community guidelines</li>
+                        <li><i class="fa-solid fa-check-circle text-green-500"></i> Support artists and fans</li>
+                    </ul>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Application
+                    </button>
+                    <a href="{% url 'index' %}" class="btn-secondary w-full flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+        
+        <p class="text-center text-xs text-gray-600 mt-4">
+            Your request will be reviewed by the admin team. You'll receive an email notification once a decision is made.
+        </p>
+    </div>
+
+    <script>
+        // Character counter for reason field
+        const reasonTextarea = document.getElementById('reason');
+        if (reasonTextarea) {
+            reasonTextarea.addEventListener('input', function() {
+                const count = this.value.length;
+                if (count < 50) {
+                    this.style.borderColor = '#f44336';
+                } else {
+                    this.style.borderColor = '#4CAF50';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

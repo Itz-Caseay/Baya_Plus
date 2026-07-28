@@ -24,6 +24,50 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# Add this decorator to check artist role
+def artist_required(view_func):
+    """Decorator to check if user has an Artist profile"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            if profile.role != 'Artist':
+                messages.error(request, "Access denied. Only artists can access this page.")
+                if profile.role == 'Fan':
+                    return redirect('fanboard')
+                return redirect('index')
+        except UserProfile.DoesNotExist:
+            messages.error(request, "Please create a profile first.")
+            return redirect('choose-profile')
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+# Add this decorator to check fan role
+def fan_required(view_func):
+    """Decorator to check if user has a Fan profile"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            if profile.role != 'Fan':
+                messages.error(request, "Access denied. Only fans can access this page.")
+                if profile.role == 'Artist':
+                    return redirect('artistboard')
+                return redirect('index')
+        except UserProfile.DoesNotExist:
+            messages.error(request, "Please create a profile first.")
+            return redirect('choose-profile')
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+
 def test_admin_email(request):
     """Test sending email to admins"""
     try:
@@ -336,17 +380,24 @@ def choose_profile(request):
 
 @login_required(login_url='login')
 def fanboard(request):
-    """Fan dashboard - shows personalized content"""
+    """Fan dashboard - only accessible by users with Fan role"""
+    # Check if user has a profile
     try:
         profile = UserProfile.objects.get(user=request.user)
-        if profile.role != 'Fan':
-            messages.error(request, "Only fans can access this page.")
-            return redirect('artistboard')
     except UserProfile.DoesNotExist:
         messages.error(request, "Please create a profile first.")
         return redirect('choose-profile')
     
-    # Get recent releases from followed artists
+    # Check if user has the Fan role
+    if profile.role != 'Fan':
+        messages.error(request, "Access denied. Only fans can access this page.")
+        # Redirect based on their actual role
+        if profile.role == 'Artist':
+            return redirect('artistboard')
+        else:
+            return redirect('index')
+    
+    # Get fan-specific data
     followed_artists = Follow.objects.filter(follower=request.user).values_list('following', flat=True)
     followed_releases = Release.objects.filter(
         artist__in=followed_artists,
@@ -354,17 +405,13 @@ def fanboard(request):
         is_public=True
     ).order_by('-release_date')[:10]
     
-    # Get trending releases (by plays and likes)
     trending = Release.objects.filter(
         status='published', 
         is_public=True
     ).order_by('-total_plays', '-total_likes')[:8]
     
-    # Get liked releases and tracks
     liked_releases = Like.objects.filter(user=request.user, release__isnull=False).select_related('release')
     liked_tracks = Like.objects.filter(user=request.user, track__isnull=False).select_related('track')
-    
-    # Get playlists count
     playlists_count = Playlist.objects.filter(user=request.user).count()
     
     context = {
@@ -511,6 +558,7 @@ def fan_playlist(request, playlist_id=None):
     })
 
 @login_required(login_url='login')
+@fan_required
 def fan_search(request):
     """Search for artists, releases, and tracks"""
     query = request.GET.get('q', '')
@@ -552,8 +600,26 @@ def fan_search(request):
     return render(request, "fan/search.html", context)
 
 @login_required(login_url='login')
+@artist_required
 def artistboard(request):
-    profile = get_object_or_404(UserProfile, user=request.user)
+    """Artist dashboard - only accessible by users with Artist role"""
+    # Check if user has a profile
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Please create a profile first.")
+        return redirect('choose-profile')
+    
+    # Check if user has the Artist role
+    if profile.role != 'Artist':
+        messages.error(request, "Access denied. Only artists can access this page.")
+        # Redirect based on their actual role
+        if profile.role == 'Fan':
+            return redirect('fanboard')
+        else:
+            return redirect('index')
+    
+    # Get artist's releases
     releases = Release.objects.filter(artist=request.user).order_by('-created_at')
     
     return render(request, "auth/artistboard.html", {
@@ -569,6 +635,7 @@ def artistboard(request):
     
 #Artists create releases
 @login_required(login_url='login')
+@artist_required
 def create_release(request):
     # Check if user has an artist profile
     try:
@@ -1965,6 +2032,7 @@ def profile_settings(request):
     return render(request, "settings/profile_settings.html", {
         'profile': profile,
     })
+
     
 @staff_member_required(login_url='login')
 def admin_dashboard(request):
@@ -2182,3 +2250,203 @@ def admin_user_detail(request, user_id):
     }
     
     return render(request, "admin/admin_user_detail.html", context)
+
+@login_required(login_url='login')
+def admin_apply(request):
+    """Apply to become an admin"""
+    # Check if user already has a pending request
+    existing_request = AdminRequest.objects.filter(user=request.user, status='pending').first()
+    if existing_request:
+        messages.warning(request, "You already have a pending admin request. Please wait for review.")
+        return redirect('index')
+    
+    # Check if user already tried and got rejected recently (optional: cooldown period)
+    rejected_request = AdminRequest.objects.filter(user=request.user, status='rejected').order_by('-created_at').first()
+    if rejected_request and rejected_request.created_at > timezone.now() - timedelta(days=30):
+        messages.warning(request, "Your previous admin request was rejected. You can apply again after 30 days.")
+        return redirect('index')
+    
+    if request.method == "POST":
+        reason = request.POST.get('reason')
+        experience = request.POST.get('experience')
+        
+        if not reason:
+            messages.error(request, "Please tell us why you want to become an admin.")
+            return redirect('admin_apply')
+        
+        # Create admin request
+        admin_request = AdminRequest.objects.create(
+            user=request.user,
+            reason=reason,
+            experience=experience or ''
+        )
+        
+        # Send notification to system admins
+        try:
+            from django.core.mail import send_mail
+            from django.contrib.sites.shortcuts import get_current_site
+            
+            current_site = get_current_site(request)
+            admin_review_link = f"http://{current_site.domain}/bayaplus/staff/admin-requests/"
+            
+            # Get all staff users
+            admin_emails = User.objects.filter(is_staff=True).values_list('email', flat=True)
+            
+            if admin_emails:
+                subject = f"New Admin Request from {request.user.username}"
+                message = f"""
+                New Admin Request - BayaPlus
+                
+                User: {request.user.username} ({request.user.email})
+                Reason: {reason}
+                Experience: {experience or 'Not provided'}
+                
+                Review and manage requests here:
+                {admin_review_link}
+                
+                This is an automated notification from BayaPlus.
+                """
+                
+                send_mail(
+                    subject,
+                    message,
+                    'BayaPlus Admin <noreply@bayaplus.com>',
+                    list(admin_emails),
+                    fail_silently=True,
+                )
+        except Exception as e:
+            print(f"Error sending admin request email: {str(e)}")
+        
+        messages.success(request, "Your admin request has been submitted! You will be notified once reviewed.")
+        return redirect('index')
+    
+    return render(request, "auth/admin_apply.html")
+
+
+@staff_member_required(login_url='login')
+def admin_manage_requests(request):
+    """Admin view to manage admin requests"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    # Get all admin requests
+    pending_requests = AdminRequest.objects.filter(status='pending').order_by('-created_at')
+    approved_requests = AdminRequest.objects.filter(status='approved').order_by('-created_at')[:20]
+    rejected_requests = AdminRequest.objects.filter(status='rejected').order_by('-created_at')[:20]
+    
+    # Stats
+    total_requests = AdminRequest.objects.count()
+    pending_count = pending_requests.count()
+    approved_count = AdminRequest.objects.filter(status='approved').count()
+    rejected_count = AdminRequest.objects.filter(status='rejected').count()
+    
+    context = {
+        'pending_requests': pending_requests,
+        'approved_requests': approved_requests,
+        'rejected_requests': rejected_requests,
+        'total_requests': total_requests,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+    }
+    
+    return render(request, "admin/admin_requests.html", context)
+
+
+@staff_member_required(login_url='login')
+def admin_review_request(request, request_id):
+    """Admin view to review a single admin request"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('index')
+    
+    admin_request = get_object_or_404(AdminRequest, id=request_id)
+    
+    if request.method == "POST":
+        action = request.POST.get('action')
+        admin_notes = request.POST.get('admin_notes', '')
+        
+        if action == 'approve':
+            admin_request.status = 'approved'
+            admin_request.reviewed_by = request.user
+            admin_request.reviewed_at = timezone.now()
+            admin_request.save()
+            
+            # Make user staff/admin
+            user = admin_request.user
+            user.is_staff = True
+            user.save()
+            
+            # Send approval email to user
+            try:
+                send_mail(
+                    'Admin Request Approved - BayaPlus',
+                    f"""
+                    Congratulations {user.username}!
+                    
+                    Your admin request has been approved. You now have admin access to BayaPlus.
+                    
+                    You can now manage users, releases, and review content.
+                    
+                    Login to access the admin panel:
+                    http://{get_current_site(request).domain}/bayaplus/staff/dashboard/
+                    
+                    Notes from reviewer:
+                    {admin_notes}
+                    
+                    - BayaPlus Team
+                    """,
+                    'BayaPlus Admin <noreply@bayaplus.com>',
+                    [user.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(f"Error sending approval email: {str(e)}")
+            
+            messages.success(request, f"Admin request from {user.username} has been approved!")
+            
+        elif action == 'reject':
+            admin_request.status = 'rejected'
+            admin_request.reviewed_by = request.user
+            admin_request.reviewed_at = timezone.now()
+            admin_request.save()
+            
+            # Send rejection email to user
+            try:
+                send_mail(
+                    'Admin Request Update - BayaPlus',
+                    f"""
+                    Hi {admin_request.user.username},
+                    
+                    Your admin request for BayaPlus has been reviewed.
+                    
+                    Status: Rejected
+                    
+                    Notes from reviewer:
+                    {admin_notes or 'No specific reason provided'}
+                    
+                    You can apply again after 30 days if you wish.
+                    
+                    - BayaPlus Team
+                    """,
+                    'BayaPlus Admin <noreply@bayaplus.com>',
+                    [admin_request.user.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(f"Error sending rejection email: {str(e)}")
+            
+            messages.success(request, f"Admin request from {admin_request.user.username} has been rejected.")
+            
+        elif action == 'delete':
+            admin_request.delete()
+            messages.success(request, "Admin request has been deleted.")
+        
+        return redirect('admin_manage_requests')
+    
+    context = {
+        'admin_request': admin_request,
+    }
+    
+    return render(request, "admin/admin_request_review.html", context)

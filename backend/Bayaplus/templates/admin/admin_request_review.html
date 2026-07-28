@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Admin Request - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #0b0b0b; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; }
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 12px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        textarea {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #fbbf24;
+        }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-success:hover { background: #45a049; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-danger:hover { background: #d32f2f; }
+        .btn-secondary { background: #1a1a1a; color: #9ca3af; }
+        .btn-secondary:hover { background: #222; color: white; }
+        .admin-badge {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pending { background: #ff9800; color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'index' %}" class="flex items-center gap-1">
+                    <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+                </a>
+                <span class="admin-badge"><i class="fa-solid fa-user-shield"></i> Admin Panel</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'admin_manage_requests' %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="container mx-auto max-w-3xl px-4 sm:px-6 py-8">
+        <div class="gradient-border p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">Review Admin Request</h1>
+                    <p class="text-gray-400 text-sm">Review application from {{ admin_request.user.username }}</p>
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div class="bg-[#1a1a1a] rounded-xl p-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-400">Username</p>
+                        <p class="font-bold">{{ admin_request.user.username }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Email</p>
+                        <p class="font-bold">{{ admin_request.user.email }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Joined</p>
+                        <p class="font-bold">{{ admin_request.user.date_joined|date:"F d, Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Status</p>
+                        <span class="status-pending px-3 py-1 rounded-full text-xs font-bold">Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Details -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-300 mb-2">Why they want to become an admin</h3>
+                    <div class="bg-[#1a1a1a] rounded-lg p-4">
+                        <p class="text-gray-300">{{ admin_request.reason }}</p>
+                    </div>
+                </div>
+                
+                {% if admin_request.experience %}
+                <div>
+                    <h3 class="text-sm font-bold text-gray-300 mb-2">Relevant Experience</h3>
+                    <div class="bg-[#1a1a1a] rounded-lg p-4">
+                        <p class="text-gray-300">{{ admin_request.experience }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <h3 class="text-sm font-bold text-gray-300 mb-2">Submitted</h3>
+                    <div class="bg-[#1a1a1a] rounded-lg p-4">
+                        <p class="text-gray-400">{{ admin_request.created_at|date:"F d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="admin_notes" class="block text-sm font-medium text-gray-300 mb-2">
+                        Admin Notes <span class="text-gray-500">(Optional)</span>
+                    </label>
+                    <textarea name="admin_notes" id="admin_notes" 
+                              placeholder="Add notes about this decision..."></textarea>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="submit" name="action" value="approve" 
+                            class="btn-success px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-check"></i> Approve Request
+                    </button>
+                    <button type="submit" name="action" value="reject" 
+                            class="btn-danger px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-xmark"></i> Reject Request
+                    </button>
+                    <button type="submit" name="action" value="delete" 
+                            class="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-trash"></i> Delete Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>

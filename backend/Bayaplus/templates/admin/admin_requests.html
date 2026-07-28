@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Requests - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .admin-badge {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pending { background: #ff9800; color: white; }
+        .status-approved { background: #4CAF50; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'index' %}" class="flex items-center gap-1">
+                    <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                    <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+                </a>
+                <span class="admin-badge">
+                    <i class="fa-solid fa-user-shield"></i> Admin Panel
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'admin_dashboard' %}" class="text-gray-400 hover:text-white text-sm">
+                    Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        
+        <!-- Page Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black">👑 Admin Requests</h1>
+                <p class="text-gray-400 text-sm">Manage user applications for admin access</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl text-center">
+                <p class="text-2xl font-bold text-white">{{ total_requests }}</p>
+                <p class="text-xs text-gray-400">Total Requests</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl text-center">
+                <p class="text-2xl font-bold text-yellow-500">{{ pending_count }}</p>
+                <p class="text-xs text-gray-400">Pending</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl text-center">
+                <p class="text-2xl font-bold text-green-500">{{ approved_count }}</p>
+                <p class="text-xs text-gray-400">Approved</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl text-center">
+                <p class="text-2xl font-bold text-red-500">{{ rejected_count }}</p>
+                <p class="text-xs text-gray-400">Rejected</p>
+            </div>
+        </div>
+
+        <!-- Pending Requests -->
+        {% if pending_requests %}
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-6 mb-6">
+            <h3 class="text-sm font-bold text-gray-200 mb-4">
+                <i class="fa-solid fa-clock text-yellow-400"></i> Pending Requests ({{ pending_count }})
+            </h3>
+            <div class="space-y-3">
+                {% for req in pending_requests %}
+                    <div class="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg hover:bg-[#222] transition">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-sm font-bold">
+                                    {{ req.user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <p class="font-bold">{{ req.user.username }}</p>
+                                    <p class="text-xs text-gray-400">{{ req.user.email }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ req.reason|truncatewords:20 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="status-pending px-3 py-1 rounded-full text-xs font-bold">Pending</span>
+                            <a href="{% url 'admin_review_request' req.id %}" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg text-xs font-bold transition">
+                                Review
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tabs for Approved/Rejected -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-6">
+            <div class="flex border-b border-[#1a1a1a] mb-4">
+                <button onclick="showTab('approved')" id="tab-approved" class="px-4 py-2 text-sm font-medium text-yellow-400 border-b-2 border-yellow-400">
+                    Approved
+                </button>
+                <button onclick="showTab('rejected')" id="tab-rejected" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent">
+                    Rejected
+                </button>
+            </div>
+            
+            <div id="approved-content">
+                {% if approved_requests %}
+                    <div class="space-y-2">
+                        {% for req in approved_requests %}
+                            <div class="flex items-center justify-between p-3 hover:bg-[#1a1a1a] rounded-lg transition">
+                                <div>
+                                    <p class="font-bold">{{ req.user.username }}</p>
+                                    <p class="text-xs text-gray-400">Reviewed by {{ req.reviewed_by.username }} • {{ req.reviewed_at|timesince }} ago</p>
+                                </div>
+                                <span class="status-approved px-3 py-1 rounded-full text-xs font-bold">Approved</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No approved requests</p>
+                {% endif %}
+            </div>
+            
+            <div id="rejected-content" class="hidden">
+                {% if rejected_requests %}
+                    <div class="space-y-2">
+                        {% for req in rejected_requests %}
+                            <div class="flex items-center justify-between p-3 hover:bg-[#1a1a1a] rounded-lg transition">
+                                <div>
+                                    <p class="font-bold">{{ req.user.username }}</p>
+                                    <p class="text-xs text-gray-400">Reviewed by {{ req.reviewed_by.username }} • {{ req.reviewed_at|timesince }} ago</p>
+                                </div>
+                                <span class="status-rejected px-3 py-1 rounded-full text-xs font-bold">Rejected</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No rejected requests</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function showTab(tab) {
+            // Hide all content
+            document.getElementById('approved-content').classList.add('hidden');
+            document.getElementById('rejected-content').classList.add('hidden');
+            
+            // Remove active styles from tabs
+            document.getElementById('tab-approved').classList.remove('border-yellow-400', 'text-yellow-400');
+            document.getElementById('tab-approved').classList.add('text-gray-400', 'border-transparent');
+            document.getElementById('tab-rejected').classList.remove('border-yellow-400', 'text-yellow-400');
+            document.getElementById('tab-rejected').classList.add('text-gray-400', 'border-transparent');
+            
+            // Show selected content
+            if (tab === 'approved') {
+                document.getElementById('approved-content').classList.remove('hidden');
+                document.getElementById('tab-approved').classList.remove('text-gray-400', 'border-transparent');
+                document.getElementById('tab-approved').classList.add('border-yellow-400', 'text-yellow-400');
+            } else {
+                document.getElementById('rejected-content').classList.remove('hidden');
+                document.getElementById('tab-rejected').classList.remove('text-gray-400', 'border-transparent');
+                document.getElementById('tab-rejected').classList.add('border-yellow-400', 'text-yellow-400');
+            }
+        }
+    </script>
+
+</body>
+</html>
