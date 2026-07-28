@@ -13,7 +13,7 @@ BayaPlus is a full-featured music streaming platform that connects artists and f
 
 ## 🎬 Platform Demo
 
-[![BayaPlus Demo](https://img.youtube.com/vi/CyFD1fVk_YY/0.jpg)](https://www.https://www.youtube.com/watch?v=CyFD1fVk_YY)
+[![BayaPlus Demo](https://img.youtube.com/vi/CyFD1fVk_YY/0.jpg)](https://www.youtube.com/watch?v=CyFD1fVk_YY)
 
 > 🎬 Click the image above to watch the demo video
 ## ✨ Features
