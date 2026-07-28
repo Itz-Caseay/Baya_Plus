@@ -308,9 +308,9 @@ def login_user(request):
                 messages.success(request, f"Welcome back, {user.username}!")
 
                 if profile.role == "Artist":
-                    return redirect("artistboard")
+                    return redirect("index")
                 elif profile.role == "Fan":
-                    return redirect("fanboard")
+                    return redirect("index")
                 else:
                     return redirect("index")
 
