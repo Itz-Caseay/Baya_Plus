@@ -235,16 +235,18 @@
         }
 
         /* Toast styles */
-.toast-container {
-    max-width: 380px;
-}
-.toast {
-    min-width: 280px;
-    backdrop-filter: blur(10px);
-}
-.toast-container .toast:last-child {
-    margin-bottom: 0;
-}
+        .toast-container {
+            max-width: 380px;
+        }
+
+        .toast {
+            min-width: 280px;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast-container .toast:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 
@@ -660,63 +662,67 @@
         }
     </script>
 
-    <!-- ============================================ -->
-    <!-- BAYAPLUS MUSIC PLAYER JAVASCRIPT -->
-    <!-- ============================================ -->
     <script>
         // ============================================
-        // BAYAPLUS MUSIC PLAYER
-        // ============================================
+// BAYAPLUS MUSIC PLAYER - COMPLETE WORKING VERSION
+// ============================================
 
-        // Audio Player State
-        let audio = new Audio();
-        let currentTrack = null;
-        let isPlaying = false;
-        let playId = null;
-        let durationTracked = 0;
-        let volume = 70;
-        let isShuffled = false;
-        let repeatMode = 'none';
-        let queue = [];
-        let currentIndex = 0;
+// Audio Player State
+let audioInstance = null;
+let currentTrack = null;
+let isPlaying = false;
+let playId = null;
+let durationTracked = 0;
+let volume = 70;
+let isShuffled = false;
+let repeatMode = 'none';
+let queue = [];
+let currentIndex = 0;
 
-        // DOM Elements
-        const playBtn = document.getElementById('play-btn');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const bottomPlay = document.getElementById('bottom-play');
-        const bottomPrev = document.getElementById('bottom-prev');
-        const bottomNext = document.getElementById('bottom-next');
-        const progress = document.getElementById('progress');
-        const progressDot = document.getElementById('progress-dot');
-        const progressBar = document.getElementById('progress-bar');
-        const currentTimeEl = document.getElementById('current-time');
-        const durationEl = document.getElementById('duration');
-        const titleEl = document.getElementById('now-playing-title');
-        const artistEl = document.getElementById('now-playing-artist');
-        const titleSmallEl = document.getElementById('now-playing-title-small');
-        const artistSmallEl = document.getElementById('now-playing-artist-small');
-        const coverBg = document.getElementById('now-playing-bg');
-        const shuffleBtn = document.getElementById('shuffle-btn');
-        const repeatBtn = document.getElementById('repeat-btn');
-        const likeBtn = document.getElementById('like-btn');
-        const queueList = document.getElementById('queue-list');
-        const queueCount = document.getElementById('queue-count');
-        const bottomTitle = document.getElementById('bottom-player-title');
-        const bottomArtist = document.getElementById('bottom-player-artist');
-        const bottomCover = document.getElementById('bottom-player-cover');
-        const volumeBtn = document.getElementById('bottom-volume-btn');
-        const volumeProgress = document.getElementById('bottom-volume-progress');
-        const volumeBar = document.getElementById('bottom-volume-bar');
+// ============================================
+// GET AUDIO PLAYER INSTANCE
+// ============================================
+function getAudioPlayer() {
+    if (!audioInstance) {
+        audioInstance = new Audio();
+        
+        audioInstance.addEventListener('error', function(e) {
+            console.error('Audio error:', e);
+            showToast('Audio playback error. Please try again.', 'error');
+        });
+        
+        audioInstance.addEventListener('play', function() {
+            isPlaying = true;
+            updatePlayButtons(true);
+        });
+        
+        audioInstance.addEventListener('pause', function() {
+            isPlaying = false;
+            updatePlayButtons(false);
+        });
+        
+        audioInstance.addEventListener('timeupdate', function() {
+            updateProgress();
+            updatePlayTracking();
+        });
+        
+        audioInstance.addEventListener('loadedmetadata', function() {
+            updateDuration();
+        });
+        
+        audioInstance.addEventListener('ended', function() {
+            handleTrackEnd();
+        });
+    }
+    return audioInstance;
+}
 
-        // ============================================
-        // PLAY TRACK FUNCTION
-        // ============================================
-        // In the playTrack function, add error handling
-        // ============================================
-// PLAY TRACK FUNCTION - UPDATED WITH BETTER ERROR HANDLING
+// ============================================
+// PLAY TRACK FUNCTION
 // ============================================
 function playTrack(trackId, trackData = null) {
+    const audio = getAudioPlayer();
+    
     if (trackData) {
         loadTrack(trackData);
     } else {
@@ -728,13 +734,14 @@ function playTrack(trackId, trackData = null) {
             playBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         }
         
-        fetch(`/bayaplus/api/track/${trackId}/info/`)
+        const url = `/bayaplus/api/track/${trackId}/info/`;
+        console.log('📡 Fetching from:', url);
+        
+        fetch(url)
             .then(response => {
                 console.log('📡 Response status:', response.status);
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.error || `HTTP error! status: ${response.status}`);
-                    });
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
@@ -747,30 +754,19 @@ function playTrack(trackId, trackData = null) {
             })
             .catch(error => {
                 console.error('❌ Error loading track:', error);
+                showToast('Could not load track. Please try again.', 'error');
                 
                 // Reset play button
+                const playBtn = document.getElementById('play-btn');
                 if (playBtn) {
                     playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
                 }
-                
-                // Show user-friendly error
-                let errorMessage = 'Could not load track. ';
-                if (error.message.includes('404')) {
-                    errorMessage += 'The track may not exist or has been removed.';
-                } else if (error.message.includes('No audio file')) {
-                    errorMessage += 'This track has no audio file attached.';
-                } else {
-                    errorMessage += 'Please try again later.';
-                }
-                
-                // Show toast notification
-                showToast(errorMessage, 'error');
             });
     }
 }
 
 // ============================================
-// LOAD TRACK FUNCTION - UPDATED
+// LOAD TRACK FUNCTION
 // ============================================
 function loadTrack(track) {
     console.log('🎵 Loading track:', track.title);
@@ -805,10 +801,10 @@ function loadTrack(track) {
     }
     
     // Load audio
+    const audio = getAudioPlayer();
     const audioUrl = `/bayaplus/stream/${track.id}/`;
     console.log('🔊 Loading audio from:', audioUrl);
     
-    const audio = getAudioPlayer();
     audio.src = audioUrl;
     audio.load();
     
@@ -826,40 +822,225 @@ function loadTrack(track) {
     // Start play tracking
     startPlayTracking(track.id);
     
-    // Play with error handling
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.error('🔊 Playback error:', error);
-            showToast('Could not play this track. The audio file may be missing or corrupted.', 'error');
+    // Play the audio
+    audio.play().then(() => {
+        console.log('▶️ Playing track:', track.title);
+    }).catch(error => {
+        console.error('🔊 Playback error:', error);
+        showToast('Could not play this track. The audio file may be missing.', 'error');
+    });
+}
+
+// ============================================
+// PLAY TRACKING (30-second rule)
+// ============================================
+function startPlayTracking(trackId) {
+    const url = `/bayaplus/api/track/${trackId}/play/start/`;
+    console.log('📡 Starting play tracking at:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        console.log('📡 Play tracking response:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            playId = data.play_id;
+            durationTracked = 0;
+            console.log('✅ Play tracking started:', playId);
+        }
+    })
+    .catch(error => {
+        console.error('Error starting play tracking:', error);
+    });
+}
+
+function updatePlayTracking() {
+    if (!playId) return;
+    
+    durationTracked += 1;
+    
+    if (durationTracked % 5 === 0) {
+        const url = `/bayaplus/api/track/play/update/${playId}/`;
+        console.log('📡 Updating play tracking:', durationTracked, 'seconds');
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                duration_played: durationTracked,
+                completed: durationTracked >= 30
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.counted_as_stream) {
+                console.log('✅ Track counted as a stream!');
+            }
+        })
+        .catch(error => console.error('Error updating play tracking:', error));
+    }
+}
+
+// ============================================
+// TOGGLE PLAY/PAUSE
+// ============================================
+function togglePlay() {
+    const audio = getAudioPlayer();
+    
+    if (!audio.src) {
+        showToast('No track loaded. Select a song to play.', 'info');
+        return;
+    }
+    
+    if (isPlaying) {
+        audio.pause();
+    } else {
+        audio.play().catch(error => {
+            console.error('Play error:', error);
+            showToast('Could not play this track.', 'error');
         });
     }
 }
 
 // ============================================
-// GET AUDIO PLAYER INSTANCE
+// PLAY NEXT / PREVIOUS
 // ============================================
-let audioInstance = null;
-
-function getAudioPlayer() {
-    if (!audioInstance) {
-        audioInstance = new Audio();
-        
-        // Add error listener
-        audioInstance.addEventListener('error', function(e) {
-            console.error('🔊 Audio error:', e);
-            console.error('Error code:', audioInstance.error ? audioInstance.error.code : 'unknown');
-            showToast('Audio playback error. Please try again.', 'error');
-        });
+function playNext() {
+    if (queue.length === 0) {
+        showToast('Queue is empty.', 'info');
+        return;
     }
-    return audioInstance;
+    
+    if (isShuffled) {
+        const randomIndex = Math.floor(Math.random() * queue.length);
+        currentIndex = randomIndex;
+    } else {
+        currentIndex = (currentIndex + 1) % queue.length;
+    }
+    
+    playTrack(queue[currentIndex].id);
+}
+
+function playPrevious() {
+    const audio = getAudioPlayer();
+    if (audio.currentTime > 3) {
+        audio.currentTime = 0;
+        return;
+    }
+    
+    if (queue.length === 0) {
+        showToast('Queue is empty.', 'info');
+        return;
+    }
+    
+    currentIndex = (currentIndex - 1 + queue.length) % queue.length;
+    playTrack(queue[currentIndex].id);
+}
+
+// ============================================
+// HANDLE TRACK END
+// ============================================
+function handleTrackEnd() {
+    console.log('🏁 Track ended');
+    
+    if (repeatMode === 'one') {
+        const audio = getAudioPlayer();
+        audio.currentTime = 0;
+        audio.play();
+    } else {
+        playNext();
+    }
+}
+
+// ============================================
+// UPDATE UI FUNCTIONS
+// ============================================
+function updatePlayButtons(playing) {
+    const playBtn = document.getElementById('play-btn');
+    const bottomPlay = document.getElementById('bottom-play');
+    
+    if (playBtn) {
+        playBtn.innerHTML = playing ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+    if (bottomPlay) {
+        bottomPlay.innerHTML = playing ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+}
+
+function updateProgress() {
+    const audio = getAudioPlayer();
+    if (audio.duration && !isNaN(audio.duration)) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        const progress = document.getElementById('progress');
+        const progressDot = document.getElementById('progress-dot');
+        const currentTimeEl = document.getElementById('current-time');
+        
+        if (progress) progress.style.width = percent + '%';
+        if (progressDot) progressDot.style.left = percent + '%';
+        if (currentTimeEl) currentTimeEl.textContent = formatTime(audio.currentTime);
+    }
+}
+
+function updateDuration() {
+    const audio = getAudioPlayer();
+    const durationEl = document.getElementById('duration');
+    if (durationEl && audio.duration && !isNaN(audio.duration)) {
+        durationEl.textContent = formatTime(audio.duration);
+    }
+}
+
+// ============================================
+// FORMAT TIME
+// ============================================
+function formatTime(seconds) {
+    if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// ============================================
+// SET VOLUME
+// ============================================
+function setVolume(value) {
+    const audio = getAudioPlayer();
+    volume = Math.min(100, Math.max(0, value));
+    audio.volume = volume / 100;
+    
+    const volumeProgress = document.getElementById('bottom-volume-progress');
+    if (volumeProgress) {
+        volumeProgress.style.width = volume + '%';
+    }
+    
+    const volumeBtn = document.getElementById('bottom-volume-btn');
+    if (volumeBtn) {
+        if (volume === 0) {
+            volumeBtn.innerHTML = '<i class="fa-solid fa-volume-mute"></i>';
+        } else if (volume < 50) {
+            volumeBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
+        } else {
+            volumeBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        }
+    }
 }
 
 // ============================================
 // SHOW TOAST NOTIFICATION
 // ============================================
 function showToast(message, type = 'info') {
-    // Create toast container if it doesn't exist
     let container = document.querySelector('.toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -867,10 +1048,7 @@ function showToast(message, type = 'info') {
         document.body.appendChild(container);
     }
     
-    // Create toast
     const toast = document.createElement('div');
-    toast.className = `toast px-4 py-3 rounded-lg text-sm font-medium shadow-lg transition-all transform translate-x-full`;
-    
     const colors = {
         'error': 'bg-red-600 text-white',
         'success': 'bg-green-600 text-white',
@@ -878,17 +1056,15 @@ function showToast(message, type = 'info') {
         'info': 'bg-blue-600 text-white'
     };
     
-    toast.className += ` ${colors[type] || colors.info}`;
+    toast.className = `toast px-4 py-3 rounded-lg text-sm font-medium shadow-lg transition-all transform translate-x-full ${colors[type] || colors.info}`;
     toast.innerHTML = message;
     
     container.appendChild(toast);
     
-    // Animate in
     setTimeout(() => {
         toast.style.transform = 'translateX(0)';
     }, 10);
     
-    // Remove after 4 seconds
     setTimeout(() => {
         toast.style.transform = 'translateX(100%)';
         setTimeout(() => {
@@ -897,390 +1073,166 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-
-        // ============================================
-        // PLAY RELEASE FUNCTION
-        // ============================================
-        function playRelease(releaseId) {
-            fetch(`/bayaplus/api/release/${releaseId}/tracks/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.tracks && data.tracks.length > 0) {
-                        queue = data.tracks;
-                        currentIndex = 0;
-                        updateQueueUI();
-                        playTrack(queue[0].id);
-                    }
-                })
-                .catch(error => console.error('Error loading release tracks:', error));
-        }
-
-        // ============================================
-        // LOAD TRACK FUNCTION
-        // ============================================
-        // ============================================
-        // PLAY TRACKING (30-second rule)
-        // ============================================
-        function startPlayTracking(trackId) {
-            fetch(`/bayaplus/api/track/${trackId}/play/start/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCSRFToken(),
-                    'Content-Type': 'application/json',
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        playId = data.play_id;
-                        durationTracked = 0;
-                    }
-                })
-                .catch(error => console.error('Error starting play tracking:', error));
-        }
-
-        function updatePlayTracking() {
-            if (!playId) return;
-
-            durationTracked += 1;
-
-            // Update every 5 seconds
-            if (durationTracked % 5 === 0) {
-                fetch(`/bayaplus/api/track/play/update/${playId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCSRFToken(),
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        duration_played: durationTracked,
-                        completed: durationTracked >= 30
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.counted_as_stream) {
-                            console.log('✅ Track counted as a stream!');
-                        }
-                    })
-                    .catch(error => console.error('Error updating play tracking:', error));
+// ============================================
+// GET CSRF TOKEN
+// ============================================
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith('csrftoken=')) {
+                cookieValue = decodeURIComponent(trimmed.substring(10));
+                break;
             }
         }
+    }
+    return cookieValue;
+}
 
-        // ============================================
-        // TOGGLE PLAY/PAUSE
-        // ============================================
-        function togglePlay() {
-            if (audio.src) {
-                if (isPlaying) {
-                    audio.pause();
-                } else {
-                    audio.play();
-                }
-            } else if (queue.length > 0) {
-                playTrack(queue[0].id);
-            }
-        }
-
-        // ============================================
-        // PLAY NEXT / PREVIOUS
-        // ============================================
-        function playNext() {
-            if (isShuffled) {
-                const randomIndex = Math.floor(Math.random() * queue.length);
-                currentIndex = randomIndex;
-            } else {
-                currentIndex = (currentIndex + 1) % queue.length;
-            }
-
-            if (queue.length > 0) {
-                playTrack(queue[currentIndex].id);
-            }
-        }
-
-        function playPrevious() {
-            if (audio.currentTime > 3) {
-                audio.currentTime = 0;
-                return;
-            }
-            currentIndex = (currentIndex - 1 + queue.length) % queue.length;
-            if (queue.length > 0) {
-                playTrack(queue[currentIndex].id);
-            }
-        }
-
-        // ============================================
-        // UPDATE QUEUE UI
-        // ============================================
-        function updateQueueUI() {
-            if (queueList) {
-                if (queue.length === 0) {
-                    queueList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Queue is empty</p>';
-                    queueCount.textContent = '0 songs';
-                    return;
-                }
-
-                queueCount.textContent = `${queue.length} songs`;
-                let html = '';
-                queue.forEach((track, index) => {
-                    const isActive = index === currentIndex;
-                    html += `
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[#1a1a1a] transition queue-item ${isActive ? 'active bg-yellow-400/10 border-l-2 border-yellow-400' : ''}" 
-                             onclick="playTrack(${track.id})" style="cursor: pointer;">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="text-xs text-gray-500 w-4 text-center">${index + 1}</span>
-                                <div class="w-6 h-6 rounded bg-red-950 flex items-center justify-center shrink-0 overflow-hidden">
-                                    ${track.cover_art ? `<img src="${track.cover_art}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-music text-red-500 text-xs"></i>`}
-                                </div>
-                                <div class="truncate">
-                                    <p class="text-xs font-medium truncate">${track.title}</p>
-                                    <p class="text-[10px] text-gray-500 truncate">${track.artist}</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-gray-500">${track.duration || '--'}</span>
-                        </div>
-                    `;
-                });
-                queueList.innerHTML = html;
-            }
-        }
-
-        // ============================================
-        // SET VOLUME
-        // ============================================
-        function setVolume(value) {
-            volume = Math.min(100, Math.max(0, value));
-            audio.volume = volume / 100;
-            if (volumeProgress) {
-                volumeProgress.style.width = volume + '%';
-            }
-
-            // Update volume icon
-            if (volumeBtn) {
-                if (volume === 0) {
-                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-mute"></i>';
-                } else if (volume < 50) {
-                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
-                } else {
-                    volumeBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                }
-            }
-        }
-
-        // ============================================
-        // GET CSRF TOKEN
-        // ============================================
-        function getCSRFToken() {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const trimmed = cookie.trim();
-                    if (trimmed.startsWith('csrftoken=')) {
-                        cookieValue = decodeURIComponent(trimmed.substring(10));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // ============================================
-        // FORMAT TIME
-        // ============================================
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return '0:00';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-
-        // Play/Pause Buttons
-        if (playBtn) {
-            playBtn.addEventListener('click', togglePlay);
-        }
-        if (bottomPlay) {
-            bottomPlay.addEventListener('click', togglePlay);
-        }
-
-        // Next/Previous Buttons
-        if (nextBtn) {
-            nextBtn.addEventListener('click', playNext);
-        }
-        if (prevBtn) {
-            prevBtn.addEventListener('click', playPrevious);
-        }
-        if (bottomNext) {
-            bottomNext.addEventListener('click', playNext);
-        }
-        if (bottomPrev) {
-            bottomPrev.addEventListener('click', playPrevious);
-        }
-
-        // Audio Events
-        audio.addEventListener('play', () => {
-            isPlaying = true;
-            if (playBtn) {
-                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            }
-            if (bottomPlay) {
-                bottomPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            }
-        });
-
-        audio.addEventListener('pause', () => {
-            isPlaying = false;
-            if (playBtn) {
-                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-            }
-            if (bottomPlay) {
-                bottomPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
-            }
-        });
-
-        audio.addEventListener('timeupdate', () => {
-            if (audio.duration) {
-                const percent = (audio.currentTime / audio.duration) * 100;
-                if (progress) {
-                    progress.style.width = percent + '%';
-                }
-                if (progressDot) {
-                    progressDot.style.left = percent + '%';
-                }
-                if (currentTimeEl) {
-                    currentTimeEl.textContent = formatTime(audio.currentTime);
-                }
-                updatePlayTracking();
-            }
-        });
-
-        audio.addEventListener('loadedmetadata', () => {
-            if (durationEl) {
-                durationEl.textContent = formatTime(audio.duration);
-            }
-        });
-
-        audio.addEventListener('ended', () => {
-            if (repeatMode === 'one') {
-                audio.currentTime = 0;
-                audio.play();
-            } else {
-                playNext();
-            }
-        });
-
-        // Progress Bar Click
-        if (progressBar) {
-            progressBar.addEventListener('click', (e) => {
-                if (audio.duration) {
-                    const rect = progressBar.getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    audio.currentTime = percent * audio.duration;
-                }
-            });
-        }
-
-        // Volume
-        if (volumeBar) {
-            volumeBar.addEventListener('click', (e) => {
-                const rect = volumeBar.getBoundingClientRect();
+// ============================================
+// EVENT LISTENERS SETUP
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎵 BayaPlus Player Initializing...');
+    
+    // Play/Pause Buttons
+    const playBtn = document.getElementById('play-btn');
+    const bottomPlay = document.getElementById('bottom-play');
+    
+    if (playBtn) playBtn.addEventListener('click', togglePlay);
+    if (bottomPlay) bottomPlay.addEventListener('click', togglePlay);
+    
+    // Next/Previous Buttons
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const bottomNext = document.getElementById('bottom-next');
+    const bottomPrev = document.getElementById('bottom-prev');
+    
+    if (nextBtn) nextBtn.addEventListener('click', playNext);
+    if (prevBtn) prevBtn.addEventListener('click', playPrevious);
+    if (bottomNext) bottomNext.addEventListener('click', playNext);
+    if (bottomPrev) bottomPrev.addEventListener('click', playPrevious);
+    
+    // Progress Bar Click
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+        progressBar.addEventListener('click', function(e) {
+            const audio = getAudioPlayer();
+            if (audio.duration && !isNaN(audio.duration)) {
+                const rect = this.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
-                setVolume(percent * 100);
-            });
-        }
-
-        if (volumeBtn) {
-            volumeBtn.addEventListener('click', () => {
-                if (audio.volume > 0) {
-                    setVolume(0);
-                } else {
-                    setVolume(70);
-                }
-            });
-        }
-
-        // Shuffle
-        if (shuffleBtn) {
-            shuffleBtn.addEventListener('click', () => {
-                isShuffled = !isShuffled;
-                shuffleBtn.style.color = isShuffled ? '#fbbf24' : '';
-            });
-        }
-
-        // Repeat
-        if (repeatBtn) {
-            repeatBtn.addEventListener('click', () => {
-                const modes = ['none', 'all', 'one'];
-                const icons = ['fa-repeat', 'fa-repeat', 'fa-repeat-1'];
-                const currentIdx = modes.indexOf(repeatMode);
-                repeatMode = modes[(currentIdx + 1) % modes.length];
-                repeatBtn.style.color = repeatMode !== 'none' ? '#fbbf24' : '';
-                repeatBtn.innerHTML = `<i class="fa-solid ${icons[(currentIdx + 1) % icons.length]}"></i>`;
-            });
-        }
-
-        // Like
-        if (likeBtn) {
-            likeBtn.addEventListener('click', () => {
-                const icon = likeBtn.querySelector('i');
-                if (icon.classList.contains('fa-regular')) {
-                    icon.classList.remove('fa-regular');
-                    icon.classList.add('fa-solid', 'text-red-500');
-                } else {
-                    icon.classList.remove('fa-solid', 'text-red-500');
-                    icon.classList.add('fa-regular');
-                }
-            });
-        }
-
-        // ============================================
-        // KEYBOARD SHORTCUTS
-        // ============================================
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if (e.code === 'Space') {
-                e.preventDefault();
-                togglePlay();
-            }
-            if (e.code === 'ArrowRight' && e.ctrlKey) {
-                e.preventDefault();
-                playNext();
-            }
-            if (e.code === 'ArrowLeft' && e.ctrlKey) {
-                e.preventDefault();
-                playPrevious();
+                audio.currentTime = percent * audio.duration;
             }
         });
-
-        // ============================================
-        // INITIALIZE
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function () {
-            setVolume(70);
-            updateQueueUI();
-
-            fetch('/bayaplus/api/queue/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.queue && data.queue.length > 0) {
-                        queue = data.queue;
-                        if (data.current) {
-                            currentIndex = queue.findIndex(t => t.id === data.current.id);
-                            if (currentIndex === -1) currentIndex = 0;
-                        }
-                        updateQueueUI();
-                    }
-                })
-                .catch(error => console.error('Error loading queue:', error));
+    }
+    
+    // Volume
+    const volumeBar = document.getElementById('bottom-volume-bar');
+    if (volumeBar) {
+        volumeBar.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            setVolume(percent * 100);
         });
+    }
+    
+    const volumeBtn = document.getElementById('bottom-volume-btn');
+    if (volumeBtn) {
+        volumeBtn.addEventListener('click', function() {
+            const audio = getAudioPlayer();
+            if (audio.volume > 0) {
+                setVolume(0);
+            } else {
+                setVolume(70);
+            }
+        });
+    }
+    
+    // Shuffle
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (shuffleBtn) {
+        shuffleBtn.addEventListener('click', function() {
+            isShuffled = !isShuffled;
+            this.style.color = isShuffled ? '#fbbf24' : '';
+            showToast(isShuffled ? 'Shuffle ON' : 'Shuffle OFF', 'info');
+        });
+    }
+    
+    // Repeat
+    const repeatBtn = document.getElementById('repeat-btn');
+    if (repeatBtn) {
+        repeatBtn.addEventListener('click', function() {
+            const modes = ['none', 'all', 'one'];
+            const icons = ['fa-repeat', 'fa-repeat', 'fa-repeat-1'];
+            const labels = ['Repeat OFF', 'Repeat ALL', 'Repeat ONE'];
+            const currentIdx = modes.indexOf(repeatMode);
+            const nextIdx = (currentIdx + 1) % modes.length;
+            repeatMode = modes[nextIdx];
+            this.style.color = repeatMode !== 'none' ? '#fbbf24' : '';
+            this.innerHTML = `<i class="fa-solid ${icons[nextIdx]}"></i>`;
+            showToast(labels[nextIdx], 'info');
+        });
+    }
+    
+    // Like
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('fa-regular')) {
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid', 'text-red-500');
+                showToast('Added to likes! ❤️', 'success');
+            } else {
+                icon.classList.remove('fa-solid', 'text-red-500');
+                icon.classList.add('fa-regular');
+                showToast('Removed from likes 💔', 'info');
+            }
+        });
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            togglePlay();
+        }
+        if (e.code === 'ArrowRight' && e.ctrlKey) {
+            e.preventDefault();
+            playNext();
+        }
+        if (e.code === 'ArrowLeft' && e.ctrlKey) {
+            e.preventDefault();
+            playPrevious();
+        }
+    });
+    
+    // Set initial volume
+    setVolume(70);
+    
+    console.log('🎵 BayaPlus Player Loaded!');
+    console.log('📋 Controls: Space = Play/Pause, Ctrl+Right = Next, Ctrl+Left = Previous');
+    console.log('📋 30-second rule: Tracks count as streams after 30 seconds of playback');
+    console.log('📋 Track available:', 'Do That (ID: 2)');
+});
 
-        console.log('🎵 BayaPlus Player Loaded!');
-        console.log('📋 Controls: Space = Play/Pause, Ctrl+Right = Next, Ctrl+Left = Previous');
-        console.log('📋 30-second rule: Tracks count as streams after 30 seconds of playback');
+// Toast styles
+const toastStyles = document.createElement('style');
+toastStyles.textContent = `
+    .toast-container {
+        max-width: 380px;
+        z-index: 9999;
+    }
+    .toast {
+        min-width: 280px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+`;
+document.head.appendChild(toastStyles);
     </script>
 
 </body>

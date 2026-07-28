@@ -22,6 +22,7 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 import json
 
+
 logger = logging.getLogger(__name__)
 
 # Add this decorator to check artist role
@@ -110,10 +111,10 @@ def index(request):
     # Get recent releases
     recent = Release.objects.filter(status='published', is_public=True).order_by('-created_at')[:12]
     
-    # Get featured releases (if you have a featured flag)
+    # Get featured releases
     featured = Release.objects.filter(status='published', is_public=True, is_featured=True)[:5]
     
-    # Get top tracks (if you have a Track model with plays)
+    # Get top tracks
     top_tracks = Track.objects.filter(release__status='published', release__is_public=True).order_by('-plays')[:10]
     
     # Get random releases for "Made for you" section
@@ -133,7 +134,6 @@ def index(request):
     }
     
     return render(request, "pages/index.html", context)
-
 def signup(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -2405,61 +2405,67 @@ def admin_review_request(request, request_id):
 # In views.py - Update the streaming function
 
 # In views.py - Streaming functions
-
 def get_track_audio(request, track_id):
     """Stream audio file with range request support"""
-    track = get_object_or_404(Track, id=track_id)
-    
-    # Check if track is from a published release
-    if track.release.status != 'published' or not track.release.is_public:
-        return HttpResponse("Track not available", status=404)
-    
-    audio_file = track.audio_file
-    if not audio_file:
-        return HttpResponse("Audio file not found", status=404)
-    
-    # Serve the file with range request support
-    import os
-    from django.http import FileResponse, HttpResponse
-    import mimetypes
-    import re
-    
-    file_path = audio_file.path
-    if not os.path.exists(file_path):
-        return HttpResponse("Audio file not found on server", status=404)
-    
-    file_size = os.path.getsize(file_path)
-    
-    range_header = request.META.get('HTTP_RANGE', '').strip()
-    
-    if range_header:
-        try:
+    try:
+        track = get_object_or_404(Track, id=track_id)
+        
+        # Check if track is from a published release
+        if track.release.status != 'published' or not track.release.is_public:
+            return HttpResponse("Track not available", status=404)
+        
+        audio_file = track.audio_file
+        if not audio_file:
+            return HttpResponse("Audio file not found", status=404)
+        
+        # Get the file path
+        file_path = audio_file.path
+        
+        # Check if file exists
+        import os
+        if not os.path.exists(file_path):
+            return HttpResponse("Audio file not found on server", status=404)
+        
+        # Serve the file
+        from django.http import FileResponse
+        import mimetypes
+        
+        # Determine content type
+        content_type = mimetypes.guess_type(file_path)[0] or 'audio/mpeg'
+        
+        # Open the file and return as response
+        response = FileResponse(
+            open(file_path, 'rb'),
+            content_type=content_type
+        )
+        response['Content-Length'] = os.path.getsize(file_path)
+        response['Accept-Ranges'] = 'bytes'
+        
+        # Handle range requests (for seeking)
+        range_header = request.META.get('HTTP_RANGE', '').strip()
+        if range_header:
+            import re
             range_match = re.search(r'bytes=(\d+)-(\d*)', range_header)
             if range_match:
                 start = int(range_match.group(1))
+                file_size = os.path.getsize(file_path)
                 end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
                 
-                if start >= file_size or end >= file_size:
-                    return HttpResponse(status=416)
-                
-                response = HttpResponse(
-                    open(file_path, 'rb').read(end - start + 1),
-                    status=206,
-                    content_type=mimetypes.guess_type(file_path)[0] or 'audio/mpeg'
-                )
-                response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
-                response['Accept-Ranges'] = 'bytes'
-                response['Content-Length'] = str(end - start + 1)
-                return response
-        except Exception as e:
-            print(f"Range request error: {e}")
-    
-    # Fallback to serving the whole file
-    response = FileResponse(open(file_path, 'rb'), content_type=mimetypes.guess_type(file_path)[0] or 'audio/mpeg')
-    response['Accept-Ranges'] = 'bytes'
-    response['Content-Length'] = str(file_size)
-    return response
-
+                if start < file_size and end < file_size:
+                    response = HttpResponse(
+                        open(file_path, 'rb').read(end - start + 1),
+                        status=206,
+                        content_type=content_type
+                    )
+                    response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+                    response['Content-Length'] = str(end - start + 1)
+                    response['Accept-Ranges'] = 'bytes'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Stream error: {e}")
+        return HttpResponse(f"Error: {str(e)}", status=500)
 
 def track_info(request, track_id):
     """Get track information for playback"""
@@ -2469,26 +2475,32 @@ def track_info(request, track_id):
         # Check if track has audio file
         if not track.audio_file:
             return JsonResponse({
-                'error': 'No audio file found for this track'
+                'error': 'No audio file found for this track',
+                'id': track.id,
+                'title': track.title
             }, status=404)
+        
+        # Get release info
+        release = track.release
         
         data = {
             'id': track.id,
             'title': track.title,
-            'artist': track.release.artist_profile.artist_name or track.release.artist.username,
+            'artist': release.artist_profile.artist_name if release.artist_profile else release.artist.username,
             'duration': track.duration or '--',
-            'cover_art': track.release.cover_art.url if track.release.cover_art else None,
-            'release_id': track.release.id,
-            'release_title': track.release.title,
+            'cover_art': release.cover_art.url if release.cover_art else None,
+            'release_id': release.id,
+            'release_title': release.title,
             'audio_url': f'/bayaplus/stream/{track.id}/',
         }
         
         return JsonResponse(data)
         
+    except Track.DoesNotExist:
+        return JsonResponse({'error': 'Track not found'}, status=404)
     except Exception as e:
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 @login_required(login_url='login')
 def track_play_start(request, track_id):
@@ -2553,31 +2565,37 @@ def track_play_update(request, play_id):
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
 def release_tracks(request, release_id):
     """Get all tracks for a release"""
-    release = get_object_or_404(Release, id=release_id, status='published', is_public=True)
-    tracks = release.tracks.all().order_by('track_number')
-    
-    data = {
-        'release_id': release.id,
-        'release_title': release.title,
-        'tracks': [
-            {
-                'id': track.id,
-                'title': track.title,
-                'artist': release.artist_profile.artist_name or release.artist.username,
-                'duration': track.duration or '--',
-                'cover_art': release.cover_art.url if release.cover_art else None,
-                'track_number': track.track_number,
-            }
-            for track in tracks
-        ]
-    }
-    
-    return JsonResponse(data)
-
-
+    try:
+        release = get_object_or_404(Release, id=release_id)
+        
+        if release.status != 'published' or not release.is_public:
+            return JsonResponse({'error': 'Release not available'}, status=404)
+        
+        tracks = release.tracks.all().order_by('track_number')
+        
+        data = {
+            'release_id': release.id,
+            'release_title': release.title,
+            'tracks': [
+                {
+                    'id': track.id,
+                    'title': track.title,
+                    'artist': release.artist_profile.artist_name if release.artist_profile else release.artist.username,
+                    'duration': track.duration or '--',
+                    'cover_art': release.cover_art.url if release.cover_art else None,
+                    'track_number': track.track_number,
+                    'has_audio': bool(track.audio_file),
+                }
+                for track in tracks
+            ]
+        }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 @login_required(login_url='login')
 def get_queue(request):
     """Get user's current queue"""
@@ -2621,3 +2639,33 @@ def get_queue(request):
         
     except Queue.DoesNotExist:
         return JsonResponse({'queue': [], 'current': None, 'total': 0})
+    
+# In views.py - Add a test view
+# In views.py - Add this test view
+def api_test(request):
+    """Test API endpoint"""
+    try:
+        tracks = Track.objects.all()
+        track_data = []
+        for track in tracks[:5]:
+            track_data.append({
+                'id': track.id,
+                'title': track.title,
+                'has_audio': bool(track.audio_file),
+                'release_status': track.release.status,
+            })
+        
+        return JsonResponse({
+            'status': 'ok',
+            'message': 'API is working',
+            'tracks_count': Track.objects.count(),
+            'tracks_with_audio': Track.objects.filter(audio_file__isnull=False).count(),
+            'sample_tracks': track_data,
+            'urls': {
+                'track_info': '/bayaplus/api/track/{id}/info/',
+                'stream': '/bayaplus/stream/{id}/',
+                'play_start': '/bayaplus/api/track/{id}/play/start/',
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

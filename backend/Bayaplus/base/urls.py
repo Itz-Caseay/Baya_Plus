@@ -1,10 +1,12 @@
+# In base/urls.py
 from django.urls import path
 from . import views
 
+app_name = 'base'
 
 urlpatterns = [
     # ==================== MAIN INDEX ====================
-    path('', views.index, name='index'),  # ← ADD THIS - This is the homepage
+    path('', views.index, name='index'),  # ← ADD THIS LINE
     
     # ==================== AUTHENTICATION URLs ====================
     path('signup/', views.signup, name='signup'),
@@ -57,7 +59,14 @@ urlpatterns = [
     path('following/', views.following_list, name='following_list'),
     path('followers/<str:username>/', views.followers_list, name='followers_list'),
     
-    # ==================== STAFF/ADMIN URLs ====================
+    # ==================== ADMIN URLs ====================
+    path('admin-apply/', views.admin_apply, name='admin_apply'),
+    path('staff/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('staff/profile/', views.admin_profile, name='admin_profile'),
+    path('staff/users/', views.admin_all_users, name='admin_all_users'),
+    path('staff/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('staff/admin-requests/', views.admin_manage_requests, name='admin_manage_requests'),
+    path('staff/admin-request/<int:request_id>/', views.admin_review_request, name='admin_review_request'),
     path('staff/pending/', views.admin_pending_releases, name='admin_pending_releases'),
     path('staff/review/<int:release_id>/', views.admin_review_release, name='admin_review_release'),
     path('staff/all/', views.admin_all_releases, name='admin_all_releases'),
@@ -65,27 +74,14 @@ urlpatterns = [
     # ==================== SETTINGS URLs ====================
     path('settings/profile/', views.profile_settings, name='profile_settings'),
     
-    # ==================== TEST URL ====================
-    path('test-email/', views.test_email, name='test_email'),
-    path('test-admin-email/', views.test_admin_email, name='test_admin_email'),
-    
-    # Admin URLs
-    path('staff/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('staff/profile/', views.admin_profile, name='admin_profile'),
-    path('staff/users/', views.admin_all_users, name='admin_all_users'),
-    path('staff/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
-    path('staff/pending/', views.admin_pending_releases, name='admin_pending_releases'),
-    path('staff/review/<int:release_id>/', views.admin_review_release, name='admin_review_release'),
-    path('staff/all/', views.admin_all_releases, name='admin_all_releases'),
-    # Admin Request URLs
-    path('admin-apply/', views.admin_apply, name='admin_apply'),
-    path('staff/admin-requests/', views.admin_manage_requests, name='admin_manage_requests'),
-    path('staff/admin-request/<int:request_id>/', views.admin_review_request, name='admin_review_request'),
-    # Streaming URLs
+    # ==================== STREAMING URLs ====================
     path('stream/<int:track_id>/', views.get_track_audio, name='stream_track'),
     path('api/track/<int:track_id>/info/', views.track_info, name='track_info'),
     path('api/track/<int:track_id>/play/start/', views.track_play_start, name='track_play_start'),
     path('api/track/play/update/<int:play_id>/', views.track_play_update, name='track_play_update'),
     path('api/release/<int:release_id>/tracks/', views.release_tracks, name='release_tracks'),
     path('api/queue/', views.get_queue, name='get_queue'),
+    
+    # ==================== TEST URL ====================
+    path('test-email/', views.test_email, name='test_email'),
 ]
