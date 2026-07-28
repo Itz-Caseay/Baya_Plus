@@ -44,16 +44,17 @@
                         <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
                             <i class="fa-solid fa-radio text-lg"></i> Radio
                         </a>
-                        <!-- In user dashboard sidebar -->
-                        {% if not user.is_staff %}
-                            <a href="{% url 'admin_apply' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                                <i class="fa-solid fa-user-shield text-lg"></i> Become Admin
-                            </a>
-                        {% endif %}
+                        
                         {% if user.is_authenticated %}
-                            <a href="{% url 'artistboard' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-                                <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
-                            </a>
+                            {% if user.userprofile.role == 'Artist' %}
+                                <a href="{% url 'artistboard' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                                </a>
+                            {% elif user.userprofile.role == 'Fan' %}
+                                <a href="{% url 'fanboard' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </div>
 
@@ -86,6 +87,16 @@
                                 </a>
                                 <a href="{% url 'my_releases' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
                                     <i class="fa-solid fa-compact-disc"></i> My Releases
+                                </a>
+                            </div>
+                        {% elif user.userprofile.role == 'Fan' %}
+                            <div class="space-y-2 pt-4 border-t border-[#1a1a1a]">
+                                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Fan Tools</p>
+                                <a href="{% url 'fan_library' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
+                                    <i class="fa-solid fa-heart"></i> My Library
+                                </a>
+                                <a href="{% url 'fan_playlist' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
+                                    <i class="fa-solid fa-list"></i> Playlists
                                 </a>
                             </div>
                         {% endif %}
@@ -140,10 +151,22 @@
                         <i class="fa-regular fa-bell"></i>
                         <span class="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                     </button>
+                    
+                    <!-- Conditional Dashboard Link -->
                     {% if user.is_authenticated %}
-                        <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm shrink-0">
-                            <i class="fa-solid fa-user"></i>
-                        </a>
+                        {% if user.userprofile.role == 'Artist' %}
+                            <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm shrink-0" title="Artist Dashboard">
+                                <i class="fa-solid fa-microphone"></i>
+                            </a>
+                        {% elif user.userprofile.role == 'Fan' %}
+                            <a href="{% url 'fanboard' %}" class="text-gray-400 hover:text-white text-sm shrink-0" title="Fan Dashboard">
+                                <i class="fa-solid fa-headphones"></i>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'index' %}" class="text-gray-400 hover:text-white text-sm shrink-0">
+                                <i class="fa-solid fa-user"></i>
+                            </a>
+                        {% endif %}
                         <a href="{% url 'logout' %}" class="text-gray-400 hover:text-white text-sm shrink-0">
                             <i class="fa-solid fa-sign-out-alt"></i>
                         </a>
@@ -309,16 +332,35 @@
                                     <p class="text-[10px] text-gray-500">Upload your music</p>
                                 </div>
                             </a>
+                            <a href="{% url 'artistboard' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
+                                <div class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center text-red-500">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-xs font-bold">Artist Dashboard</h5>
+                                    <p class="text-[10px] text-gray-500">Manage your music</p>
+                                </div>
+                            </a>
+                        {% elif user.userprofile.role == 'Fan' %}
+                            <a href="{% url 'fan_library' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
+                                <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-500">
+                                    <i class="fa-solid fa-heart"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-xs font-bold">My Library</h5>
+                                    <p class="text-[10px] text-gray-500">Your liked music</p>
+                                </div>
+                            </a>
+                            <a href="{% url 'fanboard' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
+                                <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-500">
+                                    <i class="fa-solid fa-headphones"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-xs font-bold">Fan Dashboard</h5>
+                                    <p class="text-[10px] text-gray-500">Your music hub</p>
+                                </div>
+                            </a>
                         {% endif %}
-                        <a href="{% url 'artistboard' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
-                            <div class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center text-red-500">
-                                <i class="fa-solid fa-user"></i>
-                            </div>
-                            <div>
-                                <h5 class="text-xs font-bold">Dashboard</h5>
-                                <p class="text-[10px] text-gray-500">View your stats</p>
-                            </div>
-                        </a>
                     {% else %}
                         <a href="{% url 'login' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
                             <div class="w-8 h-8 bg-yellow-400/20 rounded-lg flex items-center justify-center text-yellow-400">
@@ -336,6 +378,19 @@
                             <div>
                                 <h5 class="text-xs font-bold">Sign Up</h5>
                                 <p class="text-[10px] text-gray-500">Create an account</p>
+                            </div>
+                        </a>
+                    {% endif %}
+                    
+                    <!-- Admin Apply Link - Show for all authenticated users -->
+                    {% if user.is_authenticated and not user.is_staff %}
+                        <a href="{% url 'admin_apply' %}" class="flex items-center gap-3 p-2 hover:bg-[#161616] rounded-lg transition group">
+                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-500">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold">Become Admin</h5>
+                                <p class="text-[10px] text-gray-500">Apply for admin access</p>
                             </div>
                         </a>
                     {% endif %}
