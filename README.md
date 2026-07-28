@@ -11,6 +11,11 @@ A streaming platform designed in Cameroon
 
 BayaPlus is a full-featured music streaming platform that connects artists and fans. Artists can upload and manage their music releases, while fans can discover new music, create playlists, follow their favorite artists, and enjoy seamless streaming. The platform includes a robust admin panel for content moderation and user management.
 
+## 🎬 Platform Demo
+
+[![BayaPlus Demo](https://img.youtube.com/vi/CyFD1fVk_YY/0.jpg)](https://www.https://www.youtube.com/watch?v=CyFD1fVk_YY)
+
+> 🎬 Click the image above to watch the demo video
 ## ✨ Features
 
 ### 🎨 User Features
