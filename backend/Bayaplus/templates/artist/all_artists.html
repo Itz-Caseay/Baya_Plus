@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Artists - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .transition-all { transition: all 0.3s ease; }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        .gradient-border {
+            position: relative;
+            background: #121212;
+            border-radius: 12px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .artist-card {
+            background: #121212;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .artist-card:hover {
+            border-color: #fbbf24;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        .artist-card .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            overflow: hidden;
+            border: 3px solid #2a2a2a;
+            transition: all 0.3s ease;
+        }
+        .artist-card:hover .avatar {
+            border-color: #fbbf24;
+        }
+        .artist-card .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .artist-card .avatar .placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+        }
+        .trending-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: black;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .trending-badge i {
+            font-size: 8px;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #fbbf24;
+        }
+        .nav-link.active {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="hidden lg:flex w-64 bg-[#0f0f0f] p-6 flex-col justify-between border-r border-[#1a1a1a] shrink-0 h-screen sticky top-0 overflow-y-auto">
+        <div>
+            <!-- Logo -->
+            <div class="flex items-center gap-1 mb-8">
+                <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-3xl font-light italic">plus</span>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="space-y-1.5">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-house text-lg"></i> Home
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i> Search
+                </a>
+                <a href="{% url 'all_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-compass text-lg"></i> Browse
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-radio text-lg"></i> Radio
+                </a>
+                <a href="{% url 'artistboard' %}" class="flex items-center gap-4 bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                </a>
+            </nav>
+
+            <!-- Your Library -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider px-4">Your Library</p>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-bars-staggered"></i> Playlists
+                </a>
+                <a href="{% url 'my_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-compact-disc"></i> Releases
+                </a>
+                <a href="#" class="flex items-center gap-4 text-yellow-400 px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-user"></i> Artists
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-music"></i> Songs
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-heart"></i> Liked Content
+                </a>
+            </div>
+
+            <!-- Artist Quick Access -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Artist Tools</p>
+                <a href="{% url 'create_release' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-plus"></i> New Release
+                </a>
+                <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-chart-line"></i> Analytics
+                </a>
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Upgrade Plan -->
+        <div class="bg-gradient-to-b from-[#161616] to-[#0f0f0f] border border-yellow-500/20 rounded-xl p-4 text-center">
+            <div class="flex justify-center items-center gap-1 mb-1">
+                <i class="fa-solid fa-crown text-yellow-400 text-xs"></i>
+                <span class="text-white font-bold text-sm">Baya</span>
+                <span class="text-yellow-400 text-sm italic">plus</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Unlimited music.<br>No ads. Offline play.</p>
+            <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2.5 px-6 rounded-full w-full transition tracking-wide">
+                Upgrade Now
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto">
+        
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl font-bold">🎤 Artists</h1>
+                <p class="text-sm text-gray-400">Discover and follow your favorite artists</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <input type="text" placeholder="Search artists..." 
+                           class="bg-[#121212] border border-[#222] rounded-full pl-8 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-yellow-400 w-48 sm:w-64">
+                </div>
+            </div>
+        </header>
+
+        <!-- Trending Artists Section -->
+        <section class="mb-10">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-fire text-yellow-400"></i>
+                <h2 class="text-lg font-bold">Trending Artists</h2>
+                <span class="text-xs text-gray-500 bg-[#1a1a1a] px-2 py-0.5 rounded-full">Top 10</span>
+            </div>
+            
+            {% if trending_artists %}
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {% for artist in trending_artists %}
+                        <div class="artist-card relative" onclick="window.location.href='{% url 'artist_releases' artist.user.username %}'">
+                            {% if forloop.counter <= 3 %}
+                                <div class="trending-badge">
+                                    <i class="fa-solid fa-fire"></i> #{{ forloop.counter }}
+                                </div>
+                            {% endif %}
+                            <div class="avatar">
+                                {% if artist.avatar %}
+                                    <img src="{{ artist.avatar.url }}" alt="{{ artist.artist_name|default:artist.user.username }}">
+                                {% else %}
+                                    <div class="placeholder">{{ artist.artist_name|default:artist.user.username|first|upper }}</div>
+                                {% endif %}
+                            </div>
+                            <h3 class="font-bold text-sm truncate">{{ artist.artist_name|default:artist.user.username }}</h3>
+                            <p class="text-xs text-gray-500">{{ artist.release_count }} releases</p>
+                            <div class="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
+                                <i class="fa-regular fa-heart text-red-500"></i>
+                                <span>{{ artist.follower_count|default:0 }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-10 bg-[#121212] rounded-xl border border-[#1a1a1a]">
+                    <p class="text-gray-500">No trending artists yet</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- All Artists Section -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold">All Artists</h2>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-gray-500">{{ total_artists }} artists</span>
+                    <select class="bg-[#121212] border border-[#222] rounded-lg px-3 py-1 text-xs text-gray-300 focus:outline-none focus:border-yellow-400">
+                        <option value="newest">Newest</option>
+                        <option value="popular">Most Popular</option>
+                        <option value="az">A-Z</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if all_artists %}
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {% for artist in all_artists %}
+                        <div class="artist-card" onclick="window.location.href='{% url 'artist_releases' artist.user.username %}'">
+                            <div class="avatar">
+                                {% if artist.avatar %}
+                                    <img src="{{ artist.avatar.url }}" alt="{{ artist.artist_name|default:artist.user.username }}">
+                                {% else %}
+                                    <div class="placeholder">{{ artist.artist_name|default:artist.user.username|first|upper }}</div>
+                                {% endif %}
+                            </div>
+                            <h3 class="font-bold text-sm truncate">{{ artist.artist_name|default:artist.user.username }}</h3>
+                            <p class="text-xs text-gray-500">{{ artist.release_count }} releases</p>
+                            <div class="flex items-center justify-center gap-1 mt-2 text-xs text-gray-500">
+                                <i class="fa-regular fa-heart text-red-500"></i>
+                                <span>{{ artist.follower_count|default:0 }}</span>
+                            </div>
+                            {% if artist.is_following %}
+                                <span class="text-xs text-green-500 mt-1 block">Following</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if all_artists.has_other_pages %}
+                    <div class="flex items-center justify-center gap-2 mt-8">
+                        {% if all_artists.has_previous %}
+                            <a href="?page={{ all_artists.previous_page_number }}" class="px-3 py-1 rounded-lg bg-[#121212] border border-[#1a1a1a] text-sm hover:border-yellow-400 transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% for num in all_artists.paginator.page_range %}
+                            {% if all_artists.number == num %}
+                                <span class="px-3 py-1 rounded-lg bg-yellow-400 text-black text-sm font-bold">{{ num }}</span>
+                            {% elif num > all_artists.number|add:'-3' and num < all_artists.number|add:'3' %}
+                                <a href="?page={{ num }}" class="px-3 py-1 rounded-lg bg-[#121212] border border-[#1a1a1a] text-sm hover:border-yellow-400 transition">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if all_artists.has_next %}
+                            <a href="?page={{ all_artists.next_page_number }}" class="px-3 py-1 rounded-lg bg-[#121212] border border-[#1a1a1a] text-sm hover:border-yellow-400 transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-10 bg-[#121212] rounded-xl border border-[#1a1a1a]">
+                    <div class="text-6xl mb-4">🎤</div>
+                    <p class="text-gray-400 text-lg">No artists found</p>
+                    <p class="text-gray-500 text-sm mt-2">Check back later for new artists</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 border-l border-[#1a1a1a] flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
+        <!-- Trending Artists Quick List -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-yellow-400 uppercase tracking-wider mb-3">🔥 Trending</h4>
+            {% if trending_artists %}
+                <div class="space-y-3">
+                    {% for artist in trending_artists|slice:":5" %}
+                        <a href="{% url 'artist_releases' artist.user.username %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition group">
+                            <span class="text-xs font-bold text-yellow-400 w-4">{{ forloop.counter }}</span>
+                            <div class="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-xs font-bold shrink-0">
+                                {% if artist.avatar %}
+                                    <img src="{{ artist.avatar.url }}" alt="{{ artist.artist_name|default:artist.user.username }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    {{ artist.artist_name|default:artist.user.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="truncate flex-1">
+                                <p class="text-sm font-medium truncate">{{ artist.artist_name|default:artist.user.username }}</p>
+                                <p class="text-[10px] text-gray-500">{{ artist.release_count }} releases</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-xs text-gray-500 text-center py-4">No trending artists</p>
+            {% endif %}
+        </div>
+
+        <!-- Genre Filter -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Genres</h4>
+            <div class="flex flex-wrap gap-2">
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">All</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Pop</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Hip-Hop</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">R&B</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Afrobeats</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Jazz</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Classical</span>
+            </div>
+        </div>
+
+        <!-- Followed Artists -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Following</h4>
+            {% if followed_artists %}
+                <div class="space-y-2">
+                    {% for follow in followed_artists|slice:":3" %}
+                        <a href="{% url 'artist_releases' follow.following.username %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                            <div class="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-xs font-bold shrink-0">
+                                {% if follow.following.userprofile.avatar %}
+                                    <img src="{{ follow.following.userprofile.avatar.url }}" alt="{{ follow.following.username }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    {{ follow.following.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="truncate flex-1">
+                                <p class="text-sm font-medium truncate">{{ follow.following.userprofile.artist_name|default:follow.following.username }}</p>
+                                <p class="text-[10px] text-gray-500">Artist</p>
+                            </div>
+                        </a>
+                    {% endfor %}
+                    {% if followed_artists|length > 3 %}
+                        <a href="#" class="text-xs text-yellow-400 hover:underline block text-center mt-2">View all ({{ followed_artists|length }})</a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p class="text-xs text-gray-500 text-center py-4">No artists followed yet</p>
+            {% endif %}
+        </div>
+    </aside>
+
+</body>
+</html>

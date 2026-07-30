@@ -21,6 +21,7 @@ import logging
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 import json
+from django.core.paginator import Paginator
 
 
 logger = logging.getLogger(__name__)
@@ -1446,7 +1447,6 @@ def release_detail(request, release_id):
         'total_likes': release.total_likes,
     })
     
-@login_required(login_url="login")
 def all_releases(request):
     """View all public releases (browse page)"""
     releases = Release.objects.filter(
@@ -1463,11 +1463,23 @@ def all_releases(request):
     search_query = request.GET.get('q')
     if search_query:
         releases = releases.filter(
-            models.Q(title__icontains=search_query) |
-            models.Q(artist__username__icontains=search_query) |
-            models.Q(genre__icontains=search_query) |
-            models.Q(artist_profile__artist_name__icontains=search_query)
+            Q(title__icontains=search_query) |
+            Q(artist__username__icontains=search_query) |
+            Q(genre__icontains=search_query) |
+            Q(artist_profile__artist_name__icontains=search_query)
         )
+    
+    # Get trending releases (by plays/likes)
+    trending_releases = Release.objects.filter(
+        status='published', 
+        is_public=True
+    ).order_by('-total_plays', '-total_likes')[:10]
+    
+    # Get recent releases
+    recent_releases = Release.objects.filter(
+        status='published', 
+        is_public=True
+    ).order_by('-created_at')[:10]
     
     # Get all release types for filter
     release_types = Release.RELEASE_TYPES
@@ -1478,9 +1490,11 @@ def all_releases(request):
         'current_type': release_type,
         'search_query': search_query,
         'total_releases': releases.count(),
+        'trending_releases': trending_releases,
+        'recent_releases': recent_releases,
     }
     
-    return render(request, "releases/all_releases.html", context)
+    return render(request, "releases/all_releases.html", context) 
     
 @login_required(login_url='login')
 def my_releases(request):
@@ -2669,3 +2683,58 @@ def api_test(request):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+def all_artists(request):
+    """View all artists with trending at the top"""
+    # Get all artist profiles with release counts
+    artist_profiles = UserProfile.objects.filter(role='Artist')
+    
+    # Annotate with release count and follower count
+    artist_data = []
+    for profile in artist_profiles:
+        releases = Release.objects.filter(artist=profile.user, status='published', is_public=True)
+        followers = Follow.objects.filter(following=profile.user).count()
+        
+        # Check if current user follows this artist
+        is_following = False
+        if request.user.is_authenticated:
+            is_following = Follow.objects.filter(
+                follower=request.user,
+                following=profile.user
+            ).exists()
+        
+        artist_data.append({
+            'user': profile.user,
+            'artist_name': profile.artist_name or profile.user.username,
+            'avatar': profile.avatar,
+            'release_count': releases.count(),
+            'follower_count': followers,
+            'is_following': is_following,
+            'bio': profile.bio,
+            'social_links': profile.get_social_links(),
+        })
+    
+    # Sort by follower count for trending
+    trending_artists = sorted(artist_data, key=lambda x: x['follower_count'], reverse=True)[:10]
+    
+    # Get followed artists for sidebar
+    followed_artists = []
+    if request.user.is_authenticated:
+        followed_artists = Follow.objects.filter(
+            follower=request.user
+        ).select_related('following', 'following__userprofile')
+    
+    # Paginate all artists
+    paginator = Paginator(artist_data, 24)  # 24 artists per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'trending_artists': trending_artists,
+        'all_artists': page_obj,
+        'total_artists': len(artist_data),
+        'followed_artists': followed_artists,
+    }
+    
+    return render(request, "artist/all_artists.html", context)

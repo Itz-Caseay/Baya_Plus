@@ -152,14 +152,25 @@
                 </div>
 
                 <div class="space-y-2.5">
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-google text-red-500 text-sm"></i> Continue with Google
+                    <!-- Google Button with Alert -->
+                    <button onclick="showComingSoon('Google')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-google text-red-500 text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Google</span>
                     </button>
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-apple text-white text-sm"></i> Continue with Apple
+                    
+                    <!-- Apple Button with Alert -->
+                    <button onclick="showComingSoon('Apple')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-apple text-white text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Apple</span>
                     </button>
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> Continue with Facebook
+                    
+                    <!-- Facebook Button with Alert -->
+                    <button onclick="showComingSoon('Facebook')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Facebook</span>
                     </button>
                 </div>
             </section>
@@ -171,6 +182,7 @@
     </div>
 
     <script>
+        // Toggle password visibility
         function togglePassword(icon) {
             const input = icon.parentElement.querySelector('input');
             if (input.type === 'password') {
@@ -182,6 +194,11 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
+        }
+
+        // Show "Coming Soon" alert
+        function showComingSoon(provider) {
+            alert(`🔜 ${provider} login is coming soon!\n\nWe're working on adding ${provider} authentication to BayaPlus. Stay tuned! 🎵`);
         }
     </script>
 

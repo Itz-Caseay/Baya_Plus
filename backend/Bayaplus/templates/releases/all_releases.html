@@ -13,34 +13,141 @@
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
         .transition-all { transition: all 0.3s ease; }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #fbbf24;
+        }
+        .nav-link.active {
+            color: #fbbf24;
+        }
     </style>
 </head>
-<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
-    
-    <!-- Header -->
-    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4">
-        <div class="container mx-auto max-w-7xl flex justify-between items-center">
-            <a href="{% url 'index' %}" class="flex items-center gap-1">
-                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
-                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
-            </a>
-            <div class="flex items-center gap-4">
-                <a href="{% url 'index' %}" class="text-gray-400 hover:text-white text-sm">Home</a>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">Dashboard</a>
-                    <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="text-yellow-400 hover:text-yellow-300 text-sm">Sign In</a>
-                {% endif %}
-            </div>
-        </div>
-    </header>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex">
 
-    <!-- Main Content -->
-    <main class="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
+    <!-- LEFT SIDEBAR -->
+    <aside class="hidden lg:flex w-64 bg-[#0f0f0f] p-6 flex-col justify-between border-r border-[#1a1a1a] shrink-0 h-screen sticky top-0 overflow-y-auto">
+        <div>
+            <!-- Logo -->
+            <div class="flex items-center gap-1 mb-8">
+                <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-3xl font-light italic">plus</span>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="space-y-1.5">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-house text-lg"></i> Home
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i> Search
+                </a>
+                <a href="{% url 'all_releases' %}" class="flex items-center gap-4 bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link active">
+                    <i class="fa-solid fa-compass text-lg"></i> Browse
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-radio text-lg"></i> Radio
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% if user.userprofile.role == 'Artist' %}{% url 'artistboard' %}{% else %}{% url 'fanboard' %}{% endif %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                        <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                    </a>
+                {% endif %}
+            </nav>
+
+            <!-- Your Library -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider px-4">Your Library</p>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-bars-staggered"></i> Playlists
+                </a>
+                <a href="{% url 'all_releases' %}" class="flex items-center gap-4 text-yellow-400 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-compact-disc"></i> Releases
+                </a>
+                <a href="{% url 'all_artists' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-user"></i> Artists
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-music"></i> Songs
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-heart"></i> Liked Content
+                </a>
+            </div>
+
+            <!-- Artist Quick Access (if user is artist) -->
+            {% if user.is_authenticated and user.userprofile.role == 'Artist' %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Artist Tools</p>
+                    <a href="{% url 'create_release' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-plus"></i> New Release
+                    </a>
+                    <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-chart-line"></i> Analytics
+                    </a>
+                    <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Fan Quick Access (if user is fan) -->
+            {% if user.is_authenticated and user.userprofile.role == 'Fan' %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-blue-400 uppercase tracking-wider px-4">Fan Tools</p>
+                    <a href="{% url 'fan_library' %}" class="flex items-center gap-4 text-blue-400 hover:text-blue-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-heart"></i> My Library
+                    </a>
+                    <a href="{% url 'fan_playlist' %}" class="flex items-center gap-4 text-blue-400 hover:text-blue-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-list"></i> Playlists
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Admin Quick Access -->
+            {% if user.is_authenticated and user.is_staff %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-purple-400 uppercase tracking-wider px-4">Admin</p>
+                    <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-4 text-purple-400 hover:text-purple-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-gauge-high"></i> Dashboard
+                    </a>
+                    <a href="{% url 'admin_pending_releases' %}" class="flex items-center gap-4 text-purple-400 hover:text-purple-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-clock"></i> Pending Reviews
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Admin Apply Link -->
+            {% if user.is_authenticated and not user.is_staff %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-purple-400 uppercase tracking-wider px-4">Admin</p>
+                    <a href="{% url 'admin_apply' %}" class="flex items-center gap-4 text-purple-400 hover:text-purple-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-user-shield"></i> Become Admin
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Upgrade Plan -->
+        <div class="bg-gradient-to-b from-[#161616] to-[#0f0f0f] border border-yellow-500/20 rounded-xl p-4 text-center">
+            <div class="flex justify-center items-center gap-1 mb-1">
+                <i class="fa-solid fa-crown text-yellow-400 text-xs"></i>
+                <span class="text-white font-bold text-sm">Baya</span>
+                <span class="text-yellow-400 text-sm italic">plus</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Unlimited music.<br>No ads. Offline play.</p>
+            <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2.5 px-6 rounded-full w-full transition tracking-wide">
+                Upgrade Now
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto">
         
-        <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold">🎵 All Releases</h1>
                 <p class="text-gray-400 text-sm mt-1">{{ total_releases }} releases available</p>
@@ -55,7 +162,7 @@
                     <i class="fa-solid fa-search"></i>
                 </button>
             </form>
-        </div>
+        </header>
 
         <!-- Filter Tabs -->
         <div class="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-6">
@@ -87,6 +194,20 @@
                             <div class="absolute bottom-2 right-2 w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400 text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg translate-y-2 group-hover:translate-y-0">
                                 <i class="fa-solid fa-play text-xs sm:text-sm ml-0.5"></i>
                             </div>
+                            {% if release.is_featured %}
+                                <div class="absolute top-2 left-2 bg-yellow-400 text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-star"></i> Featured
+                                </div>
+                            {% endif %}
+                            {% if release.is_free %}
+                                <div class="absolute top-2 right-2 bg-green-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    FREE
+                                </div>
+                            {% else %}
+                                <div class="absolute top-2 right-2 bg-yellow-500 text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
+                                    ${{ release.price }}
+                                </div>
+                            {% endif %}
                         </div>
                         <h4 class="text-xs font-bold truncate">{{ release.title }}</h4>
                         <p class="text-[10px] sm:text-[11px] text-gray-500 mt-1 truncate">
@@ -109,6 +230,76 @@
             </div>
         {% endif %}
     </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 border-l border-[#1a1a1a] flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
+        <!-- Trending Releases -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-yellow-400 uppercase tracking-wider mb-3">🔥 Trending Now</h4>
+            {% if trending_releases %}
+                <div class="space-y-3">
+                    {% for release in trending_releases|slice:":5" %}
+                        <a href="{% url 'release_detail' release.id %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition group">
+                            <div class="w-10 h-10 rounded bg-gradient-to-b from-red-950 to-black flex items-center justify-center shrink-0 overflow-hidden">
+                                {% if release.cover_art %}
+                                    <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <i class="fa-solid fa-music text-red-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="truncate flex-1">
+                                <p class="text-sm font-medium truncate">{{ release.title }}</p>
+                                <p class="text-[10px] text-gray-500 truncate">{{ release.artist_profile.artist_name|default:release.artist.username }}</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-xs text-gray-500 text-center py-4">No trending releases</p>
+            {% endif %}
+        </div>
+
+        <!-- New Releases -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3">✨ New Releases</h4>
+            {% if recent_releases %}
+                <div class="space-y-3">
+                    {% for release in recent_releases|slice:":5" %}
+                        <a href="{% url 'release_detail' release.id %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition group">
+                            <div class="w-10 h-10 rounded bg-gradient-to-b from-red-950 to-black flex items-center justify-center shrink-0 overflow-hidden">
+                                {% if release.cover_art %}
+                                    <img src="{{ release.cover_art.url }}" alt="{{ release.title }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <i class="fa-solid fa-music text-red-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="truncate flex-1">
+                                <p class="text-sm font-medium truncate">{{ release.title }}</p>
+                                <p class="text-[10px] text-gray-500 truncate">{{ release.artist_profile.artist_name|default:release.artist.username }}</p>
+                            </div>
+                            <span class="text-[10px] text-gray-500">{{ release.created_at|timesince }} ago</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-xs text-gray-500 text-center py-4">No new releases</p>
+            {% endif %}
+        </div>
+
+        <!-- Top Genres -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Top Genres</h4>
+            <div class="flex flex-wrap gap-2">
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">All</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Pop</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Hip-Hop</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">R&B</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Afrobeats</span>
+                <span class="text-xs bg-[#1a1a1a] px-3 py-1 rounded-full text-gray-300 hover:bg-[#2a2a2a] cursor-pointer transition">Jazz</span>
+            </div>
+        </div>
+    </aside>
 
 </body>
 </html>

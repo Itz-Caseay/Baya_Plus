@@ -81,6 +81,7 @@ urlpatterns = [
     path('api/track/<int:track_id>/play/start/', views.track_play_start, name='track_play_start'),
     path('api/track/play/update/<int:play_id>/', views.track_play_update, name='track_play_update'),
     path('api/release/<int:release_id>/tracks/', views.release_tracks, name='release_tracks'),
+    path('artists/', views.all_artists, name='all_artists'),
     path('api/queue/', views.get_queue, name='get_queue'),
     
     # ==================== TEST URL ====================

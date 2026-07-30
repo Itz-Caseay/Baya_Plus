@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - BayaPlus</title>
+    <title>Sign Up - BayaPlus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,6 +13,8 @@
         <div class="absolute inset-0 bg-cover bg-center mix-blend-screen opacity-40 grayscale contrast-125" style="background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80');"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black via-red-950/40 to-black/80 z-0"></div>
         
+        <div class="absolute right-0 top-1/4 bottom-0 w-80 bg-cover bg-top mix-blend-color-dodge opacity-30 pointer-events-none" style="background-image: url('https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=600&q=80');"></div>
+
         <div class="z-10 space-y-12">
             <a href="{% url 'index' %}" class="flex items-center gap-1">
                 <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
@@ -21,10 +23,10 @@
 
             <div class="space-y-4 max-w-sm">
                 <h1 class="text-4xl font-extrabold tracking-tight leading-tight">
-                    Music that <br><span class="text-yellow-400">moves you.</span>
+                    Start your <br><span class="text-yellow-400">music journey.</span>
                 </h1>
                 <p class="text-xs text-gray-400 leading-relaxed">
-                    Stream millions of songs, create playlists and enjoy unlimited music anytime, anywhere.
+                    Join millions of music lovers. Create your account and start listening today.
                 </p>
             </div>
 
@@ -75,16 +77,16 @@
                 <span class="text-yellow-400 text-xl font-light italic">plus</span>
             </a>
             <div class="text-[11px] text-gray-400 font-medium">
-                Don't have an account? <a href="{% url 'signup' %}" class="text-yellow-400 hover:underline ml-1">Sign up</a>
+                Already have an account? <a href="{% url 'login' %}" class="text-yellow-400 hover:underline ml-1">Log in</a>
             </div>
         </div>
 
         <div class="flex-1 flex items-center justify-center py-8">
             <section class="w-full max-w-md space-y-6">
                 <div class="text-center md:text-left space-y-1.5">
-                    <div class="hidden md:flex text-red-500 text-2xl mb-1"><i class="fa-regular fa-user-circle"></i></div>
-                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Welcome back</h2>
-                    <p class="text-xs text-gray-500">Log in to continue listening.</p>
+                    <div class="hidden md:flex text-red-500 text-2xl mb-1"><i class="fa-regular fa-user"></i></div>
+                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Create account</h2>
+                    <p class="text-xs text-gray-500">Join BayaPlus and start listening.</p>
                 </div>
 
                 <!-- Messages -->
@@ -98,54 +100,77 @@
                     </div>
                 {% endif %}
 
-                <!-- Login Form -->
-                <form method="POST" action="{% url 'login' %}" class="space-y-4">
+                <form method="POST" action="{% url 'signup' %}" class="space-y-4">
                     {% csrf_token %}
                     
                     <div class="relative">
+                        <i class="fa-regular fa-user absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="text" name="fullname" placeholder="Full name" 
+                               class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
+                    </div>
+
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="text" name="username" placeholder="Username" 
+                               class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
+                    </div>
+
+                    <div class="relative">
                         <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-gray-500 text-xs"></i>
-                        <input type="text" name="username" autocomplete="username" placeholder="Username or Email" 
+                        <input type="email" name="email" placeholder="Email address" 
                                class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
                     </div>
                     
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-500 text-xs"></i>
-                        <input type="password" name="password" autocomplete="current-password" placeholder="Password" 
+                        <input type="password" name="password" placeholder="Password" 
                                class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-10 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
                         <i class="fa-regular fa-eye absolute right-4 top-3.5 text-gray-500 text-xs cursor-pointer hover:text-white transition" onclick="togglePassword(this)"></i>
                     </div>
-                    
-                    <div class="text-right">
-                        <a href="#" class="text-[11px] font-semibold text-yellow-400 hover:underline">Forgot password?</a>
+
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="password" name="password2" placeholder="Confirm password" 
+                               class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
+                    </div>
+
+                    <div class="flex items-start gap-2 pt-1">
+                        <input type="checkbox" id="terms" class="mt-0.5 accent-yellow-400 w-4 h-4 cursor-pointer">
+                        <label for="terms" class="text-[11px] text-gray-500 cursor-pointer">
+                            I agree to the <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a> and <a href="#" class="text-yellow-400 hover:underline">Privacy Policy</a>.
+                        </label>
                     </div>
 
                     <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-3.5 rounded-full transition tracking-wide mt-2 shadow-lg shadow-yellow-400/5">
-                        Log In
+                        Create Account
                     </button>
                 </form>
 
-                <!-- Social Login Section -->
                 <div class="relative flex items-center justify-center py-2">
                     <div class="border-t border-[#1e1e1e] w-full"></div>
                     <span class="absolute bg-[#0b0b0b] px-3 text-[9px] uppercase font-bold tracking-widest text-gray-600">or continue with</span>
                 </div>
 
                 <div class="space-y-2.5">
-                    <!-- Google Login Button -->
-                    <a href="{% provider_login_url 'google' %}" 
-                       class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                    <!-- Google Button -->
+                    <button onclick="showComingSoon('Google')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
                         <i class="fa-brands fa-google text-red-500 text-sm"></i> 
                         <span class="text-gray-300 group-hover:text-white">Continue with Google</span>
-                    </a>
-                    
-                    <!-- Apple Login (Optional) -->
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-apple text-white text-sm"></i> Continue with Apple
                     </button>
                     
-                    <!-- Facebook Login (Optional) -->
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> Continue with Facebook
+                    <!-- Apple Button -->
+                    <button onclick="showComingSoon('Apple')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-apple text-white text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Apple</span>
+                    </button>
+                    
+                    <!-- Facebook Button -->
+                    <button onclick="showComingSoon('Facebook')" 
+                            class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Facebook</span>
                     </button>
                 </div>
             </section>
@@ -157,6 +182,7 @@
     </div>
 
     <script>
+        // Toggle password visibility
         function togglePassword(icon) {
             const input = icon.parentElement.querySelector('input');
             if (input.type === 'password') {
@@ -168,6 +194,11 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
+        }
+
+        // Show "Coming Soon" alert
+        function showComingSoon(provider) {
+            alert(`🔜 ${provider} login is coming soon!\n\nWe're working on adding ${provider} authentication to BayaPlus. Stay tuned! 🎵`);
         }
     </script>
 
