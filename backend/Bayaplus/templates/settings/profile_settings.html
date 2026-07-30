@@ -146,28 +146,109 @@
             color: #2196F3;
             border-color: #2196F3;
         }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #fbbf24;
+        }
+        .nav-link.active {
+            color: #fbbf24;
+        }
     </style>
 </head>
-<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex">
 
-    <!-- Header -->
-    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
-        <div class="container mx-auto max-w-7xl flex justify-between items-center">
-            <a href="{% url 'index' %}" class="flex items-center gap-1">
-                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
-                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
-            </a>
-            <div class="flex items-center gap-4">
-                <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white text-sm">
-                    <i class="fa-solid fa-arrow-left"></i> Dashboard
-                </a>
-                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+    <!-- LEFT SIDEBAR -->
+    <aside class="hidden lg:flex w-64 bg-[#0f0f0f] p-6 flex-col justify-between border-r border-[#1a1a1a] shrink-0 h-screen sticky top-0 overflow-y-auto">
+        <div>
+            <!-- Logo -->
+            <div class="flex items-center gap-1 mb-8">
+                <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-3xl font-light italic">plus</span>
             </div>
-        </div>
-    </header>
 
-    <!-- Main Content -->
-    <div class="container mx-auto max-w-4xl px-4 sm:px-6 py-8">
+            <!-- Main Navigation -->
+            <nav class="space-y-1.5">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-house text-lg"></i> Home
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i> Search
+                </a>
+                <a href="{% url 'all_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-compass text-lg"></i> Browse
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-radio text-lg"></i> Radio
+                </a>
+                <a href="{% url 'artistboard' %}" class="flex items-center gap-4 bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                </a>
+            </nav>
+
+            <!-- Your Library -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider px-4">Your Library</p>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-bars-staggered"></i> Playlists
+                </a>
+                <a href="{% url 'my_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-compact-disc"></i> Releases
+                </a>
+                <a href="{% url 'all_artists' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-user"></i> Artists
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-music"></i> Songs
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-heart"></i> Liked Content
+                </a>
+            </div>
+
+            <!-- Artist Tools -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Artist Tools</p>
+                <a href="{% url 'create_release' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-plus"></i> New Release
+                </a>
+                <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-chart-line"></i> Analytics
+                </a>
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-yellow-400 px-4 py-2 text-sm transition nav-link active">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </div>
+
+            <!-- Admin Apply Link -->
+            {% if user.is_authenticated and not user.is_staff %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-purple-400 uppercase tracking-wider px-4">Admin</p>
+                    <a href="{% url 'admin_apply' %}" class="flex items-center gap-4 text-purple-400 hover:text-purple-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-user-shield"></i> Become Admin
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Upgrade Plan -->
+        <div class="bg-gradient-to-b from-[#161616] to-[#0f0f0f] border border-yellow-500/20 rounded-xl p-4 text-center">
+            <div class="flex justify-center items-center gap-1 mb-1">
+                <i class="fa-solid fa-crown text-yellow-400 text-xs"></i>
+                <span class="text-white font-bold text-sm">Baya</span>
+                <span class="text-yellow-400 text-sm italic">plus</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Unlimited music.<br>No ads. Offline play.</p>
+            <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2.5 px-6 rounded-full w-full transition tracking-wide">
+                Upgrade Now
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto">
         
         <!-- Page Header -->
         <div class="flex items-center gap-3 mb-8">
@@ -380,7 +461,95 @@
             {% endif %}
         </div>
 
-    </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 border-l border-[#1a1a1a] flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
+        <!-- Profile Card -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4 text-center">
+            <div class="w-20 h-20 rounded-full mx-auto bg-gradient-to-br from-red-900 to-red-950 flex items-center justify-center text-3xl font-bold overflow-hidden">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="{{ profile.artist_name }}" class="w-full h-full object-cover">
+                {% else %}
+                    {{ profile.artist_name|default:request.user.username|first|upper }}
+                {% endif %}
+            </div>
+            <h3 class="mt-3 font-bold">{{ profile.artist_name|default:request.user.username }}</h3>
+            <p class="text-xs text-gray-400">{{ profile.role }}</p>
+            <a href="{% url 'profile_settings' %}" class="mt-3 block bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2 rounded-lg transition">
+                Edit Profile
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h4>
+            <div class="space-y-2">
+                <a href="{% url 'create_release' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">New Release</p>
+                        <p class="text-[10px] text-gray-500">Upload your music</p>
+                    </div>
+                </a>
+                <a href="{% url 'my_releases' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                        <i class="fa-solid fa-list"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">My Releases</p>
+                        <p class="text-[10px] text-gray-500">View all your music</p>
+                    </div>
+                </a>
+                <a href="{% url 'analytics' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">Analytics</p>
+                        <p class="text-[10px] text-gray-500">Track your performance</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Social Links Display -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Social Links</h4>
+            <div class="flex flex-wrap gap-2">
+                {% if profile.instagram %}
+                    <a href="{{ profile.instagram }}" target="_blank" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                {% endif %}
+                {% if profile.twitter %}
+                    <a href="{{ profile.twitter }}" target="_blank" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </a>
+                {% endif %}
+                {% if profile.tiktok %}
+                    <a href="{{ profile.tiktok }}" target="_blank" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-brands fa-tiktok"></i>
+                    </a>
+                {% endif %}
+                {% if profile.youtube %}
+                    <a href="{{ profile.youtube }}" target="_blank" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-brands fa-youtube"></i>
+                    </a>
+                {% endif %}
+                {% if profile.spotify %}
+                    <a href="{{ profile.spotify }}" target="_blank" class="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-brands fa-spotify"></i>
+                    </a>
+                {% endif %}
+                {% if not profile.instagram and not profile.twitter and not profile.tiktok and not profile.youtube and not profile.spotify %}
+                    <p class="text-xs text-gray-500">No social links added</p>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
 
     <script>
         // Character counter for bio
