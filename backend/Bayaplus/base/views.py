@@ -2791,3 +2791,48 @@ def all_artists(request):
     }
     
     return render(request, "artist/all_artists.html", context)
+
+
+def all_songs(request):
+    """View all songs with trending ones at the top"""
+    # Get all published tracks
+    tracks = Track.objects.filter(
+        release__status='published',
+        release__is_public=True
+    ).select_related('release', 'release__artist_profile')
+    
+    # Search
+    search_query = request.GET.get('q')
+    if search_query:
+        tracks = tracks.filter(
+            Q(title__icontains=search_query) |
+            Q(release__artist__username__icontains=search_query) |
+            Q(release__artist_profile__artist_name__icontains=search_query)
+        )
+    
+    # Get trending songs (by plays)
+    trending_songs = tracks.order_by('-plays')[:10]
+    
+    # Get top artists with most songs
+    top_artists = UserProfile.objects.filter(role='Artist').annotate(
+        song_count=Count('user__releases__tracks')
+    ).filter(song_count__gt=0).order_by('-song_count')[:10]
+    
+    # Paginate all songs
+    paginator = Paginator(tracks, 20)  # 20 songs per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Calculate start index for display
+    start_index = (page_obj.number - 1) * paginator.per_page
+    
+    context = {
+        'songs': page_obj,
+        'total_songs': tracks.count(),
+        'trending_songs': trending_songs,
+        'top_artists': top_artists,
+        'search_query': search_query,
+        'start_index': start_index,
+    }
+    
+    return render(request, "artist/all_songs.html", context)
