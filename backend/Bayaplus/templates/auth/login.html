@@ -13,8 +13,6 @@
         <div class="absolute inset-0 bg-cover bg-center mix-blend-screen opacity-40 grayscale contrast-125" style="background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80');"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black via-red-950/40 to-black/80 z-0"></div>
         
-        <div class="absolute right-0 top-1/4 bottom-0 w-80 bg-cover bg-top mix-blend-color-dodge opacity-30 pointer-events-none" style="background-image: url('https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=600&q=80');"></div>
-
         <div class="z-10 space-y-12">
             <a href="{% url 'index' %}" class="flex items-center gap-1">
                 <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
@@ -100,12 +98,13 @@
                     </div>
                 {% endif %}
 
+                <!-- Login Form -->
                 <form method="POST" action="{% url 'login' %}" class="space-y-4">
                     {% csrf_token %}
                     
                     <div class="relative">
-                        <i class="fa-regular fa-user absolute left-4 top-3.5 text-gray-500 text-xs"></i>
-                        <input type="text" name="username" autocomplete="username" placeholder="Username" 
+                        <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                        <input type="text" name="username" autocomplete="username" placeholder="Username or Email" 
                                class="w-full bg-[#121212] border border-[#222] rounded-lg pl-11 pr-4 py-3.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-yellow-400 transition">
                     </div>
                     
@@ -125,18 +124,26 @@
                     </button>
                 </form>
 
+                <!-- Social Login Section -->
                 <div class="relative flex items-center justify-center py-2">
                     <div class="border-t border-[#1e1e1e] w-full"></div>
                     <span class="absolute bg-[#0b0b0b] px-3 text-[9px] uppercase font-bold tracking-widest text-gray-600">or continue with</span>
                 </div>
 
                 <div class="space-y-2.5">
-                    <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
-                        <i class="fa-brands fa-google text-red-500 text-sm"></i> Continue with Google
-                    </button>
+                    <!-- Google Login Button -->
+                    <a href="{% provider_login_url 'google' %}" 
+                       class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition group">
+                        <i class="fa-brands fa-google text-red-500 text-sm"></i> 
+                        <span class="text-gray-300 group-hover:text-white">Continue with Google</span>
+                    </a>
+                    
+                    <!-- Apple Login (Optional) -->
                     <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
                         <i class="fa-brands fa-apple text-white text-sm"></i> Continue with Apple
                     </button>
+                    
+                    <!-- Facebook Login (Optional) -->
                     <button class="w-full bg-[#121212] border border-[#222] hover:bg-[#1a1a1a] text-xs font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
                         <i class="fa-brands fa-facebook text-blue-600 text-sm"></i> Continue with Facebook
                     </button>
