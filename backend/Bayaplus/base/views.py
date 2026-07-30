@@ -1985,16 +1985,70 @@ def profile_settings(request):
         return redirect('choose-profile')
     
     # Profile settings are accessible by both Artists and Fans
-    # But show different options based on role
     is_artist = profile.role == 'Artist'
     
     if request.method == "POST":
-        # ... existing code ...
+        # Get form data
+        artist_name = request.POST.get('artist_name')
+        bio = request.POST.get('bio')
         
-        return render(request, "settings/profile_settings.html", {
-            'profile': profile,
-            'is_artist': is_artist,
-        })
+        # Social links
+        instagram = request.POST.get('instagram')
+        twitter = request.POST.get('twitter')
+        tiktok = request.POST.get('tiktok')
+        youtube = request.POST.get('youtube')
+        spotify = request.POST.get('spotify')
+        apple_music = request.POST.get('apple_music')
+        soundcloud = request.POST.get('soundcloud')
+        facebook = request.POST.get('facebook')
+        website = request.POST.get('website')
+        
+        # Validate artist name uniqueness (only for artists)
+        if is_artist and artist_name and artist_name != profile.artist_name:
+            if UserProfile.objects.filter(artist_name=artist_name).exclude(user=request.user).exists():
+                messages.error(request, "This artist name is already taken.")
+                return redirect('profile_settings')
+        
+        # Update profile
+        if is_artist and artist_name:
+            profile.artist_name = artist_name
+        
+        profile.bio = bio
+        
+        # Update social links
+        profile.instagram = instagram or None
+        profile.twitter = twitter or None
+        profile.tiktok = tiktok or None
+        profile.youtube = youtube or None
+        profile.spotify = spotify or None
+        profile.apple_music = apple_music or None
+        profile.soundcloud = soundcloud or None
+        profile.facebook = facebook or None
+        profile.website = website or None
+        
+        # Handle avatar upload
+        if request.FILES.get('avatar'):
+            avatar = request.FILES['avatar']
+            # Validate file size (max 5MB)
+            if avatar.size > 5 * 1024 * 1024:
+                messages.error(request, "Avatar file is too large. Maximum size is 5MB.")
+                return redirect('profile_settings')
+            # Validate file type
+            if not avatar.content_type.startswith('image/'):
+                messages.error(request, "Please upload a valid image file.")
+                return redirect('profile_settings')
+            profile.avatar = avatar
+        
+        profile.save()
+        
+        messages.success(request, "Profile updated successfully!")
+        return redirect('profile_settings')
+    
+    # GET request - render the template (THIS WAS MISSING!)
+    return render(request, "settings/profile_settings.html", {
+        'profile': profile,
+        'is_artist': is_artist,
+    })
     
 @staff_member_required(login_url='login')
 def admin_dashboard(request):
