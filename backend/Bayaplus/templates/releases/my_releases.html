@@ -7,41 +7,145 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .transition-all { transition: all 0.3s ease; }
         .status-published { background: #4CAF50; color: white; }
         .status-pending { background: #ff9800; color: white; }
         .status-draft { background: #666; color: white; }
         .status-rejected { background: #f44336; color: white; }
-        .transition-all { transition: all 0.3s ease; }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #fbbf24;
+        }
+        .nav-link.active {
+            color: #fbbf24;
+        }
     </style>
 </head>
-<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="hidden lg:flex w-64 bg-[#0f0f0f] p-6 flex-col justify-between border-r border-[#1a1a1a] shrink-0 h-screen sticky top-0 overflow-y-auto">
+        <div>
+            <!-- Logo -->
+            <div class="flex items-center gap-1 mb-8">
+                <span class="text-red-600 text-3xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-3xl font-light italic">plus</span>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="space-y-1.5">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-house text-lg"></i> Home
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i> Search
+                </a>
+                <a href="{% url 'all_releases' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-compass text-lg"></i> Browse
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link">
+                    <i class="fa-solid fa-radio text-lg"></i> Radio
+                </a>
+                <a href="{% url 'artistboard' %}" class="flex items-center gap-4 bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition nav-link active">
+                    <i class="fa-solid fa-layer-group text-lg"></i> Dashboard
+                </a>
+            </nav>
+
+            <!-- Your Library -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider px-4">Your Library</p>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-bars-staggered"></i> Playlists
+                </a>
+                <a href="{% url 'my_releases' %}" class="flex items-center gap-4 text-yellow-400 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-compact-disc"></i> Releases
+                </a>
+                <a href="{% url 'all_artists' %}" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-user"></i> Artists
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-music"></i> Songs
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-heart"></i> Liked Content
+                </a>
+            </div>
+
+            <!-- Artist Tools -->
+            <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                <p class="text-xs font-bold text-yellow-400 uppercase tracking-wider px-4">Artist Tools</p>
+                <a href="{% url 'create_release' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-plus"></i> New Release
+                </a>
+                <a href="{% url 'analytics' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-chart-line"></i> Analytics
+                </a>
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-4 text-yellow-400 hover:text-yellow-300 px-4 py-2 text-sm transition nav-link">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </div>
+
+            <!-- Admin Apply Link -->
+            {% if user.is_authenticated and not user.is_staff %}
+                <div class="mt-6 space-y-2 pt-4 border-t border-[#1a1a1a]">
+                    <p class="text-xs font-bold text-purple-400 uppercase tracking-wider px-4">Admin</p>
+                    <a href="{% url 'admin_apply' %}" class="flex items-center gap-4 text-purple-400 hover:text-purple-300 px-4 py-2 text-sm transition nav-link">
+                        <i class="fa-solid fa-user-shield"></i> Become Admin
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Upgrade Plan -->
+        <div class="bg-gradient-to-b from-[#161616] to-[#0f0f0f] border border-yellow-500/20 rounded-xl p-4 text-center">
+            <div class="flex justify-center items-center gap-1 mb-1">
+                <i class="fa-solid fa-crown text-yellow-400 text-xs"></i>
+                <span class="text-white font-bold text-sm">Baya</span>
+                <span class="text-yellow-400 text-sm italic">plus</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Unlimited music.<br>No ads. Offline play.</p>
+            <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2.5 px-6 rounded-full w-full transition tracking-wide">
+                Upgrade Now
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto">
+        
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-2xl font-bold">🎵 My Releases</h1>
                 <p class="text-gray-400 text-sm">Manage all your releases</p>
             </div>
-            <a href="{% url 'create_release' %}" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold text-sm transition">
+            <a href="{% url 'create_release' %}" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> New Release
             </a>
         </div>
 
         <!-- Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl card-hover transition-all">
                 <p class="text-gray-400 text-xs">Total</p>
                 <p class="text-2xl font-bold">{{ total_releases }}</p>
             </div>
-            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl card-hover transition-all">
                 <p class="text-gray-400 text-xs">Published</p>
                 <p class="text-2xl font-bold text-green-500">{{ published }}</p>
             </div>
-            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl card-hover transition-all">
                 <p class="text-gray-400 text-xs">Pending</p>
                 <p class="text-2xl font-bold text-yellow-500">{{ pending }}</p>
             </div>
-            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl">
+            <div class="bg-[#121212] border border-[#1a1a1a] p-4 rounded-xl card-hover transition-all">
                 <p class="text-gray-400 text-xs">Drafts</p>
                 <p class="text-2xl font-bold text-gray-400">{{ drafts }}</p>
             </div>
@@ -76,17 +180,17 @@
                                 <span class="text-xs status-{{ release.status }} px-3 py-1 rounded-full">
                                     {{ release.get_status_display }}
                                 </span>
-                                <a href="{% url 'edit_release' release.id %}" class="text-gray-400 hover:text-white text-sm">
+                                <a href="{% url 'edit_release' release.id %}" class="text-gray-400 hover:text-white text-sm transition" title="Edit">
                                     <i class="fa-solid fa-edit"></i>
                                 </a>
-                                <a href="{% url 'add_tracks' release.id %}" class="text-blue-400 hover:text-blue-300 text-sm">
+                                <a href="{% url 'add_tracks' release.id %}" class="text-blue-400 hover:text-blue-300 text-sm transition" title="Manage Tracks">
                                     <i class="fa-solid fa-music"></i>
                                 </a>
-                                <a href="{% url 'publish_release' release.id %}" class="text-yellow-400 hover:text-yellow-300 text-sm">
+                                <a href="{% url 'publish_release' release.id %}" class="text-yellow-400 hover:text-yellow-300 text-sm transition" title="Publish">
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                                 {% if release.status == 'published' %}
-                                    <a href="{% url 'release_detail' release.id %}" class="text-green-400 hover:text-green-300 text-sm">
+                                    <a href="{% url 'release_detail' release.id %}" class="text-green-400 hover:text-green-300 text-sm transition" title="View Release">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
                                 {% endif %}
@@ -96,6 +200,7 @@
                 </div>
             {% else %}
                 <div class="text-center py-12">
+                    <div class="text-6xl mb-4">🎵</div>
                     <p class="text-gray-500 text-lg">No releases yet</p>
                     <a href="{% url 'create_release' %}" class="text-yellow-400 hover:text-yellow-300 font-semibold">
                         Create your first release →
@@ -103,13 +208,95 @@
                 </div>
             {% endif %}
         </div>
+    </main>
 
-        <!-- Back Button -->
-        <div class="mt-6">
-            <a href="{% url 'artistboard' %}" class="text-gray-400 hover:text-white">
-                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-            </a>
+    <!-- RIGHT SIDEBAR -->
+    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 border-l border-[#1a1a1a] flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
+        <!-- Quick Stats -->
+        <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Stats</h4>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center p-2 bg-[#0b0b0b] rounded-lg">
+                    <span class="text-gray-400 text-sm">Total Releases</span>
+                    <span class="font-bold">{{ total_releases }}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-[#0b0b0b] rounded-lg">
+                    <span class="text-gray-400 text-sm">Published</span>
+                    <span class="font-bold text-green-500">{{ published }}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-[#0b0b0b] rounded-lg">
+                    <span class="text-gray-400 text-sm">Pending</span>
+                    <span class="font-bold text-yellow-500">{{ pending }}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-[#0b0b0b] rounded-lg">
+                    <span class="text-gray-400 text-sm">Drafts</span>
+                    <span class="font-bold text-gray-400">{{ drafts }}</span>
+                </div>
+                {% if rejected > 0 %}
+                    <div class="flex justify-between items-center p-2 bg-[#0b0b0b] rounded-lg">
+                        <span class="text-gray-400 text-sm">Rejected</span>
+                        <span class="font-bold text-red-500">{{ rejected }}</span>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h4>
+            <div class="space-y-2">
+                <a href="{% url 'create_release' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">New Release</p>
+                        <p class="text-[10px] text-gray-500">Upload your music</p>
+                    </div>
+                </a>
+                <a href="{% url 'add_tracks' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">Add Tracks</p>
+                        <p class="text-[10px] text-gray-500">Upload audio files</p>
+                    </div>
+                </a>
+                <a href="{% url 'analytics' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">Analytics</p>
+                        <p class="text-[10px] text-gray-500">Track performance</p>
+                    </div>
+                </a>
+                <a href="{% url 'profile_settings' %}" class="flex items-center gap-3 p-2 hover:bg-[#1a1a1a] rounded-lg transition">
+                    <div class="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium">Settings</p>
+                        <p class="text-[10px] text-gray-500">Manage profile</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Tip -->
+        <div class="mt-4 bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400 shrink-0">
+                    <i class="fa-solid fa-lightbulb text-sm"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium">Pro Tip</h4>
+                    <p class="text-xs text-gray-500 mt-1">Release with cover art get 3x more plays. Make sure your cover art is 3000x3000 pixels.</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
 </body>
 </html>
