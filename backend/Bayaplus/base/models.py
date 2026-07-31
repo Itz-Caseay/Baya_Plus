@@ -326,3 +326,115 @@ class QueueItem(models.Model):
     
     def __str__(self):
         return f"{self.track.title} at position {self.position}"
+    
+# In models.py - Add these models
+
+class Subscription(models.Model):
+    """User subscription plan"""
+    PLAN_TYPES = (
+        ('free', 'Free'),
+        ('premium', 'Premium'),
+        ('pro', 'Pro Artist'),
+    )
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
+    plan = models.CharField(max_length=20, choices=PLAN_TYPES, default='free')
+    is_active = models.BooleanField(default=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    auto_renew = models.BooleanField(default=False)
+    
+    # Payment info
+    stripe_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_subscription_id = models.CharField(max_length=100, blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.plan}"
+    
+    @property
+    def is_premium(self):
+        return self.plan in ['premium', 'pro'] and self.is_active
+    
+    @property
+    def days_remaining(self):
+        if self.expires_at:
+            delta = self.expires_at - timezone.now()
+            return max(0, delta.days)
+        return None
+
+
+class Ad(models.Model):
+    """Advertisement model"""
+    AD_TYPES = (
+        ('audio', 'Audio Ad'),
+        ('video', 'Video Ad'),
+        ('banner', 'Banner Ad'),
+        ('popup', 'Popup Ad'),
+    )
+    
+    title = models.CharField(max_length=200)
+    advertiser = models.CharField(max_length=100)
+    ad_type = models.CharField(max_length=20, choices=AD_TYPES, default='audio')
+    
+    # Audio/Video file
+    audio_file = models.FileField(upload_to='ads/audio/', blank=True, null=True)
+    video_file = models.FileField(upload_to='ads/video/', blank=True, null=True)
+    image_file = models.ImageField(upload_to='ads/images/', blank=True, null=True)
+    
+    # Target URL
+    target_url = models.URLField(max_length=500, blank=True, null=True)
+    
+    # Scheduling
+    start_date = models.DateTimeField(default=timezone.now)
+    end_date = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    # Frequency (how often to show)
+    frequency = models.IntegerField(default=3, help_text="Show after every N songs")
+    
+    # Targeting
+    target_genres = models.CharField(max_length=200, blank=True, null=True)
+    target_countries = models.CharField(max_length=200, blank=True, null=True)
+    
+    # Stats
+    impressions = models.PositiveIntegerField(default=0)
+    clicks = models.PositiveIntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.title} - {self.advertiser}"
+    
+    @property
+    def is_valid(self):
+        """Check if ad is currently valid"""
+        if not self.is_active:
+            return False
+        if self.end_date and self.end_date < timezone.now():
+            return False
+        if self.start_date and self.start_date > timezone.now():
+            return False
+        return True
+
+
+class AdPlayback(models.Model):
+    """Track ad plays for users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ad_plays')
+    ad = models.ForeignKey(Ad, on_delete=models.CASCADE, related_name='plays')
+    played_at = models.DateTimeField(auto_now_add=True)
+    completed = models.BooleanField(default=False)
+    duration_played = models.IntegerField(default=0)
+    clicked = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.ad.title} at {self.played_at}"
+
+
+class AdSkip(models.Model):
+    """Track ad skips (for premium users)"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ad_skips')
+    ad = models.ForeignKey(Ad, on_delete=models.CASCADE, related_name='skips')
+    skipped_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username} skipped {self.ad.title}"
