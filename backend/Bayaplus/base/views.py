@@ -2838,3 +2838,225 @@ def all_songs(request):
     }
     
     return render(request, "artist/all_songs.html", context)
+
+# Subscriptins
+
+@login_required(login_url='login')
+def subscription_plans(request):
+    """View subscription plans and pricing"""
+    # Get user's current subscription
+    try:
+        subscription = Subscription.objects.get(user=request.user)
+    except Subscription.DoesNotExist:
+        subscription = Subscription.objects.create(user=request.user, plan='free')
+    
+    # Plans data
+    plans = [
+        {
+            'id': 'free',
+            'name': 'Free',
+            'price': '$0',
+            'period': 'Forever',
+            'features': [
+                'Limited song playback',
+                'Ads every 3 songs',
+                'Standard audio quality',
+                'Basic player controls',
+                'Limited playlists',
+            ],
+            'is_current': subscription.plan == 'free',
+            'popular': False,
+        },
+        {
+            'id': 'premium',
+            'name': 'Premium',
+            'price': '$9.99',
+            'period': 'per month',
+            'features': [
+                'Unlimited song playback',
+                'No ads',
+                'High audio quality',
+                'Full player controls',
+                'Unlimited playlists',
+                'Download offline',
+                'Skip any time',
+            ],
+            'is_current': subscription.plan == 'premium',
+            'popular': True,
+        },
+        {
+            'id': 'pro',
+            'name': 'Pro Artist',
+            'price': '$19.99',
+            'period': 'per month',
+            'features': [
+                'All Premium features',
+                'Advanced analytics',
+                'Promote your music',
+                'Priority support',
+                'Verified artist badge',
+                'Upload more releases',
+            ],
+            'is_current': subscription.plan == 'pro',
+            'popular': False,
+        },
+    ]
+    
+    context = {
+        'plans': plans,
+        'subscription': subscription,
+        'is_premium': subscription.is_premium,
+    }
+    
+    return render(request, "subscription/plans.html", context)
+
+
+@login_required(login_url='login')
+def upgrade_subscription(request):
+    """Upgrade user subscription"""
+    if request.method == "POST":
+        plan = request.POST.get('plan')
+        
+        if plan not in ['free', 'premium', 'pro']:
+            messages.error(request, "Invalid plan selected.")
+            return redirect('subscription_plans')
+        
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+        except Subscription.DoesNotExist:
+            subscription = Subscription.objects.create(user=request.user, plan='free')
+        
+        if subscription.plan == plan:
+            messages.info(request, f"You are already on the {plan} plan.")
+            return redirect('subscription_plans')
+        
+        # Update subscription
+        subscription.plan = plan
+        subscription.is_active = True
+        
+        if plan == 'free':
+            subscription.expires_at = None
+            messages.success(request, "You have downgraded to the Free plan.")
+        else:
+            from datetime import timedelta
+            subscription.expires_at = timezone.now() + timedelta(days=30)
+            messages.success(request, f"Successfully upgraded to {plan.capitalize()} plan!")
+        
+        subscription.save()
+        return redirect('subscription_plans')
+    
+    return redirect('subscription_plans')
+
+
+@login_required(login_url='login')
+def cancel_subscription(request):
+    """Cancel premium subscription"""
+    if request.method == "POST":
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            if subscription.plan != 'free':
+                subscription.plan = 'free'
+                subscription.is_active = True
+                subscription.expires_at = None
+                subscription.save()
+                messages.success(request, "Your subscription has been cancelled.")
+            else:
+                messages.info(request, "You are already on the Free plan.")
+        except Subscription.DoesNotExist:
+            messages.error(request, "No subscription found.")
+        
+        return redirect('subscription_plans')
+
+
+@login_required(login_url='login')
+def get_ad(request):
+    """Get an ad to display to the user"""
+    if request.method == "GET":
+        # Check if user is premium
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            if subscription.is_premium:
+                return JsonResponse({'has_ad': False, 'message': 'Premium user - no ads'})
+        except Subscription.DoesNotExist:
+            pass
+        
+        # Get user's play count since last ad
+        session_key = f'ad_play_count_{request.user.id}'
+        play_count = request.session.get(session_key, 0)
+        
+        # Check if user has reached the ad frequency
+        frequency = 3  # Show after every 3 songs
+        if play_count < frequency:
+            # Increment play count
+            request.session[session_key] = play_count + 1
+            return JsonResponse({'has_ad': False, 'message': 'No ad yet'})
+        
+        # Reset play count
+        request.session[session_key] = 0
+        
+        # Get a random active ad
+        ad = Ad.objects.filter(is_active=True).order_by('?').first()
+        
+        if not ad:
+            return JsonResponse({'has_ad': False, 'message': 'No ads available'})
+        
+        # Record ad impression
+        AdPlayback.objects.create(
+            user=request.user,
+            ad=ad,
+            completed=False
+        )
+        
+        return JsonResponse({
+            'has_ad': True,
+            'ad': {
+                'id': ad.id,
+                'title': ad.title,
+                'advertiser': ad.advertiser,
+                'ad_type': ad.ad_type,
+                'audio_url': ad.audio_file.url if ad.audio_file else None,
+                'video_url': ad.video_file.url if ad.video_file else None,
+                'image_url': ad.image_file.url if ad.image_file else None,
+                'target_url': ad.target_url,
+            }
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required(login_url='login')
+def ad_completed(request):
+    """Track when an ad is completed"""
+    if request.method == "POST":
+        data = json.loads(request.body)
+        ad_id = data.get('ad_id')
+        duration_played = data.get('duration_played', 0)
+        clicked = data.get('clicked', False)
+        
+        if ad_id:
+            try:
+                ad = Ad.objects.get(id=ad_id)
+                ad_play = AdPlayback.objects.filter(
+                    user=request.user,
+                    ad=ad,
+                    completed=False
+                ).last()
+                
+                if ad_play:
+                    ad_play.completed = True
+                    ad_play.duration_played = duration_played
+                    ad_play.clicked = clicked
+                    ad_play.save()
+                    
+                    # Update ad stats
+                    ad.impressions += 1
+                    if clicked:
+                        ad.clicks += 1
+                    ad.save()
+                    
+                    # Award points or unlock next song
+                    return JsonResponse({'success': True})
+            except Ad.DoesNotExist:
+                pass
+        
+        return JsonResponse({'success': False}, status=400)
