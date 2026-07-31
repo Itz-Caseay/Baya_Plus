@@ -16,6 +16,8 @@ from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from datetime import timedelta, datetime
 import re
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.csrf import csrf_exempt
 from .models import *
 import logging
 from django.db.models import Sum, Count, Q
