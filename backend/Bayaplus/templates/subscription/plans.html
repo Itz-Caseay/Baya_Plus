@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Plans - BayaPlus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .plan-card {
+            background: #121212;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .plan-card:hover {
+            transform: translateY(-4px);
+            border-color: #fbbf24;
+        }
+        .plan-card.popular {
+            border-color: #fbbf24;
+            background: #1a1a1a;
+        }
+        .plan-card .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fbbf24;
+            color: black;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .plan-card .price {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .plan-card .period {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .plan-card .features {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        .plan-card .features li {
+            padding: 8px 0;
+            color: #d1d5db;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .plan-card .features li i {
+            color: #4CAF50;
+            width: 20px;
+        }
+        .plan-card .features li .disabled {
+            color: #6b7280;
+        }
+        .btn-plan {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-plan:hover {
+            transform: translateY(-2px);
+        }
+        .btn-free {
+            background: #1a1a1a;
+            color: #9ca3af;
+        }
+        .btn-free:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        .btn-premium {
+            background: #fbbf24;
+            color: black;
+        }
+        .btn-premium:hover {
+            background: #f59e0b;
+        }
+        .btn-pro {
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            color: white;
+        }
+        .btn-pro:hover {
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+        .btn-current {
+            background: #4CAF50;
+            color: white;
+            cursor: default;
+        }
+        .btn-current:hover {
+            transform: none;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-white font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div class="container mx-auto max-w-7xl flex justify-between items-center">
+            <a href="{% url 'index' %}" class="flex items-center gap-1">
+                <span class="text-red-600 text-2xl font-bold tracking-tight">Baya</span>
+                <span class="text-yellow-400 text-2xl font-light italic">plus</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% if user.userprofile.role == 'Artist' %}{% url 'artistboard' %}{% else %}{% url 'fanboard' %}{% endif %}" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="text-red-400 hover:text-red-300 text-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-6xl px-4 sm:px-6 py-12">
+        
+        <!-- Page Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl sm:text-4xl font-black">Choose Your Plan</h1>
+            <p class="text-gray-400 text-sm mt-2">Upgrade to premium and enjoy ad-free music</p>
+            <p class="text-xs text-gray-500 mt-1">
+                {% if is_premium %}
+                    <span class="text-green-500">✅ You're on the {{ subscription.plan|title }} plan</span>
+                {% else %}
+                    <span class="text-yellow-400">⚠️ You're on the Free plan</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="space-y-2 mb-6 max-w-md mx-auto">
+                {% for message in messages %}
+                    <div class="text-xs p-3 rounded-lg {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/20 text-red-400{% elif message.tags == 'success' %}bg-green-500/10 border border-green-500/20 text-green-400{% elif message.tags == 'warning' %}bg-yellow-500/10 border border-yellow-500/20 text-yellow-400{% else %}bg-blue-500/10 border border-blue-500/20 text-blue-400{% endif %}">
+                        <i class="fa-solid fa-circle-info mr-2"></i> {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Plans Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for plan in plans %}
+                <div class="plan-card {% if plan.popular %}popular{% endif %}">
+                    {% if plan.popular %}
+                        <div class="popular-badge">⭐ Most Popular</div>
+                    {% endif %}
+                    
+                    <h2 class="text-xl font-bold">{{ plan.name }}</h2>
+                    <div class="mt-2">
+                        <span class="price">{{ plan.price }}</span>
+                        <span class="period">/ {{ plan.period }}</span>
+                    </div>
+                    
+                    <ul class="features">
+                        {% for feature in plan.features %}
+                            <li>
+                                <i class="fa-solid fa-check"></i>
+                                {{ feature }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <form method="POST" action="{% url 'upgrade_subscription' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="plan" value="{{ plan.id }}">
+                        
+                        {% if plan.is_current %}
+                            <button type="button" class="btn-plan btn-current" disabled>
+                                <i class="fa-solid fa-check"></i> Current Plan
+                            </button>
+                        {% elif plan.id == 'free' %}
+                            <button type="submit" class="btn-plan btn-free">
+                                Stay Free
+                            </button>
+                        {% elif plan.id == 'premium' %}
+                            <button type="submit" class="btn-plan btn-premium">
+                                Upgrade Now
+                            </button>
+                        {% elif plan.id == 'pro' %}
+                            <button type="submit" class="btn-plan btn-pro">
+                                Go Pro
+                            </button>
+                        {% endif %}
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Benefits Section -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-6 text-center">
+                <div class="w-12 h-12 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400 mx-auto mb-3">
+                    <i class="fa-solid fa-music text-xl"></i>
+                </div>
+                <h3 class="font-bold">Unlimited Music</h3>
+                <p class="text-xs text-gray-400 mt-1">Listen to millions of songs without interruption</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-6 text-center">
+                <div class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mx-auto mb-3">
+                    <i class="fa-solid fa-circle-xmark text-xl"></i>
+                </div>
+                <h3 class="font-bold">No Ads</h3>
+                <p class="text-xs text-gray-400 mt-1">Enjoy your music without any interruptions</p>
+            </div>
+            <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-6 text-center">
+                <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 mx-auto mb-3">
+                    <i class="fa-solid fa-download text-xl"></i>
+                </div>
+                <h3 class="font-bold">Offline Listening</h3>
+                <p class="text-xs text-gray-400 mt-1">Download your favorite songs and listen anywhere</p>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-12 bg-[#121212] border border-[#1a1a1a] rounded-xl p-6">
+            <h3 class="text-lg font-bold mb-4 text-center">Frequently Asked Questions</h3>
+            <div class="space-y-4 max-w-2xl mx-auto">
+                <details class="group">
+                    <summary class="cursor-pointer text-sm font-medium text-gray-300 hover:text-white transition">
+                        What's included in the Free plan?
+                    </summary>
+                    <p class="text-xs text-gray-400 mt-2">The Free plan includes limited song playback with ads every 3 songs, standard audio quality, and basic player controls.</p>
+                </details>
+                <details class="group">
+                    <summary class="cursor-pointer text-sm font-medium text-gray-300 hover:text-white transition">
+                        Can I cancel my subscription anytime?
+                    </summary>
+                    <p class="text-xs text-gray-400 mt-2">Yes, you can cancel your subscription anytime from your account settings. Your premium benefits will continue until the end of your billing period.</p>
+                </details>
+                <details class="group">
+                    <summary class="cursor-pointer text-sm font-medium text-gray-300 hover:text-white transition">
+                        What payment methods are accepted?
+                    </summary>
+                    <p class="text-xs text-gray-400 mt-2">We accept all major credit cards, PayPal, and mobile money payments.</p>
+                </details>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-8 text-center">
+            <a href="{% if user.userprofile.role == 'Artist' %}{% url 'artistboard' %}{% else %}{% url 'fanboard' %}{% endif %}" class="text-gray-400 hover:text-white text-sm">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>

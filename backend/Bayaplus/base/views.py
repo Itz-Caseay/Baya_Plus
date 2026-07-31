@@ -162,6 +162,7 @@ def signup(request):
                     )
                     user.is_active = False
                     user.save()
+                    Subscription.objects.create(user=user, plan='free')
                     
                     # Generate verification link
                     current_site = get_current_site(request)
@@ -3060,3 +3061,11 @@ def ad_completed(request):
                 pass
         
         return JsonResponse({'success': False}, status=400)
+    
+def check_subscription(user):
+    """Check if user has premium subscription"""
+    try:
+        subscription = Subscription.objects.get(user=user)
+        return subscription.is_premium
+    except Subscription.DoesNotExist:
+        return False

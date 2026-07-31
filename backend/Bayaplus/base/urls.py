@@ -85,6 +85,13 @@ urlpatterns = [
     path('songs/', views.all_songs, name='all_songs'),
     path('api/queue/', views.get_queue, name='get_queue'),
     
+    # Subscription URLs
+    path('subscription/plans/', views.subscription_plans, name='subscription_plans'),
+    path('subscription/upgrade/', views.upgrade_subscription, name='upgrade_subscription'),
+    path('subscription/cancel/', views.cancel_subscription, name='cancel_subscription'),
+    path('api/get-ad/', views.get_ad, name='get_ad'),
+    path('api/ad-completed/', views.ad_completed, name='ad_completed'),
+    
     # ==================== TEST URL ====================
     path('test-email/', views.test_email, name='test_email'),
 ]
