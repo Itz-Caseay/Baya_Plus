@@ -443,6 +443,20 @@
     <script data-turbo-eval="false">
         window.__bayaAudio = window.__bayaAudio || new Audio();
 
+        function updateArtistBoardPlayButton() {
+            const button = document.getElementById('bottom-play');
+            if (!button) return;
+            button.innerHTML = window.__bayaAudio.paused
+                ? '<i class="fa-solid fa-play"></i>'
+                : '<i class="fa-solid fa-pause"></i>';
+        }
+
+        if (!window.__bayaPlayerUiBound) {
+            window.__bayaAudio.addEventListener('play', updateArtistBoardPlayButton);
+            window.__bayaAudio.addEventListener('pause', updateArtistBoardPlayButton);
+            window.__bayaPlayerUiBound = true;
+        }
+
         if (!window.playTrack) {
             window.playTrack = function (trackId) {
                 fetch(`/bayaplus/api/track/${trackId}/info/`)
@@ -458,6 +472,7 @@
                         if (player) player.classList.remove('hidden');
                         if (title) title.textContent = track.title;
                         if (artist) artist.textContent = track.artist;
+                        updateArtistBoardPlayButton();
                     })
                     .catch(() => window.showToast && showToast('Could not load track.', 'error'));
             };
@@ -471,6 +486,7 @@
             });
             bottomPlay.dataset.bayaBound = 'true';
         }
+        updateArtistBoardPlayButton();
     </script>
 
     <script>
