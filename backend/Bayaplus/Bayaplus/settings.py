@@ -51,7 +51,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'BayaPlus.urls'
+ROOT_URLCONF = 'Bayaplus.urls'
 
 TEMPLATES = [
     {
@@ -68,7 +68,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'BayaPlus.wsgi.application'
+WSGI_APPLICATION = 'Bayaplus.wsgi.application'
 
 
 # Database
