@@ -89,10 +89,13 @@
         .nav-link.active {
             color: #fbbf24;
         }
+        .release-layout {
+            min-width: 0;
+        }
     </style>
 </head>
 
-<body class="bg-[#0b0b0b] text-white font-sans min-h-screen flex">
+<body class="bg-[#0b0b0b] text-white font-sans h-screen overflow-hidden flex">
 
     <!-- LEFT SIDEBAR -->
     <aside class="hidden lg:flex w-64 bg-[#0f0f0f] p-6 flex-col justify-between border-r border-[#1a1a1a] shrink-0 h-screen sticky top-0 overflow-y-auto">
@@ -199,10 +202,10 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 overflow-y-auto">
+    <main class="release-layout flex-1 min-w-0 bg-[#0b0b0b] p-4 sm:p-6 md:p-8 pb-28 overflow-y-auto">
         
         <!-- Release Header -->
-        <div class="flex flex-col md:flex-row gap-8 mb-10">
+        <div class="max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-8 mb-10">
             <!-- Cover Art -->
             <div class="md:w-80 shrink-0">
                 <div class="relative rounded-xl overflow-hidden cover-art-shadow">
@@ -324,7 +327,7 @@
         </div>
 
         <!-- Tracks Section -->
-        <section class="bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+        <section class="max-w-7xl mx-auto w-full bg-[#121212] rounded-xl border border-[#1a1a1a] p-4 sm:p-6">
             <h2 class="text-xl font-bold mb-4">🎵 Tracks</h2>
 
             {% if tracks %}
@@ -354,7 +357,7 @@
         </section>
 
         <!-- Comments Section -->
-        <section class="mt-8 bg-[#121212] rounded-xl border border-[#1a1a1a] p-6">
+        <section class="max-w-7xl mx-auto w-full mt-8 bg-[#121212] rounded-xl border border-[#1a1a1a] p-4 sm:p-6">
             <h2 class="text-xl font-bold mb-4">💬 Comments</h2>
 
             {% if user.is_authenticated %}
@@ -402,7 +405,7 @@
         </section>
 
         <!-- Back Button -->
-        <div class="mt-8">
+        <div class="max-w-7xl mx-auto w-full mt-8">
             <a href="{% url 'all_releases' %}" class="text-gray-400 hover:text-white text-sm">
                 <i class="fa-solid fa-arrow-left"></i> Back to Releases
             </a>
@@ -410,7 +413,7 @@
     </main>
 
     <!-- RIGHT SIDEBAR -->
-    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 border-l border-[#1a1a1a] flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
+    <aside class="hidden xl:flex w-80 bg-[#0f0f0f] p-6 pb-28 border-l border-[#1a1a1a] flex-col h-full overflow-y-auto shrink-0">
         <!-- Artist Info -->
         <div class="bg-[#121212] border border-[#1a1a1a] rounded-xl p-4">
             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">About the Artist</h4>
