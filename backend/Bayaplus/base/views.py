@@ -2564,16 +2564,21 @@ def get_track_audio(request, track_id):
                 start = int(range_match.group(1))
                 file_size = os.path.getsize(file_path)
                 end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+                end = min(end, file_size - 1)
                 
-                if start < file_size and end < file_size:
-                    response = HttpResponse(
-                        open(file_path, 'rb').read(end - start + 1),
-                        status=206,
-                        content_type=content_type
-                    )
-                    response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
-                    response['Content-Length'] = str(end - start + 1)
-                    response['Accept-Ranges'] = 'bytes'
+                if start >= file_size or start > end:
+                    return HttpResponse(status=416, headers={
+                        'Content-Range': f'bytes */{file_size}',
+                    })
+
+                with open(file_path, 'rb') as audio:
+                    audio.seek(start)
+                    content = audio.read(end - start + 1)
+
+                response = HttpResponse(content, status=206, content_type=content_type)
+                response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+                response['Content-Length'] = str(len(content))
+                response['Accept-Ranges'] = 'bytes'
         
         return response
         
