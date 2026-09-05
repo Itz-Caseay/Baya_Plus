@@ -6,6 +6,7 @@
     <title>All Songs - BayaPlus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.13/dist/turbo.es2017-umd.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0b0b0b; }
@@ -362,5 +363,33 @@
         </div>
     </aside>
 
+    {% include 'includes/player.html' %}
+    <script data-turbo-eval="false">
+        window.__bayaAudio = window.__bayaAudio || new Audio();
+
+        if (!window.playTrack) {
+            window.playTrack = function (trackId) {
+                fetch(`/bayaplus/api/track/${trackId}/info/`)
+                    .then(response => response.json())
+                    .then(track => {
+                        if (track.error) throw new Error(track.error);
+                        window.__bayaAudio.src = `/bayaplus/stream/${track.id}/`;
+                        window.__bayaAudio.play();
+                        const player = document.getElementById('music-player');
+                        const title = document.getElementById('bottom-player-title');
+                        const artist = document.getElementById('bottom-player-artist');
+                        if (player) player.classList.remove('hidden');
+                        if (title) title.textContent = track.title;
+                        if (artist) artist.textContent = track.artist;
+                    })
+                    .catch(() => window.showToast && showToast('Could not load track.', 'error'));
+            };
+        }
+
+        document.getElementById('bottom-play')?.addEventListener('click', () => {
+            if (window.__bayaAudio.paused) window.__bayaAudio.play();
+            else window.__bayaAudio.pause();
+        });
+    </script>
 </body>
 </html>
