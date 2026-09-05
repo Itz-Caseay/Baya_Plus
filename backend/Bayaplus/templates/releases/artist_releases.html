@@ -1,5 +1,3 @@
-{% extends 'base.html' %}
-{% block content %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -417,6 +415,8 @@
         </div>
     </aside>
 
+    {% include 'includes/player.html' %}
+
     <!-- Follow Button AJAX Script -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -481,4 +481,3 @@
 
 </body>
 </html>
-{% endblock %}
