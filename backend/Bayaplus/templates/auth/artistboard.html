@@ -6,6 +6,7 @@
     <title>BayaPlus - Artist Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.13/dist/turbo.es2017-umd.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0b0b0b; }
@@ -17,6 +18,16 @@
         .status-draft { background: #666; color: white; }
         .status-rejected { background: #f44336; color: white; }
         .transition-all { transition: all 0.3s ease; }
+        .play-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc2626, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-[#0b0b0b] text-white font-sans h-screen flex overflow-hidden relative">
@@ -313,6 +324,13 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0 ml-2">
+                                {% with track=release.tracks.all|first %}
+                                    {% if track and track.audio_file %}
+                                        <button type="button" onclick="event.stopPropagation(); playTrack({{ track.id }})" class="text-green-400 hover:text-green-300 text-xs" title="Play first track">
+                                            <i class="fa-solid fa-play"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endwith %}
                                 {% if release.status == 'rejected' %}
                                     <a href="{% url 'publish_release' release.id %}" class="text-yellow-400 hover:text-yellow-300 text-xs" title="Resubmit">
                                         <i class="fa-solid fa-rotate"></i>
@@ -419,6 +437,36 @@
             </div>
         </section>
     </aside>
+
+    {% include 'includes/player.html' %}
+
+    <script data-turbo-eval="false">
+        window.__bayaAudio = window.__bayaAudio || new Audio();
+
+        if (!window.playTrack) {
+            window.playTrack = function (trackId) {
+                fetch(`/bayaplus/api/track/${trackId}/info/`)
+                    .then(response => response.json())
+                    .then(track => {
+                        if (track.error) throw new Error(track.error);
+                        window.__bayaAudio.src = `/bayaplus/stream/${track.id}/`;
+                        window.__bayaAudio.play();
+                        const player = document.getElementById('music-player');
+                        const title = document.getElementById('bottom-player-title');
+                        const artist = document.getElementById('bottom-player-artist');
+                        if (player) player.classList.remove('hidden');
+                        if (title) title.textContent = track.title;
+                        if (artist) artist.textContent = track.artist;
+                    })
+                    .catch(() => window.showToast && showToast('Could not load track.', 'error'));
+            };
+        }
+
+        document.getElementById('bottom-play')?.addEventListener('click', () => {
+            if (window.__bayaAudio.paused) window.__bayaAudio.play();
+            else window.__bayaAudio.pause();
+        });
+    </script>
 
     <script>
         const openBtn = document.getElementById('open-mobile-btn');

@@ -165,10 +165,11 @@ def signup(request):
                     Subscription.objects.create(user=user, plan='free')
                     
                     # Generate verification link
-                    current_site = get_current_site(request)
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
-                    verification_link = f"http://{current_site.domain}/bayaplus/activate/{uid}/{token}/"
+                    verification_link = request.build_absolute_uri(
+                        f"/bayaplus/activate/{uid}/{token}/"
+                    )
                     
                     print("\n" + "="*60)
                     print("🔗 VERIFICATION LINK:")
@@ -180,7 +181,7 @@ def signup(request):
                         mail_subject = 'Activate Your BayaPlus Account'
                         html_message = render_to_string('auth/acc_active_email.html', {
                             'user': user,
-                            'domain': current_site.domain,
+                            'domain': request.get_host(),
                             'uid': uid,
                             'token': token,
                         })
@@ -232,6 +233,48 @@ def signup(request):
             messages.error(request, "Passwords did not match")
             return redirect('signup')
     return render(request, "auth/signup.html")
+
+def resend_activation(request):
+    if request.method != "POST":
+        return redirect('signup')
+
+    email = request.POST.get('email', '').strip()
+    user = User.objects.filter(email__iexact=email, is_active=False).first()
+    if user is None:
+        messages.error(request, "No inactive account was found for that email address.")
+        return redirect('signup')
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    verification_link = request.build_absolute_uri(
+        f"/bayaplus/activate/{uid}/{token}/"
+    )
+    html_message = render_to_string('auth/acc_active_email.html', {
+        'user': user,
+        'domain': request.get_host(),
+        'uid': uid,
+        'token': token,
+    })
+
+    try:
+        email_message = EmailMessage(
+            'Activate Your BayaPlus Account',
+            html_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+        )
+        email_message.content_subtype = 'html'
+        email_message.send(fail_silently=False)
+        return render(request, "auth/registration_success.html", {
+            'email': user.email,
+            'verification_link': verification_link,
+        })
+    except Exception as error:
+        return render(request, "auth/registration_error.html", {
+            'error_message': str(error),
+            'email': user.email,
+            'verification_link': verification_link,
+        })
 
 def activate(request, uidb64, token):
     try:

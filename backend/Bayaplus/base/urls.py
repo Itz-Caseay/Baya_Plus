@@ -14,6 +14,7 @@ urlpatterns = [
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('resend-activation/', views.resend_activation, name='resend_activation'),
     path('choose-profile/', views.choose_profile, name='choose-profile'),
     
     # ==================== DASHBOARD URLs ====================

@@ -129,10 +129,12 @@
             </div>
             
             <!-- Resend Email -->
-            <p class="text-xs text-gray-600 mt-4">
+            <form method="POST" action="{% url 'resend_activation' %}" class="text-xs text-gray-600 mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="email" value="{{ email }}">
                 Didn't receive the email?
-                <a href="#" class="text-yellow-400 hover:underline">Resend verification email</a>
-            </p>
+                <button type="submit" class="text-yellow-400 hover:underline">Resend verification email</button>
+            </form>
         </div>
     </div>
 
