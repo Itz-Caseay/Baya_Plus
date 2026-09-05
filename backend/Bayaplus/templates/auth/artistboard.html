@@ -449,6 +449,7 @@
                     .then(response => response.json())
                     .then(track => {
                         if (track.error) throw new Error(track.error);
+                        window.__bayaTrack = track;
                         window.__bayaAudio.src = `/bayaplus/stream/${track.id}/`;
                         window.__bayaAudio.play();
                         const player = document.getElementById('music-player');
@@ -462,10 +463,14 @@
             };
         }
 
-        document.getElementById('bottom-play')?.addEventListener('click', () => {
-            if (window.__bayaAudio.paused) window.__bayaAudio.play();
-            else window.__bayaAudio.pause();
-        });
+        const bottomPlay = document.getElementById('bottom-play');
+        if (bottomPlay && !bottomPlay.dataset.bayaBound) {
+            bottomPlay.addEventListener('click', () => {
+                if (window.__bayaAudio.paused) window.__bayaAudio.play();
+                else window.__bayaAudio.pause();
+            });
+            bottomPlay.dataset.bayaBound = 'true';
+        }
     </script>
 
     <script>

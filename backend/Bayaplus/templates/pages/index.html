@@ -758,6 +758,7 @@
         function loadTrack(track) {
             console.log('🎵 Loading track:', track.title);
             currentTrack = track;
+            window.__bayaTrack = track;
 
             // Update UI
             const titleEl = document.getElementById('now-playing-title');
@@ -1089,7 +1090,10 @@
             const bottomPlay = document.getElementById('bottom-play');
 
             if (playBtn) playBtn.addEventListener('click', togglePlay);
-            if (bottomPlay) bottomPlay.addEventListener('click', togglePlay);
+            if (bottomPlay && !bottomPlay.dataset.bayaBound) {
+                bottomPlay.addEventListener('click', togglePlay);
+                bottomPlay.dataset.bayaBound = 'true';
+            }
 
             // Next/Previous Buttons
             const nextBtn = document.getElementById('next-btn');
@@ -1204,6 +1208,35 @@
             console.log('📋 Controls: Space = Play/Pause, Ctrl+Right = Next, Ctrl+Left = Previous');
             console.log('📋 30-second rule: Tracks count as streams after 30 seconds of playback');
         });
+
+        window.__bayaSyncPlayerUi = function () {
+            const track = window.__bayaTrack || currentTrack;
+            if (!track) return;
+
+            const titleEl = document.getElementById('now-playing-title');
+            const artistEl = document.getElementById('now-playing-artist');
+            const titleSmallEl = document.getElementById('now-playing-title-small');
+            const artistSmallEl = document.getElementById('now-playing-artist-small');
+            const bottomTitle = document.getElementById('bottom-player-title');
+            const bottomArtist = document.getElementById('bottom-player-artist');
+            const coverBg = document.getElementById('now-playing-bg');
+            const bottomCover = document.getElementById('bottom-player-cover');
+            const audio = window.__bayaAudio;
+
+            if (titleEl) titleEl.textContent = track.title;
+            if (artistEl) artistEl.textContent = track.artist;
+            if (titleSmallEl) titleSmallEl.textContent = track.title;
+            if (artistSmallEl) artistSmallEl.textContent = track.artist;
+            if (bottomTitle) bottomTitle.textContent = track.title;
+            if (bottomArtist) bottomArtist.textContent = track.artist;
+            if (track.cover_art) {
+                if (coverBg) coverBg.style.backgroundImage = `url('${track.cover_art}')`;
+                if (bottomCover) bottomCover.innerHTML = `<img src="${track.cover_art}" class="w-full h-full object-cover rounded">`;
+            }
+            if (audio) updatePlayButtons(!audio.paused);
+        };
+
+        document.addEventListener('turbo:load', window.__bayaSyncPlayerUi);
     </script>
 
 </body>
