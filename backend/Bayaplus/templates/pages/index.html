@@ -658,7 +658,7 @@
         let currentTrack = null;
         let isPlaying = false;
         let playId = null;
-        let durationTracked = 0;
+        let lastTrackedSecond = 0;
         let volume = 70;
         let isShuffled = false;
         let repeatMode = 'none';
@@ -804,7 +804,7 @@
             if (progressDot) progressDot.style.left = '0%';
             if (currentTimeEl) currentTimeEl.textContent = '0:00';
 
-            durationTracked = 0;
+            lastTrackedSecond = 0;
 
             // Start play tracking
             startPlayTracking(track.id);
@@ -842,7 +842,7 @@
                 .then(data => {
                     if (data.success) {
                         playId = data.play_id;
-                        durationTracked = 0;
+                        lastTrackedSecond = 0;
                         console.log('✅ Play tracking started:', playId);
                     }
                 })
@@ -854,11 +854,11 @@
         function updatePlayTracking() {
             if (!playId) return;
 
-            durationTracked += 1;
-
-            if (durationTracked % 5 === 0) {
+            const playedSeconds = Math.floor(audioInstance.currentTime);
+            if (playedSeconds >= lastTrackedSecond + 5) {
+                lastTrackedSecond = playedSeconds;
                 const url = `/bayaplus/api/track/play/update/${playId}/`;
-                console.log('📡 Updating play tracking:', durationTracked, 'seconds');
+                console.log('📡 Updating play tracking:', playedSeconds, 'seconds');
 
                 fetch(url, {
                     method: 'POST',
@@ -867,8 +867,8 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        duration_played: durationTracked,
-                        completed: durationTracked >= 30
+                        duration_played: playedSeconds,
+                        completed: audioInstance.ended
                     })
                 })
                     .then(response => response.json())

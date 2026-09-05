@@ -20,6 +20,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
 import logging
+from django.db import transaction
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 import json
@@ -2645,29 +2646,32 @@ def track_play_update(request, play_id):
     if request.method == "POST":
         import json
         data = json.loads(request.body)
-        play_history = get_object_or_404(PlayHistory, id=play_id, user=request.user)
         duration_played = int(data.get('duration_played', 0))
         completed = data.get('completed', False)
-        
-        # Update play history
-        play_history.duration_played = duration_played
-        play_history.completed = completed
-        play_history.save()
-        
-        # If played 30+ seconds, count as a stream
-        counted_as_stream = False
-        if duration_played >= 30:
-            # Increment track plays
-            track = play_history.track
-            track.plays += 1
-            track.save()
-            
-            # Update release plays
-            release = track.release
-            release.total_plays += 1
-            release.save()
-            
-            counted_as_stream = True
+
+        with transaction.atomic():
+            play_history = get_object_or_404(
+                PlayHistory.objects.select_for_update(),
+                id=play_id,
+                user=request.user,
+            )
+            play_history.duration_played = max(play_history.duration_played, duration_played)
+            play_history.completed = completed
+
+            # Count each listening session only once after 30 seconds.
+            counted_as_stream = play_history.stream_counted
+            if duration_played >= 30 and not play_history.stream_counted:
+                track = play_history.track
+                track.plays += 1
+                track.save(update_fields=['plays'])
+
+                release = track.release
+                release.total_plays += 1
+                release.save(update_fields=['total_plays'])
+                play_history.stream_counted = True
+                counted_as_stream = True
+
+            play_history.save()
         
         return JsonResponse({
             'success': True,

@@ -294,6 +294,7 @@ class PlayHistory(models.Model):
     played_at = models.DateTimeField(auto_now_add=True)
     duration_played = models.IntegerField(default=0)  # seconds played
     completed = models.BooleanField(default=False)  # if they listened to the whole track
+    stream_counted = models.BooleanField(default=False)
     
     class Meta:
         ordering = ['-played_at']
