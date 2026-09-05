@@ -289,6 +289,7 @@
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-3 mt-6">
                     <button
+                        id="play-all-release"
                         class="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-full font-bold transition flex items-center gap-2">
                         <i class="fa-solid fa-play"></i> Play All
                     </button>
@@ -339,7 +340,8 @@
                     </div>
                     <div class="flex items-center gap-4">
                         <span class="text-gray-500 text-sm">{{ track.duration|default:"--" }}</span>
-                        <button class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
+                        <button type="button" data-track-id="{{ track.id }}"
+                            class="release-track-play text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
                             <i class="fa-solid fa-play"></i>
                         </button>
                     </div>
@@ -477,5 +479,70 @@
     </aside>
 
     {% include 'includes/player.html' %}
+
+    <script data-turbo-eval="false">
+        window.__bayaAudio = window.__bayaAudio || new Audio();
+
+        function updateReleasePlayButton() {
+            const button = document.getElementById('bottom-play');
+            if (button) {
+                button.innerHTML = window.__bayaAudio.paused
+                    ? '<i class="fa-solid fa-play"></i>'
+                    : '<i class="fa-solid fa-pause"></i>';
+            }
+        }
+
+        function playTrack(trackId) {
+            fetch(`/bayaplus/api/track/${trackId}/info/`)
+                .then(response => response.json())
+                .then(track => {
+                    if (track.error) throw new Error(track.error);
+                    window.__bayaTrack = track;
+                    window.__bayaAudio.src = `/bayaplus/stream/${track.id}/`;
+                    window.__bayaAudio.play();
+
+                    const title = document.getElementById('bottom-player-title');
+                    const artist = document.getElementById('bottom-player-artist');
+                    const cover = document.getElementById('bottom-player-cover');
+                    if (title) title.textContent = track.title;
+                    if (artist) artist.textContent = track.artist;
+                    if (cover && track.cover_art) {
+                        cover.innerHTML = `<img src="${track.cover_art}" class="w-full h-full object-cover rounded">`;
+                    }
+                    updateReleasePlayButton();
+                })
+                .catch(() => window.showToast && showToast('Could not load track.', 'error'));
+        }
+
+        if (!window.__bayaReleasePlayerBound) {
+            window.__bayaAudio.addEventListener('play', updateReleasePlayButton);
+            window.__bayaAudio.addEventListener('pause', updateReleasePlayButton);
+            window.__bayaReleasePlayerBound = true;
+        }
+
+        const bottomPlay = document.getElementById('bottom-play');
+        if (bottomPlay && !bottomPlay.dataset.bayaBound) {
+            bottomPlay.addEventListener('click', () => {
+                if (!window.__bayaAudio.src) return;
+                if (window.__bayaAudio.paused) window.__bayaAudio.play();
+                else window.__bayaAudio.pause();
+            });
+            bottomPlay.dataset.bayaBound = 'true';
+        }
+
+        document.querySelectorAll('.release-track-play').forEach(button => {
+            if (!button.dataset.bayaBound) {
+                button.addEventListener('click', () => playTrack(button.dataset.trackId));
+                button.dataset.bayaBound = 'true';
+            }
+        });
+
+        document.getElementById('play-all-release')?.addEventListener('click', () => {
+            const firstTrack = document.querySelector('.release-track-play');
+            if (firstTrack) playTrack(firstTrack.dataset.trackId);
+        });
+
+        updateReleasePlayButton();
+    </script>
 </body>
 </html>
