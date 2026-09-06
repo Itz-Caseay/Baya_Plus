@@ -75,8 +75,24 @@ BayaPlus is a full-featured music streaming platform that connects artists and f
 
 ## 🚀 Installation
 
+### Stripe payments and ad-free plans
+
+Paid plans use Stripe Checkout. Create recurring monthly Stripe Prices for Premium and Pro, then configure the server before using the upgrade buttons:
+
+```bash
+export STRIPE_SECRET_KEY="sk_test_..."
+export STRIPE_PREMIUM_PRICE_ID="price_1UCdGsFRNZ3kZeeSu6QDk9ox"
+export STRIPE_PRO_PRICE_ID="price_1UCdIfFRNZ3kZeeSYcEwDWmp"
+```
+
+The application only enables ad-free access after Stripe confirms a completed paid Checkout session. Without these variables, paid upgrades are rejected safely.
+
 ### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Itz-Caseay/Baya_Plus.git
 cd bayaplus
+
+export STRIPE_SECRET_KEY="sk_test_..."
+export STRIPE_PREMIUM_PRICE_ID="price_1UCdGsFRNZ3kZeeSu6QDk9ox"
+export STRIPE_PRO_PRICE_ID="price_1UCdIfFRNZ3kZeeSYcEwDWmp"
