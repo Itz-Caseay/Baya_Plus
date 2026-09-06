@@ -1,0 +1,4 @@
+# Local secrets and runtime files
+.env
+*.pyc
+__pycache__/

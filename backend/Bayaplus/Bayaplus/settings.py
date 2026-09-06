@@ -12,9 +12,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -148,3 +150,10 @@ ADMIN_EMAIL_FROM = 'BayaPlus Admin <noreply@bayaplus.com>'
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_51SY67ZFRNZ3kZeeSDydPXKDDN51MLCSsCD0E7JkPOmeXftGSUESDwrZ240eUekFPy7iFAddDyZpktJ0TDbtIWkRu00y6M26gGt')
 STRIPE_PREMIUM_PRICE_ID = os.environ.get('STRIPE_PREMIUM_PRICE_ID', 'price_1UCdGsFRNZ3kZeeSu6QDk9ox')
 STRIPE_PRO_PRICE_ID = os.environ.get('STRIPE_PRO_PRICE_ID', 'price_1UCdIfFRNZ3kZeeSYcEwDWmp')
+
+# Fapshi hosted payment-link configuration. Amounts are in XAF.
+FAPSHI_APIUSER = os.environ.get('FAPSHI_APIUSER', '')
+FAPSHI_APIKEY = os.environ.get('FAPSHI_APIKEY', '')
+FAPSHI_BASE_URL = os.environ.get('FAPSHI_BASE_URL', 'https://sandbox.fapshi.com').rstrip('/')
+FAPSHI_PREMIUM_AMOUNT_XAF = os.environ.get('FAPSHI_PREMIUM_AMOUNT_XAF', '')
+FAPSHI_PRO_AMOUNT_XAF = os.environ.get('FAPSHI_PRO_AMOUNT_XAF', '')

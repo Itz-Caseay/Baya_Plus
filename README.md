@@ -83,6 +83,10 @@ Paid plans use Stripe Checkout. Create recurring monthly Stripe Prices for Premi
 export STRIPE_SECRET_KEY="sk_test_..."
 export STRIPE_PREMIUM_PRICE_ID="price_1UCdGsFRNZ3kZeeSu6QDk9ox"
 export STRIPE_PRO_PRICE_ID="price_1UCdIfFRNZ3kZeeSYcEwDWmp"
+export FAPSHI_APIUSER="your-fapshi-api-user"
+export FAPSHI_APIKEY="your-fapshi-api-key"
+export FAPSHI_PREMIUM_AMOUNT_XAF="your-premium-price-in-xaf"
+export FAPSHI_PRO_AMOUNT_XAF="your-pro-price-in-xaf"
 ```
 
 The application only enables ad-free access after Stripe confirms a completed paid Checkout session. Without these variables, paid upgrades are rejected safely.
@@ -96,3 +100,7 @@ cd bayaplus
 export STRIPE_SECRET_KEY="sk_test_..."
 export STRIPE_PREMIUM_PRICE_ID="price_1UCdGsFRNZ3kZeeSu6QDk9ox"
 export STRIPE_PRO_PRICE_ID="price_1UCdIfFRNZ3kZeeSYcEwDWmp"
+export FAPSHI_APIUSER="your-fapshi-api-user"
+export FAPSHI_APIKEY="your-fapshi-api-key"
+export FAPSHI_PREMIUM_AMOUNT_XAF="your-premium-price-in-xaf"
+export FAPSHI_PRO_AMOUNT_XAF="your-pro-price-in-xaf"

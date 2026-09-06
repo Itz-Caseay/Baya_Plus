@@ -3038,6 +3038,50 @@ def upgrade_subscription(request):
 
 
 @login_required(login_url='login')
+def fapshi_payment(request):
+    """Create a Fapshi hosted payment link for a paid plan."""
+    if request.method != 'POST':
+        return redirect('subscription_plans')
+
+    plan = request.POST.get('plan')
+    amount = {
+        'premium': settings.FAPSHI_PREMIUM_AMOUNT_XAF,
+        'pro': settings.FAPSHI_PRO_AMOUNT_XAF,
+    }.get(plan)
+    if not amount or not settings.FAPSHI_APIUSER or not settings.FAPSHI_APIKEY:
+        messages.error(request, 'Fapshi payments are not configured yet.')
+        return redirect('subscription_plans')
+
+    try:
+        response = requests.post(
+            f'{settings.FAPSHI_BASE_URL}/initiate-pay',
+            headers={
+                'apiuser': settings.FAPSHI_APIUSER,
+                'apikey': settings.FAPSHI_APIKEY,
+                'Content-Type': 'application/json',
+            },
+            json={
+                'amount': int(amount),
+                'email': request.user.email,
+                'userId': str(request.user.pk),
+                'externalId': f'{request.user.pk}-{plan}',
+                'redirectUrl': request.build_absolute_uri(reverse('subscription_plans')),
+                'message': f'BayaPlus {plan} subscription',
+            },
+            timeout=15,
+        )
+        response.raise_for_status()
+        payment_url = response.json().get('link')
+        if not payment_url:
+            raise ValueError('Fapshi did not return a payment link.')
+        return redirect(payment_url)
+    except (requests.RequestException, ValueError) as error:
+        logger.exception('Fapshi payment link creation failed')
+        messages.error(request, f'Could not start Fapshi payment: {error}')
+        return redirect('subscription_plans')
+
+
+@login_required(login_url='login')
 def subscription_checkout_success(request):
     """Verify a completed Stripe Checkout session before enabling ad-free access."""
     session_id = request.GET.get('session_id')
