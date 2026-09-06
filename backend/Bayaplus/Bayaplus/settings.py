@@ -143,3 +143,8 @@ ADMIN_EMAILS = [
 ]
 
 ADMIN_EMAIL_FROM = 'BayaPlus Admin <noreply@bayaplus.com>'
+
+# Stripe Checkout configuration. Keep these values in environment variables.
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PREMIUM_PRICE_ID = os.environ.get('STRIPE_PREMIUM_PRICE_ID', '')
+STRIPE_PRO_PRICE_ID = os.environ.get('STRIPE_PRO_PRICE_ID', '')

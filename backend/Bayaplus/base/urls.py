@@ -89,6 +89,8 @@ urlpatterns = [
     # Subscription URLs
     path('subscription/plans/', views.subscription_plans, name='subscription_plans'),
     path('subscription/upgrade/', views.upgrade_subscription, name='upgrade_subscription'),
+    path('subscription/checkout/success/', views.subscription_checkout_success, name='subscription_checkout_success'),
+    path('subscription/checkout/cancel/', views.subscription_checkout_cancel, name='subscription_checkout_cancel'),
     path('subscription/cancel/', views.cancel_subscription, name='cancel_subscription'),
     path('api/get-ad/', views.get_ad, name='get_ad'),
     path('api/ad-completed/', views.ad_completed, name='ad_completed'),

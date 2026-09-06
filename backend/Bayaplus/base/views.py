@@ -25,6 +25,8 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 import json
 from django.core.paginator import Paginator
+from django.urls import reverse
+import requests
 
 
 logger = logging.getLogger(__name__)
@@ -2966,38 +2968,121 @@ def subscription_plans(request):
 
 @login_required(login_url='login')
 def upgrade_subscription(request):
-    """Upgrade user subscription"""
-    if request.method == "POST":
-        plan = request.POST.get('plan')
-        
-        if plan not in ['free', 'premium', 'pro']:
-            messages.error(request, "Invalid plan selected.")
-            return redirect('subscription_plans')
-        
-        try:
-            subscription = Subscription.objects.get(user=request.user)
-        except Subscription.DoesNotExist:
-            subscription = Subscription.objects.create(user=request.user, plan='free')
-        
-        if subscription.plan == plan:
-            messages.info(request, f"You are already on the {plan} plan.")
-            return redirect('subscription_plans')
-        
-        # Update subscription
-        subscription.plan = plan
-        subscription.is_active = True
-        
-        if plan == 'free':
-            subscription.expires_at = None
-            messages.success(request, "You have downgraded to the Free plan.")
-        else:
-            from datetime import timedelta
-            subscription.expires_at = timezone.now() + timedelta(days=30)
-            messages.success(request, f"Successfully upgraded to {plan.capitalize()} plan!")
-        
-        subscription.save()
+    """Start a hosted Stripe Checkout session for a paid plan."""
+    if request.method != "POST":
         return redirect('subscription_plans')
-    
+
+    plan = request.POST.get('plan')
+    if plan not in ['free', 'premium', 'pro']:
+        messages.error(request, "Invalid plan selected.")
+        return redirect('subscription_plans')
+
+    subscription, _ = Subscription.objects.get_or_create(
+        user=request.user,
+        defaults={'plan': 'free'},
+    )
+
+    if plan == 'free':
+        subscription.plan = 'free'
+        subscription.is_active = True
+        subscription.expires_at = None
+        subscription.stripe_subscription_id = None
+        subscription.save(update_fields=[
+            'plan', 'is_active', 'expires_at', 'stripe_subscription_id'
+        ])
+        messages.success(request, "You have downgraded to the Free plan.")
+        return redirect('subscription_plans')
+
+    if subscription.is_premium and subscription.plan == plan:
+        messages.info(request, f"You are already on the {plan} plan.")
+        return redirect('subscription_plans')
+
+    price_id = {
+        'premium': settings.STRIPE_PREMIUM_PRICE_ID,
+        'pro': settings.STRIPE_PRO_PRICE_ID,
+    }[plan]
+    if not settings.STRIPE_SECRET_KEY or not price_id:
+        messages.error(request, "Payments are not configured yet. Add the Stripe keys and price IDs.")
+        return redirect('subscription_plans')
+
+    try:
+        response = requests.post(
+            'https://api.stripe.com/v1/checkout/sessions',
+            auth=(settings.STRIPE_SECRET_KEY, ''),
+            data={
+                'mode': 'subscription',
+                'line_items[0][price]': price_id,
+                'line_items[0][quantity]': 1,
+                'customer_email': request.user.email,
+                'client_reference_id': str(request.user.pk),
+                'metadata[user_id]': str(request.user.pk),
+                'metadata[plan]': plan,
+                'success_url': request.build_absolute_uri(
+                    reverse('subscription_checkout_success')
+                ) + '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url': request.build_absolute_uri(
+                    reverse('subscription_checkout_cancel')
+                ),
+            },
+            timeout=15,
+        )
+        response.raise_for_status()
+        checkout_url = response.json().get('url')
+        if not checkout_url:
+            raise ValueError('Stripe did not return a Checkout URL.')
+        return redirect(checkout_url)
+    except (requests.RequestException, ValueError) as error:
+        logger.exception('Stripe Checkout session creation failed')
+        messages.error(request, f"Could not start payment: {error}")
+        return redirect('subscription_plans')
+
+
+@login_required(login_url='login')
+def subscription_checkout_success(request):
+    """Verify a completed Stripe Checkout session before enabling ad-free access."""
+    session_id = request.GET.get('session_id')
+    if not session_id or not settings.STRIPE_SECRET_KEY:
+        messages.error(request, "The payment session could not be verified.")
+        return redirect('subscription_plans')
+
+    try:
+        response = requests.get(
+            f'https://api.stripe.com/v1/checkout/sessions/{session_id}',
+            auth=(settings.STRIPE_SECRET_KEY, ''),
+            timeout=15,
+        )
+        response.raise_for_status()
+        session = response.json()
+        metadata = session.get('metadata', {})
+        if (
+            session.get('status') != 'complete'
+            or session.get('payment_status') not in ['paid', 'no_payment_required']
+            or str(request.user.pk) != str(metadata.get('user_id'))
+            or metadata.get('plan') not in ['premium', 'pro']
+        ):
+            raise ValueError('Stripe did not confirm a valid paid session.')
+
+        subscription, _ = Subscription.objects.get_or_create(
+            user=request.user,
+            defaults={'plan': 'free'},
+        )
+        subscription.plan = metadata['plan']
+        subscription.is_active = True
+        subscription.started_at = timezone.now()
+        subscription.expires_at = timezone.now() + timedelta(days=30)
+        subscription.stripe_subscription_id = session.get('subscription') or ''
+        subscription.save()
+        messages.success(request, "Payment confirmed. Ads are now removed from your account.")
+    except (requests.RequestException, ValueError):
+        logger.exception('Stripe Checkout verification failed')
+        messages.error(request, "Payment could not be verified. Your account was not upgraded.")
+
+    return redirect('subscription_plans')
+
+
+@login_required(login_url='login')
+def subscription_checkout_cancel(request):
+    messages.info(request, "Payment cancelled. Your current plan has not changed.")
     return redirect('subscription_plans')
 
 

@@ -354,7 +354,11 @@ class Subscription(models.Model):
     
     @property
     def is_premium(self):
-        return self.plan in ['premium', 'pro'] and self.is_active
+        return (
+            self.plan in ['premium', 'pro']
+            and self.is_active
+            and (self.expires_at is None or self.expires_at > timezone.now())
+        )
     
     @property
     def days_remaining(self):
